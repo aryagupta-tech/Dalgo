@@ -1,0 +1,4840 @@
+[
+  {
+    "id": "checkpoint-climb",
+    "slug": "checkpoint-climb",
+    "title": "Checkpoint Climb",
+    "arena": "easy",
+    "topic": "Arrays",
+    "description": "A rover records the elevation at each checkpoint. A checkpoint earns a signal when its elevation is strictly higher than every earlier checkpoint. The first checkpoint earns a signal when the list is nonempty. Return the number of signals.",
+    "constraints": [
+      "0 <= heights.length <= 10000",
+      "-1000000 <= heights[i] <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "heights",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            3,
+            1,
+            4,
+            4,
+            7
+          ]
+        ],
+        "expected": 3,
+        "explanation": "The elevations 3, 4, and 7 set new records."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            5
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          [
+            4,
+            3,
+            2,
+            1
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            2,
+            2,
+            2
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            -5,
+            -3,
+            -4,
+            0
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            0,
+            -1,
+            1,
+            0,
+            2
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            9,
+            1,
+            8,
+            10,
+            11,
+            11
+          ]
+        ],
+        "expected": 3
+      }
+    ],
+    "reference": "function solve(heights) {\nlet best=-Infinity,count=0; for(const h of heights) if(h>best){best=h;count++;} return count;\n}",
+    "references": {
+      "javascript": "function solve(heights) {\nlet best=-Infinity,count=0; for(const h of heights) if(h>best){best=h;count++;} return count;\n}",
+      "python": "def solve(heights: list[int]) -> int:\n    best = float('-inf')\n    count = 0\n    for h in heights:\n        if h > best:\n            best = h\n            count += 1\n    return count",
+      "cpp": "int solve(std::vector<int> heights) {\nint count=0, best=std::numeric_limits<int>::min(); for(int h:heights) if(h>best){best=h;++count;} return count;\n}",
+      "java": "public static int solve(int[] heights) {\nint count=0,best=Integer.MIN_VALUE; for(int h:heights) if(h>best){best=h;count++;} return count;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(heights) {\n  // Write your solution here.\n}",
+      "python": "def solve(heights):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> heights) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] heights) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n) time, O(1) extra space",
+    "version": 1
+  },
+  {
+    "id": "mirror-cargo",
+    "slug": "mirror-cargo",
+    "title": "Mirror Cargo",
+    "arena": "easy",
+    "topic": "Two pointers",
+    "description": "A cargo label contains lowercase English letters. A label is mirror-safe when reading it from either end gives the same sequence. Return 1 when the label is mirror-safe, otherwise return 0. The empty label is mirror-safe.",
+    "constraints": [
+      "0 <= label.length <= 10000",
+      "label contains only lowercase English letters"
+    ],
+    "parameters": [
+      {
+        "name": "label",
+        "type": "string"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          "level"
+        ],
+        "expected": 1,
+        "explanation": "The letters match from both ends."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          ""
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "a"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "aa"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "ab"
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          "racecar"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "abca"
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          "abcddcba"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "abccbaq"
+        ],
+        "expected": 0
+      }
+    ],
+    "reference": "function solve(label) {\nlet l=0,r=label.length-1; while(l<r) if(label[l++]!==label[r--]) return 0; return 1;\n}",
+    "references": {
+      "javascript": "function solve(label) {\nlet l=0,r=label.length-1; while(l<r) if(label[l++]!==label[r--]) return 0; return 1;\n}",
+      "python": "def solve(label: str) -> int:\n    left, right = 0, len(label)-1\n    while left < right:\n        if label[left] != label[right]:\n            return 0\n        left += 1\n        right -= 1\n    return 1",
+      "cpp": "int solve(std::string label) {\nint l=0,r=(int)label.size()-1;while(l<r)if(label[l++]!=label[r--])return 0;return 1;\n}",
+      "java": "public static int solve(String label) {\nint l=0,r=label.length()-1;while(l<r)if(label.charAt(l++)!=label.charAt(r--))return 0;return 1;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(label) {\n  // Write your solution here.\n}",
+      "python": "def solve(label):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::string label) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(String label) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n) time, O(1) extra space",
+    "version": 1
+  },
+  {
+    "id": "supply-pair",
+    "slug": "supply-pair",
+    "title": "Supply Pair",
+    "arena": "easy",
+    "topic": "Hash maps",
+    "description": "A station needs two distinct supply crates whose weights sum to target. Return their zero-based indices [i, j], where i < j. If several pairs work, choose the smallest j, then the smallest i. Return an empty array if no pair works.",
+    "constraints": [
+      "0 <= weights.length <= 10000",
+      "-1000000 <= weights[i], target <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "weights",
+        "type": "int[]"
+      },
+      {
+        "name": "target",
+        "type": "int"
+      }
+    ],
+    "returnType": "int[]",
+    "examples": [
+      {
+        "args": [
+          [
+            4,
+            7,
+            2,
+            5
+          ],
+          9
+        ],
+        "expected": [
+          1,
+          2
+        ],
+        "explanation": "Indices 1 and 2 are the first pair completed while scanning left to right."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [],
+          0
+        ],
+        "expected": []
+      },
+      {
+        "args": [
+          [
+            5
+          ],
+          10
+        ],
+        "expected": []
+      },
+      {
+        "args": [
+          [
+            2,
+            2
+          ],
+          4
+        ],
+        "expected": [
+          0,
+          1
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            1,
+            3
+          ],
+          4
+        ],
+        "expected": [
+          0,
+          2
+        ]
+      },
+      {
+        "args": [
+          [
+            -3,
+            8,
+            5
+          ],
+          2
+        ],
+        "expected": [
+          0,
+          2
+        ]
+      },
+      {
+        "args": [
+          [
+            0,
+            0,
+            0
+          ],
+          0
+        ],
+        "expected": [
+          0,
+          1
+        ]
+      },
+      {
+        "args": [
+          [
+            3,
+            2,
+            4,
+            1
+          ],
+          5
+        ],
+        "expected": [
+          0,
+          1
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          99
+        ],
+        "expected": []
+      }
+    ],
+    "reference": "function solve(weights, target) {\nconst seen=new Map();for(let j=0;j<weights.length;j++){const x=weights[j];if(seen.has(target-x))return [seen.get(target-x),j];if(!seen.has(x))seen.set(x,j);}return [];\n}",
+    "references": {
+      "javascript": "function solve(weights, target) {\nconst seen=new Map();for(let j=0;j<weights.length;j++){const x=weights[j];if(seen.has(target-x))return [seen.get(target-x),j];if(!seen.has(x))seen.set(x,j);}return [];\n}",
+      "python": "def solve(weights: list[int], target: int) -> list[int]:\n    seen = {}\n    for j, x in enumerate(weights):\n        if target-x in seen:\n            return [seen[target-x], j]\n        if x not in seen:\n            seen[x] = j\n    return []",
+      "cpp": "std::vector<int> solve(std::vector<int> weights, int target) {\nstd::unordered_map<int,int> seen;for(int j=0;j<(int)weights.size();j++){int x=weights[j];if(seen.count(target-x))return {seen[target-x],j};if(!seen.count(x))seen[x]=j;}return {};\n}",
+      "java": "public static int[] solve(int[] weights, int target) {\njava.util.Map<Integer,Integer> seen=new java.util.HashMap<>();for(int j=0;j<weights.length;j++){int x=weights[j];if(seen.containsKey(target-x))return new int[]{seen.get(target-x),j};seen.putIfAbsent(x,j);}return new int[0];\n}"
+    },
+    "starter": {
+      "javascript": "function solve(weights, target) {\n  // Write your solution here.\n}",
+      "python": "def solve(weights, target):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<int> solve(std::vector<int> weights, int target) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[] solve(int[] weights, int target) {\n    // Write your solution here.\n    return new int[0];\n}"
+    },
+    "complexity": "O(n) expected time, O(n) extra space",
+    "version": 1
+  },
+  {
+    "id": "quiet-windows",
+    "slug": "quiet-windows",
+    "title": "Quiet Windows",
+    "arena": "easy",
+    "topic": "Arrays",
+    "description": "A sensor log contains 0 for a quiet minute and 1 for an active minute. Return the length of the longest uninterrupted quiet period.",
+    "constraints": [
+      "0 <= log.length <= 10000",
+      "Each log element is 0 or 1"
+    ],
+    "parameters": [
+      {
+        "name": "log",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            1,
+            0,
+            0,
+            1,
+            0
+          ]
+        ],
+        "expected": 2,
+        "explanation": "The two middle quiet minutes form the longest period."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            1
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            0
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            0,
+            1,
+            0,
+            1,
+            0
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        ],
+        "expected": 2
+      }
+    ],
+    "reference": "function solve(log) {\nlet best=0,run=0;for(const x of log){run=x===0?run+1:0;best=Math.max(best,run);}return best;\n}",
+    "references": {
+      "javascript": "function solve(log) {\nlet best=0,run=0;for(const x of log){run=x===0?run+1:0;best=Math.max(best,run);}return best;\n}",
+      "python": "def solve(log: list[int]) -> int:\n    best = run = 0\n    for x in log:\n        run = run+1 if x == 0 else 0\n        best = max(best, run)\n    return best",
+      "cpp": "int solve(std::vector<int> log) {\nint best=0,run=0;for(int x:log){run=x==0?run+1:0;best=std::max(best,run);}return best;\n}",
+      "java": "public static int solve(int[] log) {\nint best=0,run=0;for(int x:log){run=x==0?run+1:0;best=Math.max(best,run);}return best;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(log) {\n  // Write your solution here.\n}",
+      "python": "def solve(log):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> log) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] log) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n) time, O(1) extra space",
+    "version": 1
+  },
+  {
+    "id": "tile-rotation",
+    "slug": "tile-rotation",
+    "title": "Tile Rotation",
+    "arena": "easy",
+    "topic": "Arrays",
+    "description": "A circular display shifts each tile one position to the right per tick. Return the tile order after ticks ticks. A tile leaving the last position reappears at the first position. An empty display stays empty.",
+    "constraints": [
+      "0 <= tiles.length <= 10000",
+      "0 <= ticks <= 1000000000",
+      "-1000000 <= tiles[i] <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "tiles",
+        "type": "int[]"
+      },
+      {
+        "name": "ticks",
+        "type": "int"
+      }
+    ],
+    "returnType": "int[]",
+    "examples": [
+      {
+        "args": [
+          [
+            2,
+            4,
+            6,
+            8
+          ],
+          1
+        ],
+        "expected": [
+          8,
+          2,
+          4,
+          6
+        ],
+        "explanation": "The last tile moves to the front."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [],
+          5
+        ],
+        "expected": []
+      },
+      {
+        "args": [
+          [
+            7
+          ],
+          100
+        ],
+        "expected": [
+          7
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          0
+        ],
+        "expected": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          3
+        ],
+        "expected": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          4
+        ],
+        "expected": [
+          3,
+          1,
+          2
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4
+          ],
+          2
+        ],
+        "expected": [
+          3,
+          4,
+          1,
+          2
+        ]
+      },
+      {
+        "args": [
+          [
+            -1,
+            0,
+            1
+          ],
+          2
+        ],
+        "expected": [
+          0,
+          1,
+          -1
+        ]
+      },
+      {
+        "args": [
+          [
+            5,
+            5,
+            6,
+            6
+          ],
+          7
+        ],
+        "expected": [
+          5,
+          6,
+          6,
+          5
+        ]
+      }
+    ],
+    "reference": "function solve(tiles, ticks) {\nif(!tiles.length)return [];const k=ticks%tiles.length;return k===0?tiles.slice():tiles.slice(-k).concat(tiles.slice(0,-k));\n}",
+    "references": {
+      "javascript": "function solve(tiles, ticks) {\nif(!tiles.length)return [];const k=ticks%tiles.length;return k===0?tiles.slice():tiles.slice(-k).concat(tiles.slice(0,-k));\n}",
+      "python": "def solve(tiles: list[int], ticks: int) -> list[int]:\n    if not tiles:\n        return []\n    k = ticks % len(tiles)\n    return tiles[-k:] + tiles[:-k] if k else tiles[:]",
+      "cpp": "std::vector<int> solve(std::vector<int> tiles, int ticks) {\nif(tiles.empty())return {};int n=tiles.size(),k=ticks%n;std::vector<int> out(n);for(int i=0;i<n;i++)out[(i+k)%n]=tiles[i];return out;\n}",
+      "java": "public static int[] solve(int[] tiles, int ticks) {\nint n=tiles.length;if(n==0)return new int[0];int[] out=new int[n];int k=ticks%n;for(int i=0;i<n;i++)out[(i+k)%n]=tiles[i];return out;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(tiles, ticks) {\n  // Write your solution here.\n}",
+      "python": "def solve(tiles, ticks):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<int> solve(std::vector<int> tiles, int ticks) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[] solve(int[] tiles, int ticks) {\n    // Write your solution here.\n    return new int[0];\n}"
+    },
+    "complexity": "O(n) time, O(n) output space",
+    "version": 1
+  },
+  {
+    "id": "trail-compression",
+    "slug": "trail-compression",
+    "title": "Trail Compression",
+    "arena": "easy",
+    "topic": "Strings",
+    "description": "A trail recorder stores lowercase movement labels. Compress each maximal run by writing its letter followed by the run length, including runs of length one. Return the compressed string; an empty trail returns an empty string.",
+    "constraints": [
+      "0 <= trail.length <= 10000",
+      "trail contains only lowercase English letters"
+    ],
+    "parameters": [
+      {
+        "name": "trail",
+        "type": "string"
+      }
+    ],
+    "returnType": "string",
+    "examples": [
+      {
+        "args": [
+          "aaabbc"
+        ],
+        "expected": "a3b2c1",
+        "explanation": "Three a labels, two b labels, and one c label form three runs."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          ""
+        ],
+        "expected": ""
+      },
+      {
+        "args": [
+          "a"
+        ],
+        "expected": "a1"
+      },
+      {
+        "args": [
+          "aaaa"
+        ],
+        "expected": "a4"
+      },
+      {
+        "args": [
+          "abc"
+        ],
+        "expected": "a1b1c1"
+      },
+      {
+        "args": [
+          "aabbaa"
+        ],
+        "expected": "a2b2a2"
+      },
+      {
+        "args": [
+          "zzzzzzzzzzzz"
+        ],
+        "expected": "z12"
+      },
+      {
+        "args": [
+          "ababab"
+        ],
+        "expected": "a1b1a1b1a1b1"
+      },
+      {
+        "args": [
+          "qwwweerrrrt"
+        ],
+        "expected": "q1w3e2r4t1"
+      }
+    ],
+    "reference": "function solve(trail) {\nlet out='';for(let i=0;i<trail.length;){let j=i+1;while(j<trail.length&&trail[j]===trail[i])j++;out+=trail[i]+String(j-i);i=j;}return out;\n}",
+    "references": {
+      "javascript": "function solve(trail) {\nlet out='';for(let i=0;i<trail.length;){let j=i+1;while(j<trail.length&&trail[j]===trail[i])j++;out+=trail[i]+String(j-i);i=j;}return out;\n}",
+      "python": "def solve(trail: str) -> str:\n    out = []\n    i = 0\n    while i < len(trail):\n        j = i+1\n        while j < len(trail) and trail[j] == trail[i]:\n            j += 1\n        out.append(trail[i] + str(j-i))\n        i = j\n    return ''.join(out)",
+      "cpp": "std::string solve(std::string trail) {\nstd::string out;for(int i=0;i<(int)trail.size();){int j=i+1;while(j<(int)trail.size()&&trail[j]==trail[i])j++;out+=trail[i];out+=std::to_string(j-i);i=j;}return out;\n}",
+      "java": "public static String solve(String trail) {\nStringBuilder out=new StringBuilder();for(int i=0;i<trail.length();){int j=i+1;while(j<trail.length()&&trail.charAt(j)==trail.charAt(i))j++;out.append(trail.charAt(i)).append(j-i);i=j;}return out.toString();\n}"
+    },
+    "starter": {
+      "javascript": "function solve(trail) {\n  // Write your solution here.\n}",
+      "python": "def solve(trail):\n    # Write your solution here.\n    pass",
+      "cpp": "std::string solve(std::string trail) {\n    // Write your solution here.\n    return \"\";\n}",
+      "java": "public static String solve(String trail) {\n    // Write your solution here.\n    return \"\";\n}"
+    },
+    "complexity": "O(n) time, O(n) output space",
+    "version": 1
+  },
+  {
+    "id": "inventory-intersection",
+    "slug": "inventory-intersection",
+    "title": "Inventory Intersection",
+    "arena": "easy",
+    "topic": "Sets",
+    "description": "Two depots list item codes, possibly with duplicates. Return the distinct codes present in both depots, sorted in increasing order.",
+    "constraints": [
+      "0 <= first.length, second.length <= 10000",
+      "-1000000 <= item codes <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "first",
+        "type": "int[]"
+      },
+      {
+        "name": "second",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int[]",
+    "examples": [
+      {
+        "args": [
+          [
+            8,
+            3,
+            3,
+            1
+          ],
+          [
+            3,
+            8,
+            8,
+            5
+          ]
+        ],
+        "expected": [
+          3,
+          8
+        ],
+        "explanation": "The shared codes are 3 and 8."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [],
+          []
+        ],
+        "expected": []
+      },
+      {
+        "args": [
+          [
+            1
+          ],
+          []
+        ],
+        "expected": []
+      },
+      {
+        "args": [
+          [
+            1
+          ],
+          [
+            1
+          ]
+        ],
+        "expected": [
+          1
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "expected": [
+          1
+        ]
+      },
+      {
+        "args": [
+          [
+            3,
+            2,
+            1
+          ],
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "args": [
+          [
+            -2,
+            0,
+            3
+          ],
+          [
+            -2,
+            5,
+            0
+          ]
+        ],
+        "expected": [
+          -2,
+          0
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "expected": []
+      },
+      {
+        "args": [
+          [
+            10,
+            4,
+            4,
+            9
+          ],
+          [
+            9,
+            10,
+            4,
+            0
+          ]
+        ],
+        "expected": [
+          4,
+          9,
+          10
+        ]
+      }
+    ],
+    "reference": "function solve(first, second) {\nconst a=new Set(first);return [...new Set(second.filter(x=>a.has(x)))].sort((a,b)=>a-b);\n}",
+    "references": {
+      "javascript": "function solve(first, second) {\nconst a=new Set(first);return [...new Set(second.filter(x=>a.has(x)))].sort((a,b)=>a-b);\n}",
+      "python": "def solve(first: list[int], second: list[int]) -> list[int]:\n    return sorted(set(first) & set(second))",
+      "cpp": "std::vector<int> solve(std::vector<int> first, std::vector<int> second) {\nstd::set<int> a(first.begin(),first.end()),out;for(int x:second)if(a.count(x))out.insert(x);return std::vector<int>(out.begin(),out.end());\n}",
+      "java": "public static int[] solve(int[] first, int[] second) {\njava.util.Set<Integer> a=new java.util.HashSet<>();java.util.TreeSet<Integer> out=new java.util.TreeSet<>();for(int x:first)a.add(x);for(int x:second)if(a.contains(x))out.add(x);return out.stream().mapToInt(Integer::intValue).toArray();\n}"
+    },
+    "starter": {
+      "javascript": "function solve(first, second) {\n  // Write your solution here.\n}",
+      "python": "def solve(first, second):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<int> solve(std::vector<int> first, std::vector<int> second) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[] solve(int[] first, int[] second) {\n    // Write your solution here.\n    return new int[0];\n}"
+    },
+    "complexity": "O(n + m + u log u) expected time, O(n + u) extra space",
+    "version": 1
+  },
+  {
+    "id": "grid-fence",
+    "slug": "grid-fence",
+    "title": "Grid Fence",
+    "arena": "easy",
+    "topic": "Matrices",
+    "description": "A map uses 1 for a garden cell and 0 for empty ground. Each cell is a unit square. Return the total length of fencing around all garden cells, counting boundaries with empty ground and the outside of the map. Separate patches and holes all contribute.",
+    "constraints": [
+      "1 <= rows, columns <= 100",
+      "grid is rectangular and contains only 0 and 1"
+    ],
+    "parameters": [
+      {
+        "name": "grid",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ]
+        ],
+        "expected": 8,
+        "explanation": "Three connected squares have eight exposed unit edges."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [
+            [
+              0
+            ]
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            [
+              1
+            ]
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              1
+            ]
+          ]
+        ],
+        "expected": 6
+      },
+      {
+        "args": [
+          [
+            [
+              1
+            ],
+            [
+              1
+            ]
+          ]
+        ],
+        "expected": 6
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        ],
+        "expected": 8
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        ],
+        "expected": 8
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              0,
+              1
+            ],
+            [
+              1,
+              1,
+              1
+            ]
+          ]
+        ],
+        "expected": 16
+      },
+      {
+        "args": [
+          [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        ],
+        "expected": 4
+      }
+    ],
+    "reference": "function solve(grid) {\nlet out=0;for(let r=0;r<grid.length;r++)for(let c=0;c<grid[0].length;c++)if(grid[r][c]){out+=4;if(r&&grid[r-1][c])out-=2;if(c&&grid[r][c-1])out-=2;}return out;\n}",
+    "references": {
+      "javascript": "function solve(grid) {\nlet out=0;for(let r=0;r<grid.length;r++)for(let c=0;c<grid[0].length;c++)if(grid[r][c]){out+=4;if(r&&grid[r-1][c])out-=2;if(c&&grid[r][c-1])out-=2;}return out;\n}",
+      "python": "def solve(grid: list[list[int]]) -> int:\n    out = 0\n    for r in range(len(grid)):\n        for c in range(len(grid[0])):\n            if grid[r][c]:\n                out += 4\n                if r and grid[r-1][c]:\n                    out -= 2\n                if c and grid[r][c-1]:\n                    out -= 2\n    return out",
+      "cpp": "int solve(std::vector<std::vector<int>> grid) {\nint out=0;for(int r=0;r<(int)grid.size();r++)for(int c=0;c<(int)grid[0].size();c++)if(grid[r][c]){out+=4;if(r&&grid[r-1][c])out-=2;if(c&&grid[r][c-1])out-=2;}return out;\n}",
+      "java": "public static int solve(int[][] grid) {\nint out=0;for(int r=0;r<grid.length;r++)for(int c=0;c<grid[0].length;c++)if(grid[r][c]==1){out+=4;if(r>0&&grid[r-1][c]==1)out-=2;if(c>0&&grid[r][c-1]==1)out-=2;}return out;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(grid) {\n  // Write your solution here.\n}",
+      "python": "def solve(grid):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<std::vector<int>> grid) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[][] grid) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(rows \u00d7 columns) time, O(1) extra space",
+    "version": 1
+  },
+  {
+    "id": "bracket-beacon",
+    "slug": "bracket-beacon",
+    "title": "Bracket Beacon",
+    "arena": "easy",
+    "topic": "Stacks",
+    "description": "A beacon command contains only parentheses, square brackets, and curly braces. Return 1 if every opening bracket is closed by the same bracket type in proper nesting order, otherwise return 0. An empty command is valid.",
+    "constraints": [
+      "0 <= command.length <= 10000",
+      "command contains only ()[]{}"
+    ],
+    "parameters": [
+      {
+        "name": "command",
+        "type": "string"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          "([]){}"
+        ],
+        "expected": 1,
+        "explanation": "Every pair closes in the required nesting order."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          ""
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "()"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "([{}])"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "([)]"
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          "("
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          "]"
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          "{}[]()"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "(()))"
+        ],
+        "expected": 0
+      }
+    ],
+    "reference": "function solve(command) {\nconst stack=[],pairs={')':'(',']':'[','}':'{'};for(const c of command){if('([{'.includes(c))stack.push(c);else if(stack.pop()!==pairs[c])return 0;}return stack.length?0:1;\n}",
+    "references": {
+      "javascript": "function solve(command) {\nconst stack=[],pairs={')':'(',']':'[','}':'{'};for(const c of command){if('([{'.includes(c))stack.push(c);else if(stack.pop()!==pairs[c])return 0;}return stack.length?0:1;\n}",
+      "python": "def solve(command: str) -> int:\n    stack = []\n    pairs = {')': '(', ']': '[', '}': '{'}\n    for c in command:\n        if c in '([{':\n            stack.append(c)\n        elif not stack or stack.pop() != pairs[c]:\n            return 0\n    return int(not stack)",
+      "cpp": "int solve(std::string command) {\nstd::vector<char> st;for(char c:command){if(c=='('||c=='['||c=='{')st.push_back(c);else{char want=c==')'?'(':c==']'?'[':'{';if(st.empty()||st.back()!=want)return 0;st.pop_back();}}return st.empty()?1:0;\n}",
+      "java": "public static int solve(String command) {\njava.util.ArrayDeque<Character> st=new java.util.ArrayDeque<>();for(char c:command.toCharArray()){if(c=='('||c=='['||c=='{')st.push(c);else{char want=c==')'?'(':c==']'?'[':'{';if(st.isEmpty()||st.pop()!=want)return 0;}}return st.isEmpty()?1:0;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(command) {\n  // Write your solution here.\n}",
+      "python": "def solve(command):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::string command) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(String command) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n) time, O(n) extra space",
+    "version": 1
+  },
+  {
+    "id": "missing-marker",
+    "slug": "missing-marker",
+    "title": "Missing Marker",
+    "arena": "easy",
+    "topic": "Bitwise",
+    "description": "A trail should contain every marker from 0 through n exactly once, but one marker is missing. You receive the other n distinct markers in arbitrary order. Return the missing marker.",
+    "constraints": [
+      "0 <= n = markers.length <= 10000",
+      "markers contains distinct integers from 0 through n"
+    ],
+    "parameters": [
+      {
+        "name": "markers",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            3,
+            0,
+            1
+          ]
+        ],
+        "expected": 2,
+        "explanation": "Markers 0, 1, and 3 are present, so 2 is missing."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            0
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            1
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            0,
+            1,
+            2
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            4,
+            2,
+            0,
+            1
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            0,
+            2
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            5,
+            4,
+            3,
+            2,
+            0
+          ]
+        ],
+        "expected": 1
+      }
+    ],
+    "reference": "function solve(markers) {\nlet x=markers.length;for(let i=0;i<markers.length;i++)x^=i^markers[i];return x;\n}",
+    "references": {
+      "javascript": "function solve(markers) {\nlet x=markers.length;for(let i=0;i<markers.length;i++)x^=i^markers[i];return x;\n}",
+      "python": "def solve(markers: list[int]) -> int:\n    x = len(markers)\n    for i, value in enumerate(markers):\n        x ^= i ^ value\n    return x",
+      "cpp": "int solve(std::vector<int> markers) {\nint x=markers.size();for(int i=0;i<(int)markers.size();i++)x^=i^markers[i];return x;\n}",
+      "java": "public static int solve(int[] markers) {\nint x=markers.length;for(int i=0;i<markers.length;i++)x^=i^markers[i];return x;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(markers) {\n  // Write your solution here.\n}",
+      "python": "def solve(markers):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> markers) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] markers) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n) time, O(1) extra space",
+    "version": 1
+  },
+  {
+    "id": "relay-segments",
+    "slug": "relay-segments",
+    "title": "Relay Segments",
+    "arena": "medium",
+    "topic": "Prefix sums",
+    "description": "A relay log records signed energy changes. Count the nonempty contiguous segments whose total energy change equals target. Segments are distinguished by their start and end indices.",
+    "constraints": [
+      "0 <= changes.length <= 10000",
+      "-1000 <= changes[i] <= 1000",
+      "-10000000 <= target <= 10000000"
+    ],
+    "parameters": [
+      {
+        "name": "changes",
+        "type": "int[]"
+      },
+      {
+        "name": "target",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            2,
+            -1,
+            2,
+            1
+          ],
+          3
+        ],
+        "expected": 2,
+        "explanation": "The segments [2,-1,2] and [2,1] each sum to 3."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [],
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            0
+          ],
+          0
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            0,
+            0,
+            0
+          ],
+          0
+        ],
+        "expected": 6
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          3
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          [
+            -1,
+            -1,
+            1
+          ],
+          -1
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            1,
+            -1,
+            1,
+            -1
+          ],
+          0
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          [
+            5,
+            5,
+            5
+          ],
+          10
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          20
+        ],
+        "expected": 0
+      }
+    ],
+    "reference": "function solve(changes, target) {\nconst seen=new Map([[0,1]]);let sum=0,out=0;for(const x of changes){sum+=x;out+=seen.get(sum-target)||0;seen.set(sum,(seen.get(sum)||0)+1);}return out;\n}",
+    "references": {
+      "javascript": "function solve(changes, target) {\nconst seen=new Map([[0,1]]);let sum=0,out=0;for(const x of changes){sum+=x;out+=seen.get(sum-target)||0;seen.set(sum,(seen.get(sum)||0)+1);}return out;\n}",
+      "python": "def solve(changes: list[int], target: int) -> int:\n    seen = {0: 1}\n    sum_value = out = 0\n    for x in changes:\n        sum_value += x\n        out += seen.get(sum_value-target, 0)\n        seen[sum_value] = seen.get(sum_value, 0)+1\n    return out",
+      "cpp": "int solve(std::vector<int> changes, int target) {\nstd::unordered_map<int,int> seen;seen[0]=1;int sum=0,out=0;for(int x:changes){sum+=x;out+=seen[sum-target];seen[sum]++;}return out;\n}",
+      "java": "public static int solve(int[] changes, int target) {\njava.util.Map<Integer,Integer> seen=new java.util.HashMap<>();seen.put(0,1);int sum=0,out=0;for(int x:changes){sum+=x;out+=seen.getOrDefault(sum-target,0);seen.put(sum,seen.getOrDefault(sum,0)+1);}return out;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(changes, target) {\n  // Write your solution here.\n}",
+      "python": "def solve(changes, target):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> changes, int target) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] changes, int target) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n) expected time, O(n) extra space",
+    "version": 1
+  },
+  {
+    "id": "cooling-strip",
+    "slug": "cooling-strip",
+    "title": "Cooling Strip",
+    "arena": "medium",
+    "topic": "Sliding window",
+    "description": "A cooling strip is labelled with lowercase English letters. A usable section is a contiguous substring containing no repeated letter. Return the maximum usable section length.",
+    "constraints": [
+      "0 <= strip.length <= 100000",
+      "strip contains only lowercase English letters"
+    ],
+    "parameters": [
+      {
+        "name": "strip",
+        "type": "string"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          "abcaef"
+        ],
+        "expected": 5,
+        "explanation": "The section bcaef has five different letters."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          ""
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          "a"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "aaaa"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "abcabc"
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          "abba"
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          "pwwkew"
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          "abcdefghijklmnopqrstuvwxyz"
+        ],
+        "expected": 26
+      },
+      {
+        "args": [
+          "dvdf"
+        ],
+        "expected": 3
+      }
+    ],
+    "reference": "function solve(strip) {\nconst last=new Map();let left=0,best=0;for(let r=0;r<strip.length;r++){if(last.has(strip[r]))left=Math.max(left,last.get(strip[r])+1);last.set(strip[r],r);best=Math.max(best,r-left+1);}return best;\n}",
+    "references": {
+      "javascript": "function solve(strip) {\nconst last=new Map();let left=0,best=0;for(let r=0;r<strip.length;r++){if(last.has(strip[r]))left=Math.max(left,last.get(strip[r])+1);last.set(strip[r],r);best=Math.max(best,r-left+1);}return best;\n}",
+      "python": "def solve(strip: str) -> int:\n    last = {}\n    left = best = 0\n    for right, c in enumerate(strip):\n        left = max(left, last.get(c, -1)+1)\n        last[c] = right\n        best = max(best, right-left+1)\n    return best",
+      "cpp": "int solve(std::string strip) {\nstd::vector<int> last(26,-1);int left=0,best=0;for(int r=0;r<(int)strip.size();r++){int c=strip[r]-'a';left=std::max(left,last[c]+1);last[c]=r;best=std::max(best,r-left+1);}return best;\n}",
+      "java": "public static int solve(String strip) {\nint[] last=new int[26];java.util.Arrays.fill(last,-1);int left=0,best=0;for(int r=0;r<strip.length();r++){int c=strip.charAt(r)-'a';left=Math.max(left,last[c]+1);last[c]=r;best=Math.max(best,r-left+1);}return best;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(strip) {\n  // Write your solution here.\n}",
+      "python": "def solve(strip):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::string strip) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(String strip) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n) time, O(26) extra space",
+    "version": 1
+  },
+  {
+    "id": "beacon-coverage",
+    "slug": "beacon-coverage",
+    "title": "Beacon Coverage",
+    "arena": "medium",
+    "topic": "Intervals",
+    "description": "Each beacon covers a closed interval [start, end] on a road. Combine overlapping or touching intervals into maximal covered intervals. Return the combined intervals sorted by start. Intervals that only meet at an endpoint are combined.",
+    "constraints": [
+      "0 <= intervals.length <= 10000",
+      "Each interval has two integers with -1000000 <= start <= end <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "intervals",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int[][]",
+    "examples": [
+      {
+        "args": [
+          [
+            [
+              1,
+              4
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              9,
+              10
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            7
+          ],
+          [
+            9,
+            10
+          ]
+        ],
+        "explanation": "The first two intervals overlap and combine."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "args": [
+          [
+            [
+              2,
+              2
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            3
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              5,
+              7
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            2
+          ],
+          [
+            5,
+            7
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              10
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              4,
+              8
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            10
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              -4,
+              -1
+            ],
+            [
+              -2,
+              3
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            -4,
+            3
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            1
+          ]
+        ]
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              2,
+              3
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            4
+          ]
+        ]
+      }
+    ],
+    "reference": "function solve(intervals) {\nconst sorted=intervals.map(x=>x.slice()).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const out=[];for(const x of sorted){if(!out.length||x[0]>out[out.length-1][1])out.push(x);else out[out.length-1][1]=Math.max(out[out.length-1][1],x[1]);}return out;\n}",
+    "references": {
+      "javascript": "function solve(intervals) {\nconst sorted=intervals.map(x=>x.slice()).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const out=[];for(const x of sorted){if(!out.length||x[0]>out[out.length-1][1])out.push(x);else out[out.length-1][1]=Math.max(out[out.length-1][1],x[1]);}return out;\n}",
+      "python": "def solve(intervals: list[list[int]]) -> list[list[int]]:\n    out = []\n    for start, end in sorted(intervals):\n        if not out or start > out[-1][1]:\n            out.append([start, end])\n        else:\n            out[-1][1] = max(out[-1][1], end)\n    return out",
+      "cpp": "std::vector<std::vector<int>> solve(std::vector<std::vector<int>> intervals) {\nstd::sort(intervals.begin(),intervals.end());std::vector<std::vector<int>> out;for(auto x:intervals){if(out.empty()||x[0]>out.back()[1])out.push_back(x);else out.back()[1]=std::max(out.back()[1],x[1]);}return out;\n}",
+      "java": "public static int[][] solve(int[][] intervals) {\njava.util.Arrays.sort(intervals,(a,b)->Integer.compare(a[0],b[0]));java.util.List<int[]> out=new java.util.ArrayList<>();for(int[] x:intervals){if(out.isEmpty()||x[0]>out.get(out.size()-1)[1])out.add(x.clone());else out.get(out.size()-1)[1]=Math.max(out.get(out.size()-1)[1],x[1]);}return out.toArray(new int[0][]);\n}"
+    },
+    "starter": {
+      "javascript": "function solve(intervals) {\n  // Write your solution here.\n}",
+      "python": "def solve(intervals):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<std::vector<int>> solve(std::vector<std::vector<int>> intervals) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[][] solve(int[][] intervals) {\n    // Write your solution here.\n    return new int[0][0];\n}"
+    },
+    "complexity": "O(n log n) time, O(n) output space",
+    "version": 1
+  },
+  {
+    "id": "gateway-distance",
+    "slug": "gateway-distance",
+    "title": "Gateway Distance",
+    "arena": "medium",
+    "topic": "Breadth-first search",
+    "description": "There are n gateways numbered 0 through n-1. Each pair in links is an undirected connection that costs one hop. Return the fewest hops from start to goal, or -1 when goal cannot be reached. A gateway is zero hops from itself.",
+    "constraints": [
+      "1 <= n <= 10000",
+      "0 <= links.length <= 20000",
+      "Each link joins two distinct valid gateways; links are unique",
+      "0 <= start, goal < n"
+    ],
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "links",
+        "type": "int[][]"
+      },
+      {
+        "name": "start",
+        "type": "int"
+      },
+      {
+        "name": "goal",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          5,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              4,
+              2
+            ]
+          ],
+          0,
+          2
+        ],
+        "expected": 2,
+        "explanation": "The route 0 \u2192 1 \u2192 2 uses two connections."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          1,
+          [],
+          0,
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          2,
+          [],
+          0,
+          1
+        ],
+        "expected": -1
+      },
+      {
+        "args": [
+          2,
+          [
+            [
+              0,
+              1
+            ]
+          ],
+          1,
+          0
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          4,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          0,
+          3
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          4,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          0,
+          3
+        ],
+        "expected": -1
+      },
+      {
+        "args": [
+          3,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          0,
+          2
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          5,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          0,
+          4
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          3,
+          [
+            [
+              0,
+              1
+            ]
+          ],
+          2,
+          2
+        ],
+        "expected": 0
+      }
+    ],
+    "reference": "function solve(n, links, start, goal) {\nconst g=Array.from({length:n},()=>[]);for(const [a,b]of links){g[a].push(b);g[b].push(a);}const d=Array(n).fill(-1),q=[start];d[start]=0;for(let i=0;i<q.length;i++)for(const v of g[q[i]])if(d[v]<0){d[v]=d[q[i]]+1;q.push(v);}return d[goal];\n}",
+    "references": {
+      "javascript": "function solve(n, links, start, goal) {\nconst g=Array.from({length:n},()=>[]);for(const [a,b]of links){g[a].push(b);g[b].push(a);}const d=Array(n).fill(-1),q=[start];d[start]=0;for(let i=0;i<q.length;i++)for(const v of g[q[i]])if(d[v]<0){d[v]=d[q[i]]+1;q.push(v);}return d[goal];\n}",
+      "python": "def solve(n: int, links: list[list[int]], start: int, goal: int) -> int:\n    graph = [[] for _ in range(n)]\n    for a, b in links:\n        graph[a].append(b)\n        graph[b].append(a)\n    distance = [-1]*n\n    distance[start] = 0\n    queue = [start]\n    for u in queue:\n        for v in graph[u]:\n            if distance[v] == -1:\n                distance[v] = distance[u]+1\n                queue.append(v)\n    return distance[goal]",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> links, int start, int goal) {\nstd::vector<std::vector<int>> g(n);for(auto e:links){g[e[0]].push_back(e[1]);g[e[1]].push_back(e[0]);}std::vector<int>d(n,-1),q{start};d[start]=0;for(int i=0;i<(int)q.size();i++)for(int v:g[q[i]])if(d[v]<0){d[v]=d[q[i]]+1;q.push_back(v);}return d[goal];\n}",
+      "java": "public static int solve(int n, int[][] links, int start, int goal) {\njava.util.List<java.util.List<Integer>> g=new java.util.ArrayList<>();for(int i=0;i<n;i++)g.add(new java.util.ArrayList<>());for(int[] e:links){g.get(e[0]).add(e[1]);g.get(e[1]).add(e[0]);}int[] d=new int[n];java.util.Arrays.fill(d,-1);java.util.List<Integer> q=new java.util.ArrayList<>();q.add(start);d[start]=0;for(int i=0;i<q.size();i++)for(int v:g.get(q.get(i)))if(d[v]<0){d[v]=d[q.get(i)]+1;q.add(v);}return d[goal];\n}"
+    },
+    "starter": {
+      "javascript": "function solve(n, links, start, goal) {\n  // Write your solution here.\n}",
+      "python": "def solve(n, links, start, goal):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> links, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int n, int[][] links, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n + links.length) time and space",
+    "version": 1
+  },
+  {
+    "id": "battery-steps",
+    "slug": "battery-steps",
+    "title": "Battery Steps",
+    "arena": "medium",
+    "topic": "Greedy",
+    "description": "A rover begins at index 0 of a row of pads. From pad i it may jump forward by any positive distance up to reach[i]. Return the minimum number of jumps needed to reach the last pad, or -1 if impossible. A row with one pad needs zero jumps.",
+    "constraints": [
+      "1 <= reach.length <= 10000",
+      "0 <= reach[i] <= 10000"
+    ],
+    "parameters": [
+      {
+        "name": "reach",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            2,
+            3,
+            1,
+            1,
+            4
+          ]
+        ],
+        "expected": 2,
+        "explanation": "Jump from 0 to 1, then from 1 to 4."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [
+            0
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            1,
+            0
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            0,
+            1
+          ]
+        ],
+        "expected": -1
+      },
+      {
+        "args": [
+          [
+            1,
+            1,
+            1,
+            1
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            3,
+            0,
+            0,
+            0
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            2,
+            0,
+            0,
+            1
+          ]
+        ],
+        "expected": -1
+      },
+      {
+        "args": [
+          [
+            2,
+            3,
+            0,
+            1,
+            4
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            0,
+            1,
+            0
+          ]
+        ],
+        "expected": 3
+      }
+    ],
+    "reference": "function solve(reach) {\nlet end=0,far=0,jumps=0;for(let i=0;i<reach.length-1;i++){far=Math.max(far,i+reach[i]);if(i===end){if(far<=i)return -1;jumps++;end=far;if(end>=reach.length-1)return jumps;}}return jumps;\n}",
+    "references": {
+      "javascript": "function solve(reach) {\nlet end=0,far=0,jumps=0;for(let i=0;i<reach.length-1;i++){far=Math.max(far,i+reach[i]);if(i===end){if(far<=i)return -1;jumps++;end=far;if(end>=reach.length-1)return jumps;}}return jumps;\n}",
+      "python": "def solve(reach: list[int]) -> int:\n    end = far = jumps = 0\n    for i in range(len(reach)-1):\n        far = max(far, i+reach[i])\n        if i == end:\n            if far <= i:\n                return -1\n            jumps += 1\n            end = far\n            if end >= len(reach)-1:\n                return jumps\n    return jumps",
+      "cpp": "int solve(std::vector<int> reach) {\nint end=0,far=0,jumps=0;for(int i=0;i<(int)reach.size()-1;i++){far=std::max(far,i+reach[i]);if(i==end){if(far<=i)return -1;jumps++;end=far;if(end>=(int)reach.size()-1)return jumps;}}return jumps;\n}",
+      "java": "public static int solve(int[] reach) {\nint end=0,far=0,jumps=0;for(int i=0;i<reach.length-1;i++){far=Math.max(far,i+reach[i]);if(i==end){if(far<=i)return -1;jumps++;end=far;if(end>=reach.length-1)return jumps;}}return jumps;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(reach) {\n  // Write your solution here.\n}",
+      "python": "def solve(reach):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> reach) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] reach) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n) time, O(1) extra space",
+    "version": 1
+  },
+  {
+    "id": "workshop-schedule",
+    "slug": "workshop-schedule",
+    "title": "Workshop Schedule",
+    "arena": "medium",
+    "topic": "Greedy",
+    "description": "One workshop can host one booking at a time. Each booking is [start, end], occupying the half-open interval from start through just before end. Choose as many bookings as possible without overlap and return their count. A booking may begin exactly when another ends.",
+    "constraints": [
+      "0 <= bookings.length <= 10000",
+      "Each booking has two integers with -1000000 <= start < end <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "bookings",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            [
+              1,
+              3
+            ],
+            [
+              2,
+              4
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              5,
+              8
+            ]
+          ]
+        ],
+        "expected": 3,
+        "explanation": "Choose [1,3], [3,5], and [5,8]."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              3
+            ],
+            [
+              2,
+              4
+            ]
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            [
+              0,
+              10
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            [
+              -5,
+              -3
+            ],
+            [
+              -3,
+              0
+            ],
+            [
+              0,
+              2
+            ]
+          ]
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            [
+              4,
+              6
+            ],
+            [
+              1,
+              5
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              2,
+              3
+            ]
+          ]
+        ],
+        "expected": 3
+      }
+    ],
+    "reference": "function solve(bookings) {\nlet end=-Infinity,count=0;for(const [a,b]of bookings.slice().sort((x,y)=>x[1]-y[1]||x[0]-y[0]))if(a>=end){count++;end=b;}return count;\n}",
+    "references": {
+      "javascript": "function solve(bookings) {\nlet end=-Infinity,count=0;for(const [a,b]of bookings.slice().sort((x,y)=>x[1]-y[1]||x[0]-y[0]))if(a>=end){count++;end=b;}return count;\n}",
+      "python": "def solve(bookings: list[list[int]]) -> int:\n    end = float('-inf')\n    count = 0\n    for a, b in sorted(bookings, key=lambda x: (x[1], x[0])):\n        if a >= end:\n            count += 1\n            end = b\n    return count",
+      "cpp": "int solve(std::vector<std::vector<int>> bookings) {\nstd::sort(bookings.begin(),bookings.end(),[](const auto&a,const auto&b){return a[1]<b[1];});int end=std::numeric_limits<int>::min(),count=0;for(auto x:bookings)if(x[0]>=end){count++;end=x[1];}return count;\n}",
+      "java": "public static int solve(int[][] bookings) {\njava.util.Arrays.sort(bookings,(a,b)->Integer.compare(a[1],b[1]));int end=Integer.MIN_VALUE,count=0;for(int[] x:bookings)if(x[0]>=end){count++;end=x[1];}return count;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(bookings) {\n  // Write your solution here.\n}",
+      "python": "def solve(bookings):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<std::vector<int>> bookings) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[][] bookings) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n log n) time, O(n) sorting space",
+    "version": 1
+  },
+  {
+    "id": "reservoir-volume",
+    "slug": "reservoir-volume",
+    "title": "Reservoir Volume",
+    "arena": "medium",
+    "topic": "Two pointers",
+    "description": "A cross section of a reservoir consists of width-one columns with nonnegative heights. Water falls from above and escapes at either outer edge. Return the total units of water held between the columns after settling.",
+    "constraints": [
+      "0 <= heights.length <= 10000",
+      "0 <= heights[i] <= 10000"
+    ],
+    "parameters": [
+      {
+        "name": "heights",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            3,
+            0,
+            2,
+            0,
+            4
+          ]
+        ],
+        "expected": 7,
+        "explanation": "The three interior columns hold 3, 1, and 3 units."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            4
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            2,
+            1
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            1,
+            0,
+            1
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            3,
+            0,
+            0,
+            3
+          ]
+        ],
+        "expected": 6
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            4,
+            3,
+            2,
+            1
+          ]
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            0,
+            2,
+            0,
+            1,
+            0,
+            3
+          ]
+        ],
+        "expected": 5
+      }
+    ],
+    "reference": "function solve(heights) {\nlet l=0,r=heights.length-1,lm=0,rm=0,out=0;while(l<=r){if(lm<=rm){lm=Math.max(lm,heights[l]);out+=lm-heights[l++];}else{rm=Math.max(rm,heights[r]);out+=rm-heights[r--];}}return out;\n}",
+    "references": {
+      "javascript": "function solve(heights) {\nlet l=0,r=heights.length-1,lm=0,rm=0,out=0;while(l<=r){if(lm<=rm){lm=Math.max(lm,heights[l]);out+=lm-heights[l++];}else{rm=Math.max(rm,heights[r]);out+=rm-heights[r--];}}return out;\n}",
+      "python": "def solve(heights: list[int]) -> int:\n    left, right = 0, len(heights)-1\n    left_max = right_max = out = 0\n    while left <= right:\n        if left_max <= right_max:\n            left_max = max(left_max, heights[left])\n            out += left_max-heights[left]\n            left += 1\n        else:\n            right_max = max(right_max, heights[right])\n            out += right_max-heights[right]\n            right -= 1\n    return out",
+      "cpp": "int solve(std::vector<int> heights) {\nint l=0,r=(int)heights.size()-1,lm=0,rm=0,out=0;while(l<=r){if(lm<=rm){lm=std::max(lm,heights[l]);out+=lm-heights[l++];}else{rm=std::max(rm,heights[r]);out+=rm-heights[r--];}}return out;\n}",
+      "java": "public static int solve(int[] heights) {\nint l=0,r=heights.length-1,lm=0,rm=0,out=0;while(l<=r){if(lm<=rm){lm=Math.max(lm,heights[l]);out+=lm-heights[l++];}else{rm=Math.max(rm,heights[r]);out+=rm-heights[r--];}}return out;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(heights) {\n  // Write your solution here.\n}",
+      "python": "def solve(heights):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> heights) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] heights) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n) time, O(1) extra space",
+    "version": 1
+  },
+  {
+    "id": "repair-budget",
+    "slug": "repair-budget",
+    "title": "Repair Budget",
+    "arena": "medium",
+    "topic": "Dynamic programming",
+    "description": "A maintenance team has unlimited vouchers of each listed positive denomination. Return the fewest vouchers whose values total amount exactly, or -1 if that total is impossible. Zero amount requires zero vouchers.",
+    "constraints": [
+      "0 <= vouchers.length <= 30",
+      "Vouchers are distinct integers from 1 through 10000",
+      "0 <= amount <= 10000"
+    ],
+    "parameters": [
+      {
+        "name": "vouchers",
+        "type": "int[]"
+      },
+      {
+        "name": "amount",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            1,
+            4,
+            6
+          ],
+          8
+        ],
+        "expected": 2,
+        "explanation": "Two vouchers worth 4 each reach the total."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [],
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            2
+          ],
+          3
+        ],
+        "expected": -1
+      },
+      {
+        "args": [
+          [
+            1
+          ],
+          7
+        ],
+        "expected": 7
+      },
+      {
+        "args": [
+          [
+            2,
+            5
+          ],
+          10
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          [
+            2,
+            4
+          ],
+          7
+        ],
+        "expected": -1
+      },
+      {
+        "args": [
+          [
+            1,
+            3,
+            4
+          ],
+          6
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          [
+            9,
+            5,
+            6,
+            1
+          ],
+          11
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          [
+            7
+          ],
+          0
+        ],
+        "expected": 0
+      }
+    ],
+    "reference": "function solve(vouchers, amount) {\nconst dp=Array(amount+1).fill(amount+1);dp[0]=0;for(let a=1;a<=amount;a++)for(const v of vouchers)if(v<=a)dp[a]=Math.min(dp[a],dp[a-v]+1);return dp[amount]>amount?-1:dp[amount];\n}",
+    "references": {
+      "javascript": "function solve(vouchers, amount) {\nconst dp=Array(amount+1).fill(amount+1);dp[0]=0;for(let a=1;a<=amount;a++)for(const v of vouchers)if(v<=a)dp[a]=Math.min(dp[a],dp[a-v]+1);return dp[amount]>amount?-1:dp[amount];\n}",
+      "python": "def solve(vouchers: list[int], amount: int) -> int:\n    dp = [amount+1]*(amount+1)\n    dp[0] = 0\n    for a in range(1, amount+1):\n        for v in vouchers:\n            if v <= a:\n                dp[a] = min(dp[a], dp[a-v]+1)\n    return -1 if dp[amount] > amount else dp[amount]",
+      "cpp": "int solve(std::vector<int> vouchers, int amount) {\nstd::vector<int>dp(amount+1,amount+1);dp[0]=0;for(int a=1;a<=amount;a++)for(int v:vouchers)if(v<=a)dp[a]=std::min(dp[a],dp[a-v]+1);return dp[amount]>amount?-1:dp[amount];\n}",
+      "java": "public static int solve(int[] vouchers, int amount) {\nint[] dp=new int[amount+1];java.util.Arrays.fill(dp,amount+1);dp[0]=0;for(int a=1;a<=amount;a++)for(int v:vouchers)if(v<=a)dp[a]=Math.min(dp[a],dp[a-v]+1);return dp[amount]>amount?-1:dp[amount];\n}"
+    },
+    "starter": {
+      "javascript": "function solve(vouchers, amount) {\n  // Write your solution here.\n}",
+      "python": "def solve(vouchers, amount):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> vouchers, int amount) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] vouchers, int amount) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(amount \u00d7 vouchers.length) time, O(amount) extra space",
+    "version": 1
+  },
+  {
+    "id": "ancestor-broadcast",
+    "slug": "ancestor-broadcast",
+    "title": "Ancestor Broadcast",
+    "arena": "medium",
+    "topic": "Trees",
+    "description": "A connected tree contains n relay towers numbered 0 through n-1. Each pair in links is a bidirectional connection. A message takes one second per connection. Return the greatest shortest travel time between any pair of towers.",
+    "constraints": [
+      "1 <= n <= 10000",
+      "links contains exactly n-1 distinct edges and forms a connected tree"
+    ],
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "links",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          5,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": 3,
+        "explanation": "A farthest pair is towers 2 and 4, three links apart."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          1,
+          []
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          2,
+          [
+            [
+              0,
+              1
+            ]
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          3,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          5,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              0,
+              4
+            ]
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          5,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          7,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              2,
+              6
+            ]
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          4,
+          [
+            [
+              2,
+              0
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              2,
+              3
+            ]
+          ]
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          6,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              1,
+              4
+            ],
+            [
+              4,
+              5
+            ]
+          ]
+        ],
+        "expected": 4
+      }
+    ],
+    "reference": "function solve(n, links) {\nconst g=Array.from({length:n},()=>[]);for(const[a,b]of links){g[a].push(b);g[b].push(a);}function far(start){const d=Array(n).fill(-1),q=[start];d[start]=0;let best=start;for(let i=0;i<q.length;i++){const u=q[i];if(d[u]>d[best])best=u;for(const v of g[u])if(d[v]<0){d[v]=d[u]+1;q.push(v);}}return [best,d[best]];}return far(far(0)[0])[1];\n}",
+    "references": {
+      "javascript": "function solve(n, links) {\nconst g=Array.from({length:n},()=>[]);for(const[a,b]of links){g[a].push(b);g[b].push(a);}function far(start){const d=Array(n).fill(-1),q=[start];d[start]=0;let best=start;for(let i=0;i<q.length;i++){const u=q[i];if(d[u]>d[best])best=u;for(const v of g[u])if(d[v]<0){d[v]=d[u]+1;q.push(v);}}return [best,d[best]];}return far(far(0)[0])[1];\n}",
+      "python": "def solve(n: int, links: list[list[int]]) -> int:\n    graph = [[] for _ in range(n)]\n    for a, b in links:\n        graph[a].append(b)\n        graph[b].append(a)\n    def far(start):\n        dist = [-1]*n\n        dist[start] = 0\n        queue = [start]\n        best = start\n        for u in queue:\n            if dist[u] > dist[best]:\n                best = u\n            for v in graph[u]:\n                if dist[v] == -1:\n                    dist[v] = dist[u]+1\n                    queue.append(v)\n        return best, dist[best]\n    return far(far(0)[0])[1]",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> links) {\nstd::vector<std::vector<int>>g(n);for(auto e:links){g[e[0]].push_back(e[1]);g[e[1]].push_back(e[0]);}auto far=[&](int s){std::vector<int>d(n,-1),q{s};d[s]=0;int best=s;for(int i=0;i<(int)q.size();i++){int u=q[i];if(d[u]>d[best])best=u;for(int v:g[u])if(d[v]<0){d[v]=d[u]+1;q.push_back(v);}}return std::pair<int,int>{best,d[best]};};return far(far(0).first).second;\n}",
+      "java": "public static int solve(int n, int[][] links) {\njava.util.List<java.util.List<Integer>>g=new java.util.ArrayList<>();for(int i=0;i<n;i++)g.add(new java.util.ArrayList<>());for(int[]e:links){g.get(e[0]).add(e[1]);g.get(e[1]).add(e[0]);}int start=0,answer=0;for(int pass=0;pass<2;pass++){int[]d=new int[n];java.util.Arrays.fill(d,-1);d[start]=0;java.util.List<Integer>q=new java.util.ArrayList<>();q.add(start);int best=start;for(int i=0;i<q.size();i++){int u=q.get(i);if(d[u]>d[best])best=u;for(int v:g.get(u))if(d[v]<0){d[v]=d[u]+1;q.add(v);}}start=best;answer=d[best];}return answer;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(n, links) {\n  // Write your solution here.\n}",
+      "python": "def solve(n, links):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> links) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int n, int[][] links) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n) time and space",
+    "version": 1
+  },
+  {
+    "id": "parcel-multiplication",
+    "slug": "parcel-multiplication",
+    "title": "Parcel Multiplication",
+    "arena": "medium",
+    "topic": "Prefix products",
+    "description": "Each parcel has an integer factor. For every index, return the product of all factors except the factor at that index. Do not use division. The product of no factors is 1.",
+    "constraints": [
+      "0 <= factors.length <= 12",
+      "-5 <= factors[i] <= 5"
+    ],
+    "parameters": [
+      {
+        "name": "factors",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int[]",
+    "examples": [
+      {
+        "args": [
+          [
+            2,
+            3,
+            4
+          ]
+        ],
+        "expected": [
+          12,
+          8,
+          6
+        ],
+        "explanation": "For the first parcel, multiply 3 by 4."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          []
+        ],
+        "expected": []
+      },
+      {
+        "args": [
+          [
+            5
+          ]
+        ],
+        "expected": [
+          1
+        ]
+      },
+      {
+        "args": [
+          [
+            0
+          ]
+        ],
+        "expected": [
+          1
+        ]
+      },
+      {
+        "args": [
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "expected": [
+          6,
+          0,
+          0
+        ]
+      },
+      {
+        "args": [
+          [
+            0,
+            0,
+            4
+          ]
+        ],
+        "expected": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "args": [
+          [
+            -1,
+            2,
+            -3
+          ]
+        ],
+        "expected": [
+          -6,
+          3,
+          -2
+        ]
+      },
+      {
+        "args": [
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "expected": [
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "args": [
+          [
+            2,
+            3,
+            4,
+            5
+          ]
+        ],
+        "expected": [
+          60,
+          40,
+          30,
+          24
+        ]
+      }
+    ],
+    "reference": "function solve(factors) {\nconst out=Array(factors.length).fill(1);let p=1;for(let i=0;i<factors.length;i++){out[i]=p;p*=factors[i];}p=1;for(let i=factors.length-1;i>=0;i--){out[i]*=p;p*=factors[i];}return out;\n}",
+    "references": {
+      "javascript": "function solve(factors) {\nconst out=Array(factors.length).fill(1);let p=1;for(let i=0;i<factors.length;i++){out[i]=p;p*=factors[i];}p=1;for(let i=factors.length-1;i>=0;i--){out[i]*=p;p*=factors[i];}return out;\n}",
+      "python": "def solve(factors: list[int]) -> list[int]:\n    out = [1]*len(factors)\n    prefix = 1\n    for i, value in enumerate(factors):\n        out[i] = prefix\n        prefix *= value\n    suffix = 1\n    for i in range(len(factors)-1, -1, -1):\n        out[i] *= suffix\n        suffix *= factors[i]\n    return out",
+      "cpp": "std::vector<int> solve(std::vector<int> factors) {\nstd::vector<int>out(factors.size(),1);int p=1;for(int i=0;i<(int)factors.size();i++){out[i]=p;p*=factors[i];}p=1;for(int i=(int)factors.size()-1;i>=0;i--){out[i]*=p;p*=factors[i];}return out;\n}",
+      "java": "public static int[] solve(int[] factors) {\nint[]out=new int[factors.length];int p=1;for(int i=0;i<factors.length;i++){out[i]=p;p*=factors[i];}p=1;for(int i=factors.length-1;i>=0;i--){out[i]*=p;p*=factors[i];}return out;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(factors) {\n  // Write your solution here.\n}",
+      "python": "def solve(factors):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<int> solve(std::vector<int> factors) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[] solve(int[] factors) {\n    // Write your solution here.\n    return new int[0];\n}"
+    },
+    "complexity": "O(n) time, O(1) extra space excluding output",
+    "version": 1
+  },
+  {
+    "id": "signal-reconstruction",
+    "slug": "signal-reconstruction",
+    "title": "Signal Reconstruction",
+    "arena": "hard",
+    "topic": "Dynamic programming",
+    "description": "A noisy transmission source contains lowercase letters. Delete any number of characters while preserving the order of those retained to reconstruct target. Count the distinct choices of retained source indices that produce target, modulo 1000000007. The empty target has exactly one reconstruction.",
+    "constraints": [
+      "0 <= source.length <= 2000",
+      "0 <= target.length <= 500",
+      "source and target contain only lowercase English letters"
+    ],
+    "parameters": [
+      {
+        "name": "source",
+        "type": "string"
+      },
+      {
+        "name": "target",
+        "type": "string"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          "ababc",
+          "abc"
+        ],
+        "expected": 3,
+        "explanation": "Choose source indices [0,1,4], [0,3,4], or [2,3,4]."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          "",
+          ""
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "",
+          "a"
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          "abc",
+          ""
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "abc",
+          "abc"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "aaaa",
+          "aa"
+        ],
+        "expected": 6
+      },
+      {
+        "args": [
+          "babgbag",
+          "bag"
+        ],
+        "expected": 5
+      },
+      {
+        "args": [
+          "aaaaa",
+          "aaa"
+        ],
+        "expected": 10
+      },
+      {
+        "args": [
+          "abcabc",
+          "abc"
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          "abc",
+          "d"
+        ],
+        "expected": 0
+      }
+    ],
+    "reference": "function solve(source, target) {\nconst MOD=1000000007,dp=Array(target.length+1).fill(0);dp[0]=1;for(const c of source)for(let j=target.length;j>=1;j--)if(c===target[j-1])dp[j]=(dp[j]+dp[j-1])%MOD;return dp[target.length];\n}",
+    "references": {
+      "javascript": "function solve(source, target) {\nconst MOD=1000000007,dp=Array(target.length+1).fill(0);dp[0]=1;for(const c of source)for(let j=target.length;j>=1;j--)if(c===target[j-1])dp[j]=(dp[j]+dp[j-1])%MOD;return dp[target.length];\n}",
+      "python": "def solve(source: str, target: str) -> int:\n    dp = [0]*(len(target)+1)\n    dp[0] = 1\n    for c in source:\n        for j in range(len(target), 0, -1):\n            if c == target[j-1]:\n                dp[j] = (dp[j]+dp[j-1]) % 1000000007\n    return dp[-1]",
+      "cpp": "int solve(std::string source, std::string target) {\nstd::vector<int>dp(target.size()+1);dp[0]=1;for(char c:source)for(int j=target.size();j>=1;j--)if(c==target[j-1])dp[j]=(dp[j]+dp[j-1])%1000000007;return dp.back();\n}",
+      "java": "public static int solve(String source, String target) {\nint[]dp=new int[target.length()+1];dp[0]=1;for(char c:source.toCharArray())for(int j=target.length();j>=1;j--)if(c==target.charAt(j-1))dp[j]=(dp[j]+dp[j-1])%1000000007;return dp[target.length()];\n}"
+    },
+    "starter": {
+      "javascript": "function solve(source, target) {\n  // Write your solution here.\n}",
+      "python": "def solve(source, target):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::string source, std::string target) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(String source, String target) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(source.length \u00d7 target.length) time, O(target.length) extra space",
+    "version": 1
+  },
+  {
+    "id": "turbo-relays",
+    "slug": "turbo-relays",
+    "title": "Turbo Relays",
+    "arena": "hard",
+    "topic": "Shortest paths",
+    "description": "A directed relay network has n nodes and routes [from, to, cost]. Travel from start to goal at minimum total cost. You may use one turbo token on at most one route, replacing that route cost with floor(cost / 2). Return the minimum cost, or -1 when no route reaches goal.",
+    "constraints": [
+      "1 <= n <= 200",
+      "0 <= routes.length <= 10000",
+      "0 <= route costs <= 10000",
+      "Routes connect distinct valid nodes; directed pairs are unique",
+      "0 <= start, goal < n"
+    ],
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "routes",
+        "type": "int[][]"
+      },
+      {
+        "name": "start",
+        "type": "int"
+      },
+      {
+        "name": "goal",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          3,
+          [
+            [
+              0,
+              1,
+              8
+            ],
+            [
+              1,
+              2,
+              8
+            ],
+            [
+              0,
+              2,
+              30
+            ]
+          ],
+          0,
+          2
+        ],
+        "expected": 12,
+        "explanation": "Take the two-edge route and reduce one cost from 8 to 4."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          1,
+          [],
+          0,
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          2,
+          [
+            [
+              0,
+              1,
+              9
+            ]
+          ],
+          0,
+          1
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          2,
+          [],
+          0,
+          1
+        ],
+        "expected": -1
+      },
+      {
+        "args": [
+          3,
+          [
+            [
+              0,
+              1,
+              1
+            ],
+            [
+              1,
+              2,
+              1
+            ],
+            [
+              0,
+              2,
+              3
+            ]
+          ],
+          0,
+          2
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          3,
+          [
+            [
+              0,
+              1,
+              2
+            ],
+            [
+              1,
+              2,
+              2
+            ]
+          ],
+          2,
+          0
+        ],
+        "expected": -1
+      },
+      {
+        "args": [
+          4,
+          [
+            [
+              0,
+              1,
+              5
+            ],
+            [
+              1,
+              2,
+              9
+            ],
+            [
+              2,
+              3,
+              3
+            ]
+          ],
+          0,
+          3
+        ],
+        "expected": 12
+      },
+      {
+        "args": [
+          3,
+          [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              2,
+              0
+            ]
+          ],
+          0,
+          2
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          4,
+          [
+            [
+              0,
+              1,
+              100
+            ],
+            [
+              1,
+              3,
+              1
+            ],
+            [
+              0,
+              2,
+              30
+            ],
+            [
+              2,
+              3,
+              30
+            ]
+          ],
+          0,
+          3
+        ],
+        "expected": 45
+      }
+    ],
+    "reference": "function solve(n, routes, start, goal) {\nconst count=2*n,g=Array.from({length:n},()=>[]);for(const[a,b,w]of routes)g[a].push([b,w]);const d=Array(count).fill(Infinity),used=Array(count).fill(false);d[start*2]=0;for(let z=0;z<count;z++){let u=-1;for(let i=0;i<count;i++)if(!used[i]&&(u<0||d[i]<d[u]))u=i;if(u<0||!Number.isFinite(d[u]))break;used[u]=true;for(const[v,w]of g[Math.floor(u/2)]){const state=u%2;d[v*2+state]=Math.min(d[v*2+state],d[u]+w);if(state===0)d[v*2+1]=Math.min(d[v*2+1],d[u]+Math.floor(w/2));}}const out=Math.min(d[goal*2],d[goal*2+1]);return Number.isFinite(out)?out:-1;\n}",
+    "references": {
+      "javascript": "function solve(n, routes, start, goal) {\nconst count=2*n,g=Array.from({length:n},()=>[]);for(const[a,b,w]of routes)g[a].push([b,w]);const d=Array(count).fill(Infinity),used=Array(count).fill(false);d[start*2]=0;for(let z=0;z<count;z++){let u=-1;for(let i=0;i<count;i++)if(!used[i]&&(u<0||d[i]<d[u]))u=i;if(u<0||!Number.isFinite(d[u]))break;used[u]=true;for(const[v,w]of g[Math.floor(u/2)]){const state=u%2;d[v*2+state]=Math.min(d[v*2+state],d[u]+w);if(state===0)d[v*2+1]=Math.min(d[v*2+1],d[u]+Math.floor(w/2));}}const out=Math.min(d[goal*2],d[goal*2+1]);return Number.isFinite(out)?out:-1;\n}",
+      "python": "def solve(n: int, routes: list[list[int]], start: int, goal: int) -> int:\n    graph = [[] for _ in range(n)]\n    for a, b, w in routes:\n        graph[a].append((b, w))\n    distance = [float('inf')]*(2*n)\n    used = [False]*(2*n)\n    distance[start*2] = 0\n    for _ in range(2*n):\n        u = -1\n        for i in range(2*n):\n            if not used[i] and (u == -1 or distance[i] < distance[u]):\n                u = i\n        if u == -1 or distance[u] == float('inf'):\n            break\n        used[u] = True\n        state = u % 2\n        for v, w in graph[u//2]:\n            distance[v*2+state] = min(distance[v*2+state], distance[u]+w)\n            if state == 0:\n                distance[v*2+1] = min(distance[v*2+1], distance[u]+w//2)\n    answer = min(distance[goal*2], distance[goal*2+1])\n    return -1 if answer == float('inf') else answer",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> routes, int start, int goal) {\nstd::vector<std::vector<std::pair<int,int>>>g(n);for(auto e:routes)g[e[0]].push_back({e[1],e[2]});const int INF=1000000000;std::vector<int>d(2*n,INF);std::vector<bool>used(2*n,false);d[2*start]=0;for(int z=0;z<2*n;z++){int u=-1;for(int i=0;i<2*n;i++)if(!used[i]&&(u<0||d[i]<d[u]))u=i;if(u<0||d[u]==INF)break;used[u]=true;for(auto e:g[u/2]){int v=e.first,w=e.second,s=u%2;d[2*v+s]=std::min(d[2*v+s],d[u]+w);if(s==0)d[2*v+1]=std::min(d[2*v+1],d[u]+w/2);}}int out=std::min(d[2*goal],d[2*goal+1]);return out==INF?-1:out;\n}",
+      "java": "public static int solve(int n, int[][] routes, int start, int goal) {\njava.util.List<java.util.List<int[]>>g=new java.util.ArrayList<>();for(int i=0;i<n;i++)g.add(new java.util.ArrayList<>());for(int[]e:routes)g.get(e[0]).add(new int[]{e[1],e[2]});int INF=1000000000;int[]d=new int[2*n];java.util.Arrays.fill(d,INF);boolean[]used=new boolean[2*n];d[2*start]=0;for(int z=0;z<2*n;z++){int u=-1;for(int i=0;i<2*n;i++)if(!used[i]&&(u<0||d[i]<d[u]))u=i;if(u<0||d[u]==INF)break;used[u]=true;for(int[]e:g.get(u/2)){int v=e[0],w=e[1],s=u%2;d[2*v+s]=Math.min(d[2*v+s],d[u]+w);if(s==0)d[2*v+1]=Math.min(d[2*v+1],d[u]+w/2);}}int out=Math.min(d[2*goal],d[2*goal+1]);return out==INF?-1:out;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(n, routes, start, goal) {\n  // Write your solution here.\n}",
+      "python": "def solve(n, routes, start, goal):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> routes, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int n, int[][] routes, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n\u00b2 + routes.length) time, O(n + routes.length) extra space",
+    "version": 1
+  },
+  {
+    "id": "lane-capacity",
+    "slug": "lane-capacity",
+    "title": "Lane Capacity",
+    "arena": "hard",
+    "topic": "Maximum flow",
+    "description": "A delivery network has n junctions and directed lanes [from, to, capacity]. Flow can split among lanes, but each lane carries at most its capacity and every intermediate junction must receive and send the same amount. Return the greatest total flow possible from source to sink.",
+    "constraints": [
+      "2 <= n <= 40",
+      "0 <= lanes.length <= 400",
+      "0 <= capacities <= 1000",
+      "0 <= source, sink < n and source != sink",
+      "Directed lane pairs are unique and connect distinct junctions"
+    ],
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "lanes",
+        "type": "int[][]"
+      },
+      {
+        "name": "source",
+        "type": "int"
+      },
+      {
+        "name": "sink",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          4,
+          [
+            [
+              0,
+              1,
+              3
+            ],
+            [
+              0,
+              2,
+              2
+            ],
+            [
+              1,
+              2,
+              1
+            ],
+            [
+              1,
+              3,
+              2
+            ],
+            [
+              2,
+              3,
+              4
+            ]
+          ],
+          0,
+          3
+        ],
+        "expected": 5,
+        "explanation": "All five units leaving junction 0 can reach junction 3."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          2,
+          [],
+          0,
+          1
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          2,
+          [
+            [
+              0,
+              1,
+              5
+            ]
+          ],
+          0,
+          1
+        ],
+        "expected": 5
+      },
+      {
+        "args": [
+          2,
+          [
+            [
+              1,
+              0,
+              5
+            ]
+          ],
+          0,
+          1
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          3,
+          [
+            [
+              0,
+              1,
+              7
+            ],
+            [
+              1,
+              2,
+              3
+            ]
+          ],
+          0,
+          2
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          4,
+          [
+            [
+              0,
+              1,
+              3
+            ],
+            [
+              0,
+              2,
+              4
+            ],
+            [
+              1,
+              3,
+              3
+            ],
+            [
+              2,
+              3,
+              4
+            ]
+          ],
+          0,
+          3
+        ],
+        "expected": 7
+      },
+      {
+        "args": [
+          4,
+          [
+            [
+              0,
+              1,
+              10
+            ],
+            [
+              1,
+              2,
+              1
+            ],
+            [
+              2,
+              3,
+              10
+            ],
+            [
+              0,
+              3,
+              2
+            ]
+          ],
+          0,
+          3
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          3,
+          [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              2,
+              8
+            ]
+          ],
+          0,
+          2
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          4,
+          [
+            [
+              0,
+              1,
+              5
+            ],
+            [
+              1,
+              0,
+              2
+            ],
+            [
+              1,
+              2,
+              4
+            ],
+            [
+              2,
+              3,
+              4
+            ],
+            [
+              0,
+              3,
+              1
+            ]
+          ],
+          0,
+          3
+        ],
+        "expected": 5
+      }
+    ],
+    "reference": "function solve(n, lanes, source, sink) {\nconst cap=Array.from({length:n},()=>Array(n).fill(0));for(const[a,b,c]of lanes)cap[a][b]+=c;let total=0;while(true){const parent=Array(n).fill(-1),q=[source];parent[source]=source;for(let i=0;i<q.length&&parent[sink]<0;i++)for(let v=0;v<n;v++)if(parent[v]<0&&cap[q[i]][v]>0){parent[v]=q[i];q.push(v);}if(parent[sink]<0)break;let flow=Infinity;for(let v=sink;v!==source;v=parent[v])flow=Math.min(flow,cap[parent[v]][v]);for(let v=sink;v!==source;v=parent[v]){cap[parent[v]][v]-=flow;cap[v][parent[v]]+=flow;}total+=flow;}return total;\n}",
+    "references": {
+      "javascript": "function solve(n, lanes, source, sink) {\nconst cap=Array.from({length:n},()=>Array(n).fill(0));for(const[a,b,c]of lanes)cap[a][b]+=c;let total=0;while(true){const parent=Array(n).fill(-1),q=[source];parent[source]=source;for(let i=0;i<q.length&&parent[sink]<0;i++)for(let v=0;v<n;v++)if(parent[v]<0&&cap[q[i]][v]>0){parent[v]=q[i];q.push(v);}if(parent[sink]<0)break;let flow=Infinity;for(let v=sink;v!==source;v=parent[v])flow=Math.min(flow,cap[parent[v]][v]);for(let v=sink;v!==source;v=parent[v]){cap[parent[v]][v]-=flow;cap[v][parent[v]]+=flow;}total+=flow;}return total;\n}",
+      "python": "def solve(n: int, lanes: list[list[int]], source: int, sink: int) -> int:\n    capacity = [[0]*n for _ in range(n)]\n    for a, b, c in lanes:\n        capacity[a][b] += c\n    total = 0\n    while True:\n        parent = [-1]*n\n        parent[source] = source\n        queue = [source]\n        for u in queue:\n            for v in range(n):\n                if parent[v] == -1 and capacity[u][v] > 0:\n                    parent[v] = u\n                    queue.append(v)\n        if parent[sink] == -1:\n            break\n        flow = 1000000000\n        v = sink\n        while v != source:\n            flow = min(flow, capacity[parent[v]][v])\n            v = parent[v]\n        v = sink\n        while v != source:\n            capacity[parent[v]][v] -= flow\n            capacity[v][parent[v]] += flow\n            v = parent[v]\n        total += flow\n    return total",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> lanes, int source, int sink) {\nstd::vector<std::vector<int>>cap(n,std::vector<int>(n));for(auto e:lanes)cap[e[0]][e[1]]+=e[2];int total=0;while(true){std::vector<int>p(n,-1),q{source};p[source]=source;for(int i=0;i<(int)q.size()&&p[sink]<0;i++)for(int v=0;v<n;v++)if(p[v]<0&&cap[q[i]][v]>0){p[v]=q[i];q.push_back(v);}if(p[sink]<0)break;int flow=1000000000;for(int v=sink;v!=source;v=p[v])flow=std::min(flow,cap[p[v]][v]);for(int v=sink;v!=source;v=p[v]){cap[p[v]][v]-=flow;cap[v][p[v]]+=flow;}total+=flow;}return total;\n}",
+      "java": "public static int solve(int n, int[][] lanes, int source, int sink) {\nint[][]cap=new int[n][n];for(int[]e:lanes)cap[e[0]][e[1]]+=e[2];int total=0;while(true){int[]p=new int[n];java.util.Arrays.fill(p,-1);java.util.List<Integer>q=new java.util.ArrayList<>();q.add(source);p[source]=source;for(int i=0;i<q.size()&&p[sink]<0;i++)for(int v=0;v<n;v++)if(p[v]<0&&cap[q.get(i)][v]>0){p[v]=q.get(i);q.add(v);}if(p[sink]<0)break;int flow=1000000000;for(int v=sink;v!=source;v=p[v])flow=Math.min(flow,cap[p[v]][v]);for(int v=sink;v!=source;v=p[v]){cap[p[v]][v]-=flow;cap[v][p[v]]+=flow;}total+=flow;}return total;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(n, lanes, source, sink) {\n  // Write your solution here.\n}",
+      "python": "def solve(n, lanes, source, sink):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> lanes, int source, int sink) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int n, int[][] lanes, int source, int sink) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n\u00b3 \u00d7 lanes.length) upper-bound time with matrix BFS, O(n\u00b2) space",
+    "version": 1
+  },
+  {
+    "id": "partition-ledger",
+    "slug": "partition-ledger",
+    "title": "Partition Ledger",
+    "arena": "hard",
+    "topic": "Binary search",
+    "description": "A ledger contains nonnegative workloads in fixed order. Split it into exactly groups nonempty contiguous batches. The processing time is the largest batch sum. Return the smallest possible processing time.",
+    "constraints": [
+      "1 <= workloads.length <= 10000",
+      "0 <= workloads[i] <= 10000",
+      "1 <= groups <= workloads.length"
+    ],
+    "parameters": [
+      {
+        "name": "workloads",
+        "type": "int[]"
+      },
+      {
+        "name": "groups",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            7,
+            2,
+            5,
+            10,
+            8
+          ],
+          2
+        ],
+        "expected": 18,
+        "explanation": "Split after the third entry to obtain sums 14 and 18."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [
+            5
+          ],
+          1
+        ],
+        "expected": 5
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          1
+        ],
+        "expected": 6
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          3
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            0,
+            0,
+            0
+          ],
+          2
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          2
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            10,
+            1,
+            1,
+            1
+          ],
+          2
+        ],
+        "expected": 10
+      },
+      {
+        "args": [
+          [
+            2,
+            3,
+            1,
+            2,
+            4,
+            3
+          ],
+          3
+        ],
+        "expected": 6
+      },
+      {
+        "args": [
+          [
+            0,
+            5,
+            0,
+            5
+          ],
+          3
+        ],
+        "expected": 5
+      }
+    ],
+    "reference": "function solve(workloads, groups) {\nlet lo=Math.max(...workloads),hi=workloads.reduce((a,b)=>a+b,0);while(lo<hi){const mid=Math.floor((lo+hi)/2);let count=1,sum=0;for(const x of workloads){if(sum+x>mid){count++;sum=0;}sum+=x;}if(count<=groups)hi=mid;else lo=mid+1;}return lo;\n}",
+    "references": {
+      "javascript": "function solve(workloads, groups) {\nlet lo=Math.max(...workloads),hi=workloads.reduce((a,b)=>a+b,0);while(lo<hi){const mid=Math.floor((lo+hi)/2);let count=1,sum=0;for(const x of workloads){if(sum+x>mid){count++;sum=0;}sum+=x;}if(count<=groups)hi=mid;else lo=mid+1;}return lo;\n}",
+      "python": "def solve(workloads: list[int], groups: int) -> int:\n    low, high = max(workloads), sum(workloads)\n    while low < high:\n        middle = (low+high)//2\n        count, current = 1, 0\n        for x in workloads:\n            if current+x > middle:\n                count += 1\n                current = 0\n            current += x\n        if count <= groups:\n            high = middle\n        else:\n            low = middle+1\n    return low",
+      "cpp": "int solve(std::vector<int> workloads, int groups) {\nint lo=*std::max_element(workloads.begin(),workloads.end()),hi=0;for(int x:workloads)hi+=x;while(lo<hi){int mid=lo+(hi-lo)/2,count=1,sum=0;for(int x:workloads){if(sum+x>mid){count++;sum=0;}sum+=x;}if(count<=groups)hi=mid;else lo=mid+1;}return lo;\n}",
+      "java": "public static int solve(int[] workloads, int groups) {\nint lo=0,hi=0;for(int x:workloads){lo=Math.max(lo,x);hi+=x;}while(lo<hi){int mid=lo+(hi-lo)/2,count=1,sum=0;for(int x:workloads){if(sum+x>mid){count++;sum=0;}sum+=x;}if(count<=groups)hi=mid;else lo=mid+1;}return lo;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(workloads, groups) {\n  // Write your solution here.\n}",
+      "python": "def solve(workloads, groups):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> workloads, int groups) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] workloads, int groups) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(n log(sum(workloads) + 1)) time, O(1) extra space",
+    "version": 1
+  },
+  {
+    "id": "rising-routes",
+    "slug": "rising-routes",
+    "title": "Rising Routes",
+    "arena": "hard",
+    "topic": "DAG dynamic programming",
+    "description": "A height map is a rectangular matrix. A route may start at any cell and move up, down, left, or right, but every next height must be strictly larger. Return the largest number of cells on one route.",
+    "constraints": [
+      "1 <= rows, columns <= 100",
+      "heights is rectangular",
+      "-1000000 <= heights[r][c] <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "heights",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            [
+              9,
+              9,
+              4
+            ],
+            [
+              6,
+              6,
+              8
+            ],
+            [
+              2,
+              1,
+              1
+            ]
+          ]
+        ],
+        "expected": 4,
+        "explanation": "One route follows heights 1 \u2192 2 \u2192 6 \u2192 9."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [
+            [
+              7
+            ]
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              2,
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          [
+            [
+              4
+            ],
+            [
+              3
+            ],
+            [
+              2
+            ],
+            [
+              1
+            ]
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              4,
+              3
+            ]
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          [
+            [
+              3,
+              4,
+              5
+            ],
+            [
+              3,
+              2,
+              6
+            ],
+            [
+              2,
+              2,
+              1
+            ]
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          [
+            [
+              -3,
+              -2
+            ],
+            [
+              -4,
+              -1
+            ]
+          ]
+        ],
+        "expected": 4
+      },
+      {
+        "args": [
+          [
+            [
+              1,
+              3,
+              2
+            ],
+            [
+              0,
+              4,
+              5
+            ]
+          ]
+        ],
+        "expected": 5
+      }
+    ],
+    "reference": "function solve(heights) {\nconst R=heights.length,C=heights[0].length,cells=[];for(let r=0;r<R;r++)for(let c=0;c<C;c++)cells.push([heights[r][c],r,c]);cells.sort((a,b)=>a[0]-b[0]);const dp=Array.from({length:R},()=>Array(C).fill(1));let best=1;for(const[h,r,c]of cells){for(const[dr,dc]of [[1,0],[-1,0],[0,1],[0,-1]]){const a=r+dr,b=c+dc;if(a>=0&&a<R&&b>=0&&b<C&&heights[a][b]<h)dp[r][c]=Math.max(dp[r][c],dp[a][b]+1);}best=Math.max(best,dp[r][c]);}return best;\n}",
+    "references": {
+      "javascript": "function solve(heights) {\nconst R=heights.length,C=heights[0].length,cells=[];for(let r=0;r<R;r++)for(let c=0;c<C;c++)cells.push([heights[r][c],r,c]);cells.sort((a,b)=>a[0]-b[0]);const dp=Array.from({length:R},()=>Array(C).fill(1));let best=1;for(const[h,r,c]of cells){for(const[dr,dc]of [[1,0],[-1,0],[0,1],[0,-1]]){const a=r+dr,b=c+dc;if(a>=0&&a<R&&b>=0&&b<C&&heights[a][b]<h)dp[r][c]=Math.max(dp[r][c],dp[a][b]+1);}best=Math.max(best,dp[r][c]);}return best;\n}",
+      "python": "def solve(heights: list[list[int]]) -> int:\n    rows, cols = len(heights), len(heights[0])\n    cells = sorted((heights[r][c], r, c) for r in range(rows) for c in range(cols))\n    dp = [[1]*cols for _ in range(rows)]\n    best = 1\n    for height, r, c in cells:\n        for dr, dc in ((1,0),(-1,0),(0,1),(0,-1)):\n            a, b = r+dr, c+dc\n            if 0 <= a < rows and 0 <= b < cols and heights[a][b] < height:\n                dp[r][c] = max(dp[r][c], dp[a][b]+1)\n        best = max(best, dp[r][c])\n    return best",
+      "cpp": "int solve(std::vector<std::vector<int>> heights) {\nint R=heights.size(),C=heights[0].size();std::vector<std::vector<int>>cells,dp(R,std::vector<int>(C,1));for(int r=0;r<R;r++)for(int c=0;c<C;c++)cells.push_back({heights[r][c],r,c});std::sort(cells.begin(),cells.end());int best=1,dr[]={1,-1,0,0},dc[]={0,0,1,-1};for(auto x:cells){int h=x[0],r=x[1],c=x[2];for(int k=0;k<4;k++){int a=r+dr[k],b=c+dc[k];if(a>=0&&a<R&&b>=0&&b<C&&heights[a][b]<h)dp[r][c]=std::max(dp[r][c],dp[a][b]+1);}best=std::max(best,dp[r][c]);}return best;\n}",
+      "java": "public static int solve(int[][] heights) {\nint R=heights.length,C=heights[0].length;java.util.List<int[]>cells=new java.util.ArrayList<>();int[][]dp=new int[R][C];for(int r=0;r<R;r++)for(int c=0;c<C;c++){cells.add(new int[]{heights[r][c],r,c});dp[r][c]=1;}cells.sort((a,b)->Integer.compare(a[0],b[0]));int best=1;int[]dr={1,-1,0,0},dc={0,0,1,-1};for(int[]x:cells){int h=x[0],r=x[1],c=x[2];for(int k=0;k<4;k++){int a=r+dr[k],b=c+dc[k];if(a>=0&&a<R&&b>=0&&b<C&&heights[a][b]<h)dp[r][c]=Math.max(dp[r][c],dp[a][b]+1);}best=Math.max(best,dp[r][c]);}return best;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(heights) {\n  // Write your solution here.\n}",
+      "python": "def solve(heights):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<std::vector<int>> heights) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[][] heights) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(rows \u00d7 columns \u00d7 log(rows \u00d7 columns)) time, O(rows \u00d7 columns) extra space",
+    "version": 1
+  },
+  {
+    "id": "wildcard-registry",
+    "slug": "wildcard-registry",
+    "title": "Wildcard Registry",
+    "arena": "hard",
+    "topic": "Dynamic programming",
+    "description": "A registry pattern contains lowercase letters, ? matching exactly one arbitrary letter, and * matching any sequence of letters including empty. Return 1 if the pattern matches the entire lowercase name, otherwise return 0.",
+    "constraints": [
+      "0 <= name.length, pattern.length <= 1000",
+      "name contains lowercase English letters; pattern additionally permits ? and *"
+    ],
+    "parameters": [
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "pattern",
+        "type": "string"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          "relay",
+          "r*l?y"
+        ],
+        "expected": 1,
+        "explanation": "The star consumes e and the question mark consumes a."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          "",
+          ""
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "",
+          "*"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "",
+          "?"
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          "abc",
+          "a?c"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "abc",
+          "a*d"
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          "adceb",
+          "*a*b"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "acdcb",
+          "a*c?b"
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          "abc",
+          "***"
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          "abc",
+          "ab"
+        ],
+        "expected": 0
+      }
+    ],
+    "reference": "function solve(name, pattern) {\nlet dp=Array(pattern.length+1).fill(false);dp[0]=true;for(let j=1;j<=pattern.length;j++)dp[j]=dp[j-1]&&pattern[j-1]==='*';for(const c of name){const next=Array(pattern.length+1).fill(false);for(let j=1;j<=pattern.length;j++)next[j]=pattern[j-1]==='*'?(next[j-1]||dp[j]):dp[j-1]&&(pattern[j-1]==='?'||pattern[j-1]===c);dp=next;}return dp[pattern.length]?1:0;\n}",
+    "references": {
+      "javascript": "function solve(name, pattern) {\nlet dp=Array(pattern.length+1).fill(false);dp[0]=true;for(let j=1;j<=pattern.length;j++)dp[j]=dp[j-1]&&pattern[j-1]==='*';for(const c of name){const next=Array(pattern.length+1).fill(false);for(let j=1;j<=pattern.length;j++)next[j]=pattern[j-1]==='*'?(next[j-1]||dp[j]):dp[j-1]&&(pattern[j-1]==='?'||pattern[j-1]===c);dp=next;}return dp[pattern.length]?1:0;\n}",
+      "python": "def solve(name: str, pattern: str) -> int:\n    dp = [False]*(len(pattern)+1)\n    dp[0] = True\n    for j in range(1, len(pattern)+1):\n        dp[j] = dp[j-1] and pattern[j-1] == '*'\n    for c in name:\n        nxt = [False]*(len(pattern)+1)\n        for j in range(1, len(pattern)+1):\n            if pattern[j-1] == '*':\n                nxt[j] = nxt[j-1] or dp[j]\n            else:\n                nxt[j] = dp[j-1] and (pattern[j-1] == '?' or pattern[j-1] == c)\n        dp = nxt\n    return int(dp[-1])",
+      "cpp": "int solve(std::string name, std::string pattern) {\nint m=pattern.size();std::vector<bool>dp(m+1,false);dp[0]=true;for(int j=1;j<=m;j++)dp[j]=dp[j-1]&&pattern[j-1]=='*';for(char c:name){std::vector<bool>next(m+1,false);for(int j=1;j<=m;j++)next[j]=pattern[j-1]=='*'?(next[j-1]||dp[j]):dp[j-1]&&(pattern[j-1]=='?'||pattern[j-1]==c);dp=next;}return dp[m]?1:0;\n}",
+      "java": "public static int solve(String name, String pattern) {\nint m=pattern.length();boolean[]dp=new boolean[m+1];dp[0]=true;for(int j=1;j<=m;j++)dp[j]=dp[j-1]&&pattern.charAt(j-1)=='*';for(char c:name.toCharArray()){boolean[]next=new boolean[m+1];for(int j=1;j<=m;j++)next[j]=pattern.charAt(j-1)=='*'?(next[j-1]||dp[j]):dp[j-1]&&(pattern.charAt(j-1)=='?'||pattern.charAt(j-1)==c);dp=next;}return dp[m]?1:0;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(name, pattern) {\n  // Write your solution here.\n}",
+      "python": "def solve(name, pattern):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::string name, std::string pattern) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(String name, String pattern) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(name.length \u00d7 pattern.length) time, O(pattern.length) extra space",
+    "version": 1
+  },
+  {
+    "id": "cut-network",
+    "slug": "cut-network",
+    "title": "Cut Network",
+    "arena": "hard",
+    "topic": "Graph bridges",
+    "description": "A communication network has n nodes and undirected links. A critical link is one whose removal increases the total number of connected components. Return all critical links as [smallerNode, largerNode], sorted first by smallerNode and then by largerNode. The initial network may be disconnected.",
+    "constraints": [
+      "1 <= n <= 400",
+      "0 <= links.length <= 10000",
+      "Links are unique unordered pairs of distinct valid nodes"
+    ],
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "links",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int[][]",
+    "examples": [
+      {
+        "args": [
+          4,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              1,
+              3
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            1,
+            3
+          ]
+        ],
+        "explanation": "Only the branch to node 3 disconnects additional nodes when removed."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          1,
+          []
+        ],
+        "expected": []
+      },
+      {
+        "args": [
+          2,
+          [
+            [
+              0,
+              1
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      {
+        "args": [
+          3,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              0
+            ]
+          ]
+        ],
+        "expected": []
+      },
+      {
+        "args": [
+          4,
+          [
+            [
+              2,
+              3
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            3
+          ]
+        ]
+      },
+      {
+        "args": [
+          4,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              2,
+              3
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            0,
+            1
+          ],
+          [
+            2,
+            3
+          ]
+        ]
+      },
+      {
+        "args": [
+          4,
+          []
+        ],
+        "expected": []
+      },
+      {
+        "args": [
+          5,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      },
+      {
+        "args": [
+          4,
+          [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              3
+            ]
+          ]
+        ],
+        "expected": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            0,
+            3
+          ]
+        ]
+      }
+    ],
+    "reference": "function solve(n, links) {\nconst g=Array.from({length:n},()=>[]);for(let i=0;i<links.length;i++){const[a,b]=links[i];g[a].push([b,i]);g[b].push([a,i]);}const tin=Array(n).fill(-1),low=Array(n).fill(0),out=[];let tick=0;function visit(u,parent){tin[u]=low[u]=tick++;for(const[v,e]of g[u]){if(e===parent)continue;if(tin[v]>=0)low[u]=Math.min(low[u],tin[v]);else{visit(v,e);low[u]=Math.min(low[u],low[v]);if(low[v]>tin[u])out.push([Math.min(u,v),Math.max(u,v)]);}}}for(let u=0;u<n;u++)if(tin[u]<0)visit(u,-1);return out.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);\n}",
+    "references": {
+      "javascript": "function solve(n, links) {\nconst g=Array.from({length:n},()=>[]);for(let i=0;i<links.length;i++){const[a,b]=links[i];g[a].push([b,i]);g[b].push([a,i]);}const tin=Array(n).fill(-1),low=Array(n).fill(0),out=[];let tick=0;function visit(u,parent){tin[u]=low[u]=tick++;for(const[v,e]of g[u]){if(e===parent)continue;if(tin[v]>=0)low[u]=Math.min(low[u],tin[v]);else{visit(v,e);low[u]=Math.min(low[u],low[v]);if(low[v]>tin[u])out.push([Math.min(u,v),Math.max(u,v)]);}}}for(let u=0;u<n;u++)if(tin[u]<0)visit(u,-1);return out.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);\n}",
+      "python": "def solve(n: int, links: list[list[int]]) -> list[list[int]]:\n    graph = [[] for _ in range(n)]\n    for edge, (a, b) in enumerate(links):\n        graph[a].append((b, edge))\n        graph[b].append((a, edge))\n    time = [-1]*n\n    low = [0]*n\n    out = []\n    tick = 0\n    def visit(u, parent):\n        nonlocal tick\n        time[u] = low[u] = tick\n        tick += 1\n        for v, edge in graph[u]:\n            if edge == parent:\n                continue\n            if time[v] >= 0:\n                low[u] = min(low[u], time[v])\n            else:\n                visit(v, edge)\n                low[u] = min(low[u], low[v])\n                if low[v] > time[u]:\n                    out.append([min(u,v), max(u,v)])\n    for u in range(n):\n        if time[u] < 0:\n            visit(u, -1)\n    return sorted(out)",
+      "cpp": "std::vector<std::vector<int>> solve(int n, std::vector<std::vector<int>> links) {\nstd::vector<std::vector<std::pair<int,int>>>g(n);for(int i=0;i<(int)links.size();i++){int a=links[i][0],b=links[i][1];g[a].push_back({b,i});g[b].push_back({a,i});}std::vector<int>tin(n,-1),low(n);std::vector<std::vector<int>>out;int tick=0;std::function<void(int,int)>visit=[&](int u,int parent){tin[u]=low[u]=tick++;for(auto item:g[u]){int v=item.first,e=item.second;if(e==parent)continue;if(tin[v]>=0)low[u]=std::min(low[u],tin[v]);else{visit(v,e);low[u]=std::min(low[u],low[v]);if(low[v]>tin[u])out.push_back({std::min(u,v),std::max(u,v)});}}};for(int u=0;u<n;u++)if(tin[u]<0)visit(u,-1);std::sort(out.begin(),out.end());return out;\n}",
+      "java": "public static int[][] solve(int n, int[][] links) {\njava.util.List<java.util.List<int[]>>g=new java.util.ArrayList<>();for(int i=0;i<n;i++)g.add(new java.util.ArrayList<>());for(int i=0;i<links.length;i++){int a=links[i][0],b=links[i][1];g.get(a).add(new int[]{b,i});g.get(b).add(new int[]{a,i});}int[]tin=new int[n],low=new int[n];java.util.Arrays.fill(tin,-1);java.util.List<int[]>out=new java.util.ArrayList<>();class Visitor{int tick=0;void visit(int u,int parent){tin[u]=low[u]=tick++;for(int[]item:g.get(u)){int v=item[0],e=item[1];if(e==parent)continue;if(tin[v]>=0)low[u]=Math.min(low[u],tin[v]);else{visit(v,e);low[u]=Math.min(low[u],low[v]);if(low[v]>tin[u])out.add(new int[]{Math.min(u,v),Math.max(u,v)});}}}}Visitor visitor=new Visitor();for(int u=0;u<n;u++)if(tin[u]<0)visitor.visit(u,-1);out.sort((a,b)->a[0]!=b[0]?Integer.compare(a[0],b[0]):Integer.compare(a[1],b[1]));return out.toArray(new int[0][]);\n}"
+    },
+    "starter": {
+      "javascript": "function solve(n, links) {\n  // Write your solution here.\n}",
+      "python": "def solve(n, links):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<std::vector<int>> solve(int n, std::vector<std::vector<int>> links) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[][] solve(int n, int[][] links) {\n    // Write your solution here.\n    return new int[0][0];\n}"
+    },
+    "complexity": "O(n + links.length + b log b) time, O(n + links.length) space, where b is the bridge count",
+    "version": 1
+  },
+  {
+    "id": "festival-packing",
+    "slug": "festival-packing",
+    "title": "Festival Packing",
+    "arena": "hard",
+    "topic": "Dynamic programming",
+    "description": "A festival receives an integer value for each time slot. Select exactly count nonoverlapping performances, each occupying exactly length consecutive slots. Unused gaps are allowed and adjacent performances are allowed. Return the largest total value of selected slots. If there is not enough room for all performances, return -1.",
+    "constraints": [
+      "0 <= values.length <= 2000",
+      "-1000 <= values[i] <= 1000",
+      "1 <= length <= 2000",
+      "0 <= count <= 50"
+    ],
+    "parameters": [
+      {
+        "name": "values",
+        "type": "int[]"
+      },
+      {
+        "name": "length",
+        "type": "int"
+      },
+      {
+        "name": "count",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            1,
+            2,
+            1,
+            2,
+            6,
+            7,
+            5,
+            1
+          ],
+          2,
+          3
+        ],
+        "expected": 23,
+        "explanation": "Choose slots [0,1], [3,4], and [5,6], with sums 3, 8, and 12."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [],
+          1,
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            1,
+            2
+          ],
+          3,
+          1
+        ],
+        "expected": -1
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          1,
+          2
+        ],
+        "expected": 5
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4
+          ],
+          2,
+          2
+        ],
+        "expected": 10
+      },
+      {
+        "args": [
+          [
+            -5,
+            -1,
+            -3
+          ],
+          1,
+          2
+        ],
+        "expected": -4
+      },
+      {
+        "args": [
+          [
+            5,
+            -10,
+            6,
+            7
+          ],
+          2,
+          1
+        ],
+        "expected": 13
+      },
+      {
+        "args": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          2,
+          2
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            4,
+            1,
+            9,
+            2,
+            8
+          ],
+          2,
+          2
+        ],
+        "expected": 20
+      },
+      {
+        "args": [
+          [
+            9,
+            1,
+            8
+          ],
+          1,
+          0
+        ],
+        "expected": 0
+      }
+    ],
+    "reference": "function solve(values, length, count) {\nconst n=values.length;if(length*count>n)return -1;const prefix=[0];for(const x of values)prefix.push(prefix[prefix.length-1]+x);let prev=Array(n+1).fill(0);for(let k=1;k<=count;k++){const next=Array(n+1).fill(-Infinity);for(let i=1;i<=n;i++){next[i]=next[i-1];if(i>=length)next[i]=Math.max(next[i],prev[i-length]+prefix[i]-prefix[i-length]);}prev=next;}return prev[n];\n}",
+    "references": {
+      "javascript": "function solve(values, length, count) {\nconst n=values.length;if(length*count>n)return -1;const prefix=[0];for(const x of values)prefix.push(prefix[prefix.length-1]+x);let prev=Array(n+1).fill(0);for(let k=1;k<=count;k++){const next=Array(n+1).fill(-Infinity);for(let i=1;i<=n;i++){next[i]=next[i-1];if(i>=length)next[i]=Math.max(next[i],prev[i-length]+prefix[i]-prefix[i-length]);}prev=next;}return prev[n];\n}",
+      "python": "def solve(values: list[int], length: int, count: int) -> int:\n    n = len(values)\n    if length*count > n:\n        return -1\n    prefix = [0]\n    for x in values:\n        prefix.append(prefix[-1]+x)\n    previous = [0]*(n+1)\n    for _ in range(count):\n        nxt = [float('-inf')]*(n+1)\n        for i in range(1, n+1):\n            nxt[i] = nxt[i-1]\n            if i >= length:\n                nxt[i] = max(nxt[i], previous[i-length]+prefix[i]-prefix[i-length])\n        previous = nxt\n    return previous[n]",
+      "cpp": "int solve(std::vector<int> values, int length, int count) {\nint n=values.size();if(length*count>n)return -1;std::vector<int>prefix(n+1),prev(n+1,0);for(int i=0;i<n;i++)prefix[i+1]=prefix[i]+values[i];for(int k=1;k<=count;k++){std::vector<int>next(n+1,-1000000000);for(int i=1;i<=n;i++){next[i]=next[i-1];if(i>=length&&prev[i-length]>-1000000000)next[i]=std::max(next[i],prev[i-length]+prefix[i]-prefix[i-length]);}prev=next;}return prev[n];\n}",
+      "java": "public static int solve(int[] values, int length, int count) {\nint n=values.length;if(length*count>n)return -1;int[]prefix=new int[n+1],prev=new int[n+1];for(int i=0;i<n;i++)prefix[i+1]=prefix[i]+values[i];for(int k=1;k<=count;k++){int[]next=new int[n+1];java.util.Arrays.fill(next,-1000000000);for(int i=1;i<=n;i++){next[i]=next[i-1];if(i>=length&&prev[i-length]>-1000000000)next[i]=Math.max(next[i],prev[i-length]+prefix[i]-prefix[i-length]);}prev=next;}return prev[n];\n}"
+    },
+    "starter": {
+      "javascript": "function solve(values, length, count) {\n  // Write your solution here.\n}",
+      "python": "def solve(values, length, count):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> values, int length, int count) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] values, int length, int count) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(values.length \u00d7 count) time, O(values.length) extra space",
+    "version": 1
+  },
+  {
+    "id": "detour-permits",
+    "slug": "detour-permits",
+    "title": "Detour Permits",
+    "arena": "hard",
+    "topic": "Multidimensional dynamic programming",
+    "description": "A rectangular grid marks ordinary cells with 0 and restricted cells with 1. Travel from the top-left cell to the bottom-right cell, moving only one cell right or down at each step. Visiting each restricted cell consumes one permit, including the start and destination. Count routes using at most permits permits, modulo 1000000007.",
+    "constraints": [
+      "1 <= rows, columns <= 50",
+      "grid is rectangular and contains only 0 and 1",
+      "0 <= permits <= 20"
+    ],
+    "parameters": [
+      {
+        "name": "grid",
+        "type": "int[][]"
+      },
+      {
+        "name": "permits",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ]
+          ],
+          1
+        ],
+        "expected": 2,
+        "explanation": "The paths right-right-down and down-right-right each use one permit."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [
+            [
+              0
+            ]
+          ],
+          0
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            [
+              1
+            ]
+          ],
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            [
+              1
+            ]
+          ],
+          1
+        ],
+        "expected": 1
+      },
+      {
+        "args": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          0
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          1
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ]
+          ],
+          2
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ],
+          0
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ],
+          1
+        ],
+        "expected": 6
+      }
+    ],
+    "reference": "function solve(grid, permits) {\nconst R=grid.length,C=grid[0].length,MOD=1000000007;const dp=Array.from({length:R},()=>Array.from({length:C},()=>Array(permits+1).fill(0)));if(grid[0][0]<=permits)dp[0][0][grid[0][0]]=1;for(let r=0;r<R;r++)for(let c=0;c<C;c++){if(r===0&&c===0)continue;const cost=grid[r][c];for(let k=cost;k<=permits;k++)dp[r][c][k]=((r?dp[r-1][c][k-cost]:0)+(c?dp[r][c-1][k-cost]:0))%MOD;}return dp[R-1][C-1].reduce((a,b)=>(a+b)%MOD,0);\n}",
+    "references": {
+      "javascript": "function solve(grid, permits) {\nconst R=grid.length,C=grid[0].length,MOD=1000000007;const dp=Array.from({length:R},()=>Array.from({length:C},()=>Array(permits+1).fill(0)));if(grid[0][0]<=permits)dp[0][0][grid[0][0]]=1;for(let r=0;r<R;r++)for(let c=0;c<C;c++){if(r===0&&c===0)continue;const cost=grid[r][c];for(let k=cost;k<=permits;k++)dp[r][c][k]=((r?dp[r-1][c][k-cost]:0)+(c?dp[r][c-1][k-cost]:0))%MOD;}return dp[R-1][C-1].reduce((a,b)=>(a+b)%MOD,0);\n}",
+      "python": "def solve(grid: list[list[int]], permits: int) -> int:\n    rows, cols = len(grid), len(grid[0])\n    dp = [[[0]*(permits+1) for _ in range(cols)] for _ in range(rows)]\n    if grid[0][0] <= permits:\n        dp[0][0][grid[0][0]] = 1\n    for r in range(rows):\n        for c in range(cols):\n            if r == 0 and c == 0:\n                continue\n            cost = grid[r][c]\n            for k in range(cost, permits+1):\n                top = dp[r-1][c][k-cost] if r else 0\n                left = dp[r][c-1][k-cost] if c else 0\n                dp[r][c][k] = (top+left) % 1000000007\n    return sum(dp[-1][-1]) % 1000000007",
+      "cpp": "int solve(std::vector<std::vector<int>> grid, int permits) {\nint R=grid.size(),C=grid[0].size(),MOD=1000000007;std::vector<std::vector<std::vector<int>>>dp(R,std::vector<std::vector<int>>(C,std::vector<int>(permits+1)));if(grid[0][0]<=permits)dp[0][0][grid[0][0]]=1;for(int r=0;r<R;r++)for(int c=0;c<C;c++){if(r==0&&c==0)continue;int cost=grid[r][c];for(int k=cost;k<=permits;k++)dp[r][c][k]=((r?dp[r-1][c][k-cost]:0)+(c?dp[r][c-1][k-cost]:0))%MOD;}int out=0;for(int x:dp[R-1][C-1])out=(out+x)%MOD;return out;\n}",
+      "java": "public static int solve(int[][] grid, int permits) {\nint R=grid.length,C=grid[0].length,MOD=1000000007;int[][][]dp=new int[R][C][permits+1];if(grid[0][0]<=permits)dp[0][0][grid[0][0]]=1;for(int r=0;r<R;r++)for(int c=0;c<C;c++){if(r==0&&c==0)continue;int cost=grid[r][c];for(int k=cost;k<=permits;k++)dp[r][c][k]=((r>0?dp[r-1][c][k-cost]:0)+(c>0?dp[r][c-1][k-cost]:0))%MOD;}int out=0;for(int x:dp[R-1][C-1])out=(out+x)%MOD;return out;\n}"
+    },
+    "starter": {
+      "javascript": "function solve(grid, permits) {\n  // Write your solution here.\n}",
+      "python": "def solve(grid, permits):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<std::vector<int>> grid, int permits) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[][] grid, int permits) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(rows \u00d7 columns \u00d7 (permits + 1)) time and space",
+    "version": 1
+  },
+  {
+    "id": "chain-bundles",
+    "slug": "chain-bundles",
+    "title": "Chain Bundles",
+    "arena": "hard",
+    "topic": "Dynamic programming",
+    "description": "A trader watches a sequence of daily unit prices. One transaction buys one unit on one day and sells it on a later day. Hold at most one unit at a time and complete at most limit transactions. Return the greatest total profit; skipping all trades is allowed.",
+    "constraints": [
+      "0 <= prices.length <= 2000",
+      "0 <= prices[i] <= 10000",
+      "0 <= limit <= 100"
+    ],
+    "parameters": [
+      {
+        "name": "prices",
+        "type": "int[]"
+      },
+      {
+        "name": "limit",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            3,
+            2,
+            6,
+            5,
+            0,
+            3
+          ],
+          2
+        ],
+        "expected": 7,
+        "explanation": "Buy at 2 and sell at 6, then buy at 0 and sell at 3."
+      }
+    ],
+    "tests": [
+      {
+        "args": [
+          [],
+          3
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            7
+          ],
+          0
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            2,
+            4,
+            1
+          ],
+          2
+        ],
+        "expected": 2
+      },
+      {
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4
+          ],
+          1
+        ],
+        "expected": 3
+      },
+      {
+        "args": [
+          [
+            9,
+            7,
+            5,
+            3
+          ],
+          3
+        ],
+        "expected": 0
+      },
+      {
+        "args": [
+          [
+            1,
+            5,
+            2,
+            8,
+            1,
+            9
+          ],
+          2
+        ],
+        "expected": 15
+      },
+      {
+        "args": [
+          [
+            1,
+            5,
+            2,
+            8,
+            1,
+            9
+          ],
+          3
+        ],
+        "expected": 18
+      },
+      {
+        "args": [
+          [
+            2,
+            1,
+            4,
+            5,
+            2,
+            9,
+            7
+          ],
+          2
+        ],
+        "expected": 11
+      }
+    ],
+    "reference": "function solve(prices, limit) {\nconst k=Math.min(limit,Math.floor(prices.length/2));let cash=Array(k+1).fill(0),hold=Array(k+1).fill(-Infinity);for(const price of prices){const nc=cash.slice(),nh=hold.slice();for(let t=1;t<=k;t++){nh[t]=Math.max(hold[t],cash[t-1]-price);nc[t]=Math.max(cash[t],hold[t]+price);}cash=nc;hold=nh;}return cash[k];\n}",
+    "references": {
+      "javascript": "function solve(prices, limit) {\nconst k=Math.min(limit,Math.floor(prices.length/2));let cash=Array(k+1).fill(0),hold=Array(k+1).fill(-Infinity);for(const price of prices){const nc=cash.slice(),nh=hold.slice();for(let t=1;t<=k;t++){nh[t]=Math.max(hold[t],cash[t-1]-price);nc[t]=Math.max(cash[t],hold[t]+price);}cash=nc;hold=nh;}return cash[k];\n}",
+      "python": "def solve(prices: list[int], limit: int) -> int:\n    k = min(limit, len(prices)//2)\n    cash = [0]*(k+1)\n    hold = [float('-inf')]*(k+1)\n    for price in prices:\n        next_cash = cash[:]\n        next_hold = hold[:]\n        for t in range(1, k+1):\n            next_hold[t] = max(hold[t], cash[t-1]-price)\n            next_cash[t] = max(cash[t], hold[t]+price)\n        cash, hold = next_cash, next_hold\n    return cash[k]",
+      "cpp": "int solve(std::vector<int> prices, int limit) {\nint k=std::min(limit,(int)prices.size()/2);std::vector<int>cash(k+1),hold(k+1,-1000000000);for(int p:prices){auto nc=cash,nh=hold;for(int t=1;t<=k;t++){nh[t]=std::max(hold[t],cash[t-1]-p);nc[t]=std::max(cash[t],hold[t]+p);}cash=nc;hold=nh;}return cash[k];\n}",
+      "java": "public static int solve(int[] prices, int limit) {\nint k=Math.min(limit,prices.length/2);int[]cash=new int[k+1],hold=new int[k+1];java.util.Arrays.fill(hold,-1000000000);for(int p:prices){int[]nc=cash.clone(),nh=hold.clone();for(int t=1;t<=k;t++){nh[t]=Math.max(hold[t],cash[t-1]-p);nc[t]=Math.max(cash[t],hold[t]+p);}cash=nc;hold=nh;}return cash[k];\n}"
+    },
+    "starter": {
+      "javascript": "function solve(prices, limit) {\n  // Write your solution here.\n}",
+      "python": "def solve(prices, limit):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> prices, int limit) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] prices, int limit) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "complexity": "O(prices.length \u00d7 min(limit, prices.length / 2)) time, O(limit) extra space",
+    "version": 1
+  }
+]
