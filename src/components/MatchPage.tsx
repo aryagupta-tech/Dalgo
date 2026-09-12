@@ -18,7 +18,7 @@ import {
   Code2,
   Flag,
   GripVertical,
-  LoaderCircle,
+  ChevronDown,
   Play,
   RotateCcw,
   SkipForward,
@@ -44,8 +44,6 @@ import { useLiveMatch } from "../use-match-session";
 import {
   advanceDemo,
   createDemo,
-  DEMO_READY_MS,
-  DEMO_SEARCH_MS,
   DEMO_USER,
   demoPhase,
   finishDemo,
@@ -57,6 +55,28 @@ import {
   type DemoScenario,
   type DemoState,
 } from "../demo-session";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Divider,
+  IconButton,
+  LinearProgress,
+  NativeSelect,
+  Paper,
+  Stack,
+  Tab,
+  Tabs,
+  Typography,
+  useMediaQuery,
+} from "@mui/material";
+const MONO = '"JetBrains Mono", monospace';
 const Editor = lazy(() => import("./CodeEditor"));
 const scenarios: { id: DemoScenario; label: string }[] = [
   { id: "win", label: "Win" },
@@ -103,9 +123,9 @@ export function DemoPage() {
       <ScreenMessage
         title="The challenge couldn’t load."
         action={
-          <button className="button primary" onClick={retry}>
+          <Button variant="contained" onClick={retry}>
             Try again
-          </button>
+          </Button>
         }
       >
         {error}
@@ -198,26 +218,52 @@ function DemoSession({
       data-demo-session={state.id}
     >
       {cancelled ? (
-        <div className="queue-page">
+        <Box
+          sx={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}
+        >
           <MatchTopbar arena={arena} demo />
           <DemoNotice />
-          <section className="queue-stage">
-            <span className="overline">SEARCH CLOSED</span>
-            <h1>Demo search cancelled.</h1>
-            <p>No opponent is waiting and no rating has changed.</p>
-            <div className="queue-actions">
-              <Link className="button" to="/">
+          <Box
+            component="section"
+            sx={{
+              width: "100%",
+              maxWidth: 680,
+              mx: "auto",
+              px: 2.5,
+              my: { xs: 4, sm: 7 },
+            }}
+          >
+            <Typography variant="overline">SEARCH CLOSED</Typography>
+            <Typography
+              variant="h1"
+              sx={{ fontSize: { xs: 30, sm: 40 }, my: 1.75 }}
+            >
+              Demo search cancelled.
+            </Typography>
+            <Typography color="text.secondary">
+              No opponent is waiting and no rating has changed.
+            </Typography>
+            <Stack
+              direction="row"
+              sx={{ mt: 3, justifyContent: "space-between", gap: 1.5 }}
+            >
+              <Button component={Link} variant="outlined" to="/">
                 Back to the lobby
-              </Link>
-              <button className="button primary" onClick={restart}>
+              </Button>
+              <Button
+                variant="contained"
+                onClick={restart}
+                endIcon={<ArrowRight size={17} />}
+              >
                 Start again
-                <ArrowRight size={17} />
-              </button>
-            </div>
-          </section>
-        </div>
+              </Button>
+            </Stack>
+          </Box>
+        </Box>
       ) : phase === "searching" || phase === "ready" ? (
-        <div className="queue-page">
+        <Box
+          sx={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}
+        >
           <MatchTopbar arena={arena} demo />
           <DemoNotice />
           <QueueStage
@@ -235,7 +281,7 @@ function DemoSession({
             onCancel={cancel}
             onSkip={() => change((s) => skipDemoWait(s, Date.now()))}
           />
-        </div>
+        </Box>
       ) : (
         <MatchWorkspace
           key={state.id}
@@ -268,19 +314,24 @@ function DemoSession({
       )}
       {restartOpen && (
         <Modal title="Restart demo" onClose={() => setRestartOpen(false)}>
-          <h2>Start a fresh match?</h2>
-          <p>
+          <Typography variant="h2" sx={{ fontSize: 26, mb: 1.5 }}>
+            Start a fresh match?
+          </Typography>
+          <Typography color="text.secondary">
             The demo clock, attempts, and current draft will reset. No real
             match or rating is affected.
-          </p>
-          <div className="dialog-actions">
-            <button className="button" onClick={() => setRestartOpen(false)}>
+          </Typography>
+          <Stack
+            direction="row"
+            sx={{ mt: 3, justifyContent: "flex-end", gap: 1.5 }}
+          >
+            <Button variant="outlined" onClick={() => setRestartOpen(false)}>
               Keep this demo
-            </button>
-            <button className="button primary" onClick={restart}>
+            </Button>
+            <Button variant="contained" onClick={restart}>
               Restart demo
-            </button>
-          </div>
+            </Button>
+          </Stack>
         </Modal>
       )}
     </div>
@@ -313,9 +364,9 @@ function LiveSession({
       <ScreenMessage
         title="Sign in to your match."
         action={
-          <button className="button primary" onClick={onSignIn}>
+          <Button variant="contained" onClick={onSignIn}>
             Sign in
-          </button>
+          </Button>
         }
       >
         Your match clock continues while you’re away.
@@ -329,9 +380,9 @@ function LiveSession({
         }
         action={
           session.error ? (
-            <button className="button primary" onClick={session.retry}>
+            <Button variant="contained" onClick={session.retry}>
               Retry connection
-            </button>
+            </Button>
           ) : undefined
         }
       >
@@ -359,21 +410,60 @@ function MatchTopbar({
   children?: ReactNode;
 }) {
   return (
-    <header className="match-topbar">
-      <div className="match-topbar-left">
+    <Stack
+      component="header"
+      direction="row"
+      sx={{
+        minHeight: 57,
+        px: { xs: 1.75, sm: 3 },
+        py: 1.25,
+        bgcolor: "#0c0c0c",
+        borderBottom: 1,
+        borderColor: "divider",
+        flexShrink: 0,
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: { xs: 1, sm: 2 },
+      }}
+    >
+      <Stack
+        direction="row"
+        sx={{ alignItems: "center", gap: { xs: 1.5, sm: 2.5 } }}
+      >
         <Brand />
-        <span className="match-context">{ARENAS[arena].name} arena</span>
-      </div>
-      <div className="match-topbar-right">
-        <span className="badge">{demo ? "DEMO MATCH" : "RANKED 1v1"}</span>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            borderLeft: 1,
+            borderColor: "divider",
+            pl: { xs: 1.5, sm: 2.5 },
+            fontSize: { xs: 12, sm: 14 },
+          }}
+        >
+          {ARENAS[arena].name} arena
+        </Typography>
+      </Stack>
+      <Stack direction="row" sx={{ alignItems: "center", gap: 1.5 }}>
+        <Chip
+          variant="outlined"
+          size="small"
+          label={demo ? "DEMO MATCH" : "RANKED 1v1"}
+          sx={{ display: { xs: "none", sm: "inline-flex" }, fontSize: 11 }}
+        />
         {children || (
-          <Link className="quiet-button" to="/">
-            <ArrowLeft size={14} />
+          <Button
+            component={Link}
+            to="/"
+            variant="text"
+            size="small"
+            startIcon={<ArrowLeft size={14} />}
+          >
             Lobby
-          </Link>
+          </Button>
         )}
-      </div>
-    </header>
+      </Stack>
+    </Stack>
   );
 }
 function ScreenMessage({
@@ -386,20 +476,40 @@ function ScreenMessage({
   action?: ReactNode;
 }) {
   return (
-    <main>
-      <div className="match-topbar">
+    <Box component="main">
+      <Stack
+        component="header"
+        direction="row"
+        sx={{
+          px: 3,
+          py: 1.5,
+          borderBottom: 1,
+          borderColor: "divider",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Brand />
-        <Link className="quiet-button" to="/">
+        <Button component={Link} to="/" variant="text">
           Back to lobby
-        </Link>
-      </div>
-      <section className="screen-message">
-        <span className="overline">DALGO / MATCH</span>
-        <h1>{title}</h1>
-        <p>{children}</p>
+        </Button>
+      </Stack>
+      <Box
+        component="section"
+        sx={{ maxWidth: 580, mx: "auto", my: { xs: 6, sm: 12.5 }, p: 3.5 }}
+      >
+        <Typography variant="overline" color="text.secondary">
+          DALGO / MATCH
+        </Typography>
+        <Typography variant="h1" sx={{ fontSize: 32, my: 2 }}>
+          {title}
+        </Typography>
+        <Typography color="text.secondary" sx={{ mt: 1.5, mb: 3 }}>
+          {children}
+        </Typography>
         {action}
-      </section>
-    </main>
+      </Box>
+    </Box>
   );
 }
 function QueueStage({
@@ -427,13 +537,26 @@ function QueueStage({
 }) {
   const ready = phase === "ready";
   const paused = phase === "paused";
+  const progress = Math.min(
+    100,
+    Math.max(0, ready ? ((5 - readyIn) / 5) * 100 : (elapsed / 15) * 100),
+  );
   return (
-    <section className="queue-stage">
-      <span className="overline">
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        maxWidth: 680,
+        mx: "auto",
+        px: { xs: 2.25, sm: 2.5 },
+        my: { xs: 4, sm: 5 },
+      }}
+    >
+      <Typography variant="overline">
         {ARENAS[arena].name.toUpperCase()} / {ARENAS[arena].duration / 60} MIN /{" "}
         {demo ? "DEMO" : "RANKED"}
-      </span>
-      <h1>
+      </Typography>
+      <Typography variant="h1" sx={{ fontSize: { xs: 30, sm: 40 }, my: 1.75 }}>
         {phase === "capacity"
           ? "Today’s capacity is full."
           : paused
@@ -441,8 +564,8 @@ function QueueStage({
             : ready
               ? "Opponent assigned."
               : "Finding an opponent."}
-      </h1>
-      <p>
+      </Typography>
+      <Typography color="text.secondary" sx={{ maxWidth: 500 }}>
         {message ||
           (paused ? error || "This search is no longer active." : undefined) ||
           (ready
@@ -450,84 +573,152 @@ function QueueStage({
             : demo
               ? "This demo shows the human-first search, followed by a simulated bot. No real player is being contacted."
               : "Searching near your rating. An eligible human takes priority over a simulated bot.")}
-      </p>
-      <div className="queue-clock">
-        {ready
-          ? String(Math.ceil(readyIn)).padStart(2, "0")
-          : formatClock(elapsed)}
-        <small>{ready ? "seconds to start" : "elapsed"}</small>
-      </div>
-      <div
-        className="queue-track"
-        role="progressbar"
+      </Typography>
+      <Stack
+        direction="row"
+        sx={{ mt: 4.5, mb: 2.5, alignItems: "baseline", gap: 2 }}
+      >
+        <Typography
+          component="span"
+          sx={{
+            fontFamily: MONO,
+            fontSize: { xs: 54, sm: 72 },
+            letterSpacing: "-.07em",
+            fontVariantNumeric: "tabular-nums",
+            lineHeight: 1,
+          }}
+        >
+          {ready
+            ? String(Math.ceil(readyIn)).padStart(2, "0")
+            : formatClock(elapsed)}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          {ready ? "seconds to start" : "elapsed"}
+        </Typography>
+      </Stack>
+      <LinearProgress
+        variant="determinate"
+        value={progress}
         aria-label={ready ? "Preparation countdown" : "Opponent search"}
         aria-valuemin={0}
         aria-valuemax={ready ? 5 : 15}
         aria-valuenow={Math.min(
           ready ? 5 : 15,
-          Math.floor(ready ? 5 - readyIn : elapsed),
+          Math.max(0, Math.floor(ready ? 5 - readyIn : elapsed)),
         )}
+        sx={{
+          height: 3,
+          mb: 3.5,
+          bgcolor: "#333333",
+          "& .MuiLinearProgress-bar": {
+            bgcolor: "#eeeeee",
+            "@media (prefers-reduced-motion: reduce)": { transition: "none" },
+          },
+        }}
+      />
+      <Stack
+        direction="row"
+        sx={{ mb: 3, justifyContent: "space-between", gap: 1.5 }}
       >
-        <span
-          style={{
-            width:
-              Math.min(
-                100,
-                ready ? ((5 - readyIn) / 5) * 100 : (elapsed / 15) * 100,
-              ) + "%",
-          }}
-        />
-      </div>
-      <div className="queue-steps">
-        <span className={!ready ? "current" : ""}>01 / Human-first search</span>
-        <span className={ready ? "current" : ""}>02 / Opponent assigned</span>
-        <span>03 / Match starts</span>
-      </div>
-      <div className="pairing-sheet">
-        <div className="pairing-row">
-          <span className="avatar">Y</span>
-          <div>
-            <strong>You{demo ? " · Demo" : ""}</strong>
-            <small>
+        <Typography
+          variant="caption"
+          color={!ready ? "text.primary" : "text.secondary"}
+        >
+          01 / Human-first search
+        </Typography>
+        <Typography
+          variant="caption"
+          color={ready ? "text.primary" : "text.secondary"}
+        >
+          02 / Opponent assigned
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          03 / Match starts
+        </Typography>
+      </Stack>
+      <Stack
+        divider={<Divider />}
+        sx={{ borderTop: 1, borderBottom: 1, borderColor: "divider", my: 3 }}
+      >
+        <Stack direction="row" sx={{ py: 2.5, alignItems: "center", gap: 1.5 }}>
+          <Avatar
+            variant="rounded"
+            sx={{
+              bgcolor: "#242424",
+              color: "text.primary",
+              width: 40,
+              height: 40,
+            }}
+          >
+            Y
+          </Avatar>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontWeight: 500 }}>
+              You{demo ? " · Demo" : ""}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {ready
                 ? "Ready to play"
                 : paused
                   ? "Search stopped"
                   : "Waiting for assignment"}
-            </small>
-          </div>
-          <span className="mono">{demo ? "1,200" : ""}</span>
-        </div>
-        <div className="pairing-row">
-          <span className="avatar bot">
+            </Typography>
+          </Box>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ ml: "auto", fontFamily: MONO }}
+          >
+            {demo ? "1,200" : ""}
+          </Typography>
+        </Stack>
+        <Stack direction="row" sx={{ py: 2.5, alignItems: "center", gap: 1.5 }}>
+          <Avatar
+            variant="rounded"
+            sx={{
+              bgcolor: "#191919",
+              color: "text.secondary",
+              width: 40,
+              height: 40,
+            }}
+          >
             {ready ? <Code2 size={20} /> : <Swords size={20} />}
-          </span>
-          <div>
-            <strong>
+          </Avatar>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontWeight: 500 }}>
               {ready
                 ? "Vector · Simulated bot"
                 : paused
                   ? "Search stopped"
                   : "Searching for a human"}
-            </strong>
-            <small>
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {ready
                 ? "Demo opponent · no execution credits"
                 : paused
                   ? "No new opponent will be assigned"
                   : "Rating window expands while you wait"}
-            </small>
-          </div>
-          <span className="mono">{ready ? "1,200" : "—"}</span>
-        </div>
-      </div>
+            </Typography>
+          </Box>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ ml: "auto", fontFamily: MONO }}
+          >
+            {ready ? "1,200" : "—"}
+          </Typography>
+        </Stack>
+      </Stack>
       {error && (
-        <p className="error" role="alert">
+        <Alert severity="error" sx={{ my: 2 }}>
           {error}
-        </p>
+        </Alert>
       )}
-      <div className="queue-actions">
-        <button className="button" disabled={cancelling} onClick={onCancel}>
+      <Stack
+        direction="row"
+        sx={{ mt: 3, justifyContent: "space-between", gap: 1.5 }}
+      >
+        <Button variant="outlined" disabled={cancelling} onClick={onCancel}>
           {cancelling
             ? "Cancelling…"
             : paused
@@ -535,22 +726,30 @@ function QueueStage({
               : ready
                 ? "Cancel demo"
                 : "Cancel search"}
-        </button>
+        </Button>
         {demo && (
-          <button className="quiet-button" onClick={onSkip}>
+          <Button
+            variant="text"
+            endIcon={<SkipForward size={16} />}
+            onClick={onSkip}
+          >
             {ready ? "Skip preparation" : "Skip search"}
-            <SkipForward size={16} />
-          </button>
+          </Button>
         )}
-      </div>
-      <p className="queue-footnote">
+      </Stack>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        component="p"
+        sx={{ mt: 2.5 }}
+      >
         {demo
           ? "Skipping affects this demo only. The normal search lasts 15 seconds."
           : paused
             ? "Start another search from the lobby when matches are available."
             : "If no suitable human is found after 15 seconds, a clearly labelled bot is assigned."}
-      </p>
-    </section>
+      </Typography>
+    </Box>
   );
 }
 export function LiveQueue({
@@ -747,6 +946,8 @@ function MatchWorkspace({
   onRetry,
   demoControls,
 }: WorkspaceProps) {
+  const narrow = useMediaQuery("(max-width: 640px)");
+  const compact = useMediaQuery("(max-width: 950px)");
   const problem = match.problem;
   const preferencesKey = `dalgo:${demo ? "demo" : "live"}:language:${userId}:${match.id}`;
   const [language, setLanguage] = useState<Language>(() => {
@@ -806,55 +1007,166 @@ function MatchWorkspace({
     }
   };
   return (
-    <main className="match-page">
+    <Box
+      component="main"
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100dvh",
+        minHeight: 0,
+        overflow: "hidden",
+        bgcolor: "#080808",
+      }}
+    >
       <MatchTopbar arena={match.arena} demo={demo}>
         {!match.result ? (
-          <button
-            className="quiet-button"
+          <Button
+            variant="text"
+            size="small"
+            startIcon={<Flag size={14} />}
             onClick={() => setResigning(true)}
             disabled={ready}
           >
-            <Flag size={14} />
             {demo ? "Resign demo" : "Resign"}
-          </button>
+          </Button>
         ) : (
-          <Link className="quiet-button" to="/">
-            <ArrowLeft size={14} />
+          <Button
+            component={Link}
+            to="/"
+            variant="text"
+            size="small"
+            startIcon={<ArrowLeft size={14} />}
+          >
             Lobby
-          </Link>
+          </Button>
         )}
       </MatchTopbar>
       {demo && <DemoNotice />}
-      <div className="duel-board">
-        <div className="duel-player">
-          <span className="avatar">Y</span>
-          <div>
-            <div className="player-name">
-              {demo ? "You" : (own?.name ?? "You")}
-              <span className="badge">YOU</span>
-            </div>
-            <div className="player-rating">
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: narrow
+            ? "minmax(0, 1fr) 76px minmax(0, 1fr)"
+            : "minmax(0, 1fr) 140px minmax(0, 1fr)",
+          alignItems: "center",
+          gap: narrow ? 1.25 : 2.5,
+          minHeight: narrow ? 88 : 100,
+          px: narrow ? 1.75 : 3,
+          py: 2,
+          bgcolor: "#111111",
+          borderBottom: 1,
+          borderColor: "divider",
+          flexShrink: 0,
+        }}
+      >
+        <Stack
+          direction="row"
+          sx={{ minWidth: 0, alignItems: "center", gap: narrow ? 0.75 : 1.5 }}
+        >
+          {!compact && (
+            <Avatar
+              variant="rounded"
+              sx={{
+                bgcolor: "#242424",
+                color: "text.primary",
+                width: 40,
+                height: 40,
+              }}
+            >
+              Y
+            </Avatar>
+          )}
+          <Box sx={{ minWidth: 0 }}>
+            <Stack
+              direction="row"
+              sx={{ flexWrap: "wrap", alignItems: "center", gap: 1 }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontWeight: 500,
+                  fontSize: narrow ? 14 : 16,
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {demo ? "You" : (own?.name ?? "You")}
+              </Typography>
+              {!narrow && (
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label="YOU"
+                  sx={{ fontSize: 10, height: 20 }}
+                />
+              )}
+            </Stack>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="p"
+              sx={{ mt: 0.5 }}
+            >
               {own?.rating.toLocaleString() ?? "—"} ·{" "}
               {demo ? "Example rating" : "Pre-match rating"}
-            </div>
-          </div>
-          <span className="player-status">
-            {match.result
-              ? "Finished"
-              : pending
-                ? "Judging"
-                : ready
-                  ? "Ready"
-                  : "Solving"}
-          </span>
-        </div>
-        <div
-          className={"match-clock " + (seconds < 60 && !ready ? "urgent" : "")}
+            </Typography>
+            {compact && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                component="p"
+              >
+                {match.result
+                  ? "Finished"
+                  : pending
+                    ? "Judging"
+                    : ready
+                      ? "Ready"
+                      : "Solving"}
+              </Typography>
+            )}
+          </Box>
+          {!compact && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ ml: "auto" }}
+            >
+              {match.result
+                ? "Finished"
+                : pending
+                  ? "Judging"
+                  : ready
+                    ? "Ready"
+                    : "Solving"}
+            </Typography>
+          )}
+        </Stack>
+        <Box
           role="timer"
           aria-label={ready ? "Match starts in" : "Match time remaining"}
+          sx={{
+            textAlign: "center",
+            fontFamily: MONO,
+            fontSize: narrow ? 23 : 32,
+            fontVariantNumeric: "tabular-nums",
+            letterSpacing: "-.05em",
+            lineHeight: 1.15,
+            color: seconds < 60 && !ready ? "#f0b694" : "text.primary",
+          }}
         >
           {formatClock(ready ? (match.startsAt - now) / 1000 : seconds)}
-          <span>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            component="span"
+            sx={{
+              display: "block",
+              mt: 0.75,
+              letterSpacing: narrow ? 0 : ".06em",
+              textTransform: "uppercase",
+              fontSize: narrow ? 11 : 12,
+            }}
+          >
             {match.result
               ? "Match complete"
               : ready
@@ -862,61 +1174,174 @@ function MatchWorkspace({
                 : demo
                   ? "Demo clock"
                   : "Shared clock"}
-          </span>
-        </div>
-        <div className="duel-player opponent">
-          <span className="player-status">
-            {match.opponentStatus || "Connecting"}
-          </span>
-          <div>
-            <div className="player-name">
-              {demo ? "Vector" : (opponent?.name ?? "Connecting")}
-              {opponent?.isBot && <span className="badge">BOT</span>}
-            </div>
-            <div className="player-rating">
+          </Typography>
+        </Box>
+        <Stack
+          direction="row"
+          sx={{
+            minWidth: 0,
+            textAlign: "right",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: narrow ? 0.75 : 1.5,
+          }}
+        >
+          {!compact && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mr: "auto" }}
+            >
+              {match.opponentStatus || "Connecting"}
+            </Typography>
+          )}
+          <Box sx={{ minWidth: 0 }}>
+            <Stack
+              direction="row"
+              sx={{
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                gap: 1,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: '"Space Grotesk", sans-serif',
+                  fontSize: narrow ? 14 : 16,
+                  fontWeight: 500,
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {demo ? "Vector" : (opponent?.name ?? "Connecting")}
+              </Typography>
+              {opponent?.isBot && !narrow && (
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label="BOT"
+                  sx={{ fontSize: 10, height: 20 }}
+                />
+              )}
+            </Stack>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              component="p"
+              sx={{ mt: 0.5 }}
+            >
               {opponent?.rating.toLocaleString() ?? "—"} ·{" "}
               {opponent?.isBot ? "Simulated bot" : "Human opponent"}
-            </div>
-          </div>
-          <span className="avatar bot">
-            {opponent?.isBot ? <Code2 size={20} /> : <Swords size={20} />}
-          </span>
-        </div>
-      </div>
-      <div className="match-meta">
-        <div>
-          <span className="connection-label">
+            </Typography>
+            {compact && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                component="p"
+              >
+                {match.opponentStatus || "Connecting"}
+              </Typography>
+            )}
+          </Box>
+          {!compact && (
+            <Avatar
+              variant="rounded"
+              sx={{
+                bgcolor: "#191919",
+                color: "text.secondary",
+                width: 40,
+                height: 40,
+              }}
+            >
+              {opponent?.isBot ? <Code2 size={20} /> : <Swords size={20} />}
+            </Avatar>
+          )}
+        </Stack>
+      </Box>
+      <Stack
+        direction="row"
+        sx={{
+          px: narrow ? 1.75 : 3,
+          py: 1.25,
+          borderBottom: 1,
+          borderColor: "divider",
+          flexShrink: 0,
+          alignItems: narrow ? "flex-start" : "center",
+          justifyContent: "space-between",
+          gap: 1.5,
+        }}
+      >
+        <Stack
+          direction="row"
+          sx={{
+            flexWrap: "wrap",
+            minWidth: 0,
+            alignItems: "center",
+            gap: narrow ? 0.75 : 1.75,
+          }}
+        >
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+          >
             {connection.includes("interrupted") ? (
               <WifiOff size={13} />
             ) : (
               <Wifi size={13} />
             )}{" "}
             {connection}
-          </span>
-          <span>
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
             {ARENAS[match.arena].name} · {ARENAS[match.arena].duration / 60} min
-          </span>
-        </div>
-        <span className="attempt-label">
+          </Typography>
+        </Stack>
+        <Typography
+          variant="caption"
+          sx={{ fontFamily: MONO, color: "#cecece", lineHeight: 1.8 }}
+        >
           {Math.max(0, limits.runs - match.attempts.runs)}/{limits.runs}{" "}
           {demo ? "run previews" : "runs"} ·{" "}
           {Math.max(0, limits.submits - match.attempts.submits)}/
           {limits.submits} {demo ? "submission previews" : "submissions"} left
-        </span>
-      </div>
+        </Typography>
+      </Stack>
       {error && (
-        <div className="match-error" role="alert">
-          <span>{error}</span>
-          {onRetry && (
-            <button className="quiet-button" disabled={busy} onClick={onRetry}>
-              {retryKind ? "Retry request" : "Retry connection"}
-            </button>
-          )}
-        </div>
+        <Alert
+          severity="error"
+          action={
+            onRetry ? (
+              <Button
+                variant="text"
+                size="small"
+                disabled={busy}
+                onClick={onRetry}
+              >
+                {retryKind ? "Retry request" : "Retry connection"}
+              </Button>
+            ) : undefined
+          }
+          sx={{ borderRadius: 0, py: 0.25, flexShrink: 0 }}
+        >
+          {error}
+        </Alert>
       )}
       {match.result && (
-        <div className="result-inline">
-          <span>
+        <Stack
+          direction="row"
+          sx={{
+            px: narrow ? 1.75 : 3,
+            py: 1,
+            bgcolor: "#191919",
+            borderBottom: 1,
+            borderColor: "divider",
+            flexShrink: 0,
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1.5,
+          }}
+        >
+          <Typography variant="body2">
             {demo
               ? "Illustrative result"
               : match.result.settled
@@ -930,105 +1355,263 @@ function MatchWorkspace({
                 : match.result.winnerId === userId
                   ? "You win"
                   : "Opponent wins"}
-          </span>
-          <button className="button" onClick={() => setResultDismissed(false)}>
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setResultDismissed(false)}
+          >
             View result
-          </button>
-        </div>
+          </Button>
+        </Stack>
       )}
-      <div className="mobile-tabs" role="tablist" aria-label="Match workspace">
-        {(["problem", "code"] as const).map((t) => (
-          <button
-            key={t}
-            role="tab"
-            id={t + "-tab"}
-            aria-controls={t + "-panel"}
-            aria-selected={t === tab}
-            tabIndex={t === tab ? 0 : -1}
-            onClick={() => setTab(t)}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-                e.preventDefault();
-                const next = t === "problem" ? "code" : "problem";
-                setTab(next);
-                document.getElementById(next + "-tab")?.focus();
-              }
+      {narrow && (
+        <Tabs
+          value={tab}
+          onChange={(_, value: "problem" | "code") => setTab(value)}
+          variant="fullWidth"
+          selectionFollowsFocus
+          aria-label="Match workspace"
+          sx={{
+            minHeight: 44,
+            bgcolor: "#151515",
+            borderBottom: 1,
+            borderColor: "divider",
+            flexShrink: 0,
+          }}
+        >
+          <Tab
+            value="problem"
+            id="problem-tab"
+            aria-controls="problem-panel"
+            label="Problem"
+            sx={{ minHeight: 44 }}
+          />
+          <Tab
+            value="code"
+            id="code-tab"
+            aria-controls="code-panel"
+            label="Code"
+            sx={{ minHeight: 44 }}
+          />
+        </Tabs>
+      )}
+      <Box
+        ref={splitRef}
+        sx={{
+          display: narrow ? "block" : "grid",
+          gridTemplateColumns: `minmax(0, ${ratio}%) 9px minmax(0, 1fr)`,
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
+          bgcolor: "#0a0a0a",
+        }}
+      >
+        <Paper
+          component="section"
+          square
+          id="problem-panel"
+          role={narrow ? "tabpanel" : undefined}
+          aria-labelledby={narrow ? "problem-tab" : undefined}
+          aria-label="Problem statement"
+          sx={{
+            display: !narrow || tab === "problem" ? "flex" : "none",
+            flexDirection: "column",
+            minWidth: 0,
+            minHeight: 0,
+            height: "100%",
+            bgcolor: "#0a0a0a",
+          }}
+        >
+          <PanelHeading>
+            <Stack direction="row" sx={{ alignItems: "center", gap: 1 }}>
+              <Code2 size={15} />
+              <Typography variant="body2">Problem</Typography>
+            </Stack>
+            {!compact && (
+              <Typography variant="overline" sx={{ fontSize: 11 }}>
+                FUNCTION / SOLVE
+              </Typography>
+            )}
+          </PanelHeading>
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              overflow: "auto",
+              overscrollBehavior: "contain",
+              px: narrow ? 2.5 : 3.5,
+              pt: 3.5,
+              pb: 4.75,
             }}
           >
-            {t === "problem" ? "Problem" : "Code"}
-          </button>
-        ))}
-      </div>
-      <div
-        className={"workspace show-" + tab}
-        ref={splitRef}
-        style={{ "--split": ratio + "%" } as React.CSSProperties}
-      >
-        <section
-          id="problem-panel"
-          className="problem-panel"
-          aria-label="Problem statement"
-        >
-          <div className="panel-heading">
-            <span>
-              <BookIcon />
-              Problem
-            </span>
-            <span className="overline">FUNCTION / SOLVE</span>
-          </div>
-          <div className="problem-scroll">
-            <div className="problem-meta">
-              <span className={"difficulty " + problem.arena}>
-                {ARENAS[problem.arena].name}
-              </span>
-              <span>{problem.topic}</span>
-            </div>
-            <h1>{problem.title}</h1>
+            <Stack
+              direction="row"
+              sx={{ mb: 2, alignItems: "center", gap: 1.25 }}
+            >
+              <Chip
+                size="small"
+                variant="outlined"
+                label={ARENAS[problem.arena].name}
+                sx={{ fontSize: 12, borderColor: "#626262", borderRadius: 1 }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {problem.topic}
+              </Typography>
+            </Stack>
+            <Typography
+              variant="h1"
+              sx={{ fontSize: 28, letterSpacing: "-.035em", mb: 2.5 }}
+            >
+              {problem.title}
+            </Typography>
             {problem.description
               .split("\n")
               .filter(Boolean)
               .map((p, i) => (
-                <p key={i}>{p}</p>
+                <Typography
+                  key={i}
+                  sx={{
+                    color: "#c9c9c9",
+                    fontSize: 16,
+                    lineHeight: 1.85,
+                    mb: 2,
+                  }}
+                >
+                  {p}
+                </Typography>
               ))}
-            <div className="function-signature">
+            <Stack
+              direction="row"
+              sx={{
+                borderLeft: "2px solid #686868",
+                bgcolor: "#181818",
+                px: 1.75,
+                py: 1.5,
+                my: 3,
+                alignItems: "center",
+                gap: 1.25,
+              }}
+            >
               <Code2 size={16} />
-              <code>
+              <Typography
+                component="code"
+                sx={{
+                  fontFamily: MONO,
+                  fontSize: 14,
+                  lineHeight: 1.7,
+                  overflowWrap: "anywhere",
+                  minWidth: 0,
+                }}
+              >
                 solve({problem.parameters.map((p) => p.name).join(", ")})
-              </code>
-            </div>
+              </Typography>
+            </Stack>
             {problem.examples.map((example, i) => (
-              <div className="example" key={i}>
-                <h3>Example {i + 1}</h3>
-                <div className="example-code">
-                  <p>
-                    <span>Input</span>
+              <Box key={i} sx={{ my: 3 }}>
+                <Typography variant="subtitle2" component="h3" sx={{ mb: 1.5 }}>
+                  Example {i + 1}
+                </Typography>
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    bgcolor: "#151515",
+                    borderRadius: 1,
+                    px: 1.75,
+                    py: 1.5,
+                  }}
+                >
+                  <Typography
+                    component="p"
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: 12,
+                      lineHeight: 1.9,
+                      overflowWrap: "anywhere",
+                      color: "#d5d5d5",
+                    }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{
+                        display: "inline-block",
+                        minWidth: 59,
+                        mr: 1,
+                        color: "text.secondary",
+                      }}
+                    >
+                      Input
+                    </Box>
                     {problem.parameters
                       .map(
                         (p, j) =>
                           p.name + " = " + JSON.stringify(example.args[j]),
                       )
                       .join(", ")}
-                  </p>
-                  <p>
-                    <span>Output</span>
+                  </Typography>
+                  <Typography
+                    component="p"
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: 12,
+                      lineHeight: 1.9,
+                      overflowWrap: "anywhere",
+                      color: "#d5d5d5",
+                    }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{
+                        display: "inline-block",
+                        minWidth: 59,
+                        mr: 1,
+                        color: "text.secondary",
+                      }}
+                    >
+                      Output
+                    </Box>
                     {JSON.stringify(example.expected)}
-                  </p>
-                </div>
-                <p className="example-explanation">{example.explanation}</p>
-              </div>
+                  </Typography>
+                </Paper>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 1.25 }}
+                >
+                  {example.explanation}
+                </Typography>
+              </Box>
             ))}
-            <h3>Constraints</h3>
-            <ul className="constraints">
+            <Typography
+              variant="subtitle2"
+              component="h3"
+              sx={{ mt: 3, mb: 1.5 }}
+            >
+              Constraints
+            </Typography>
+            <Box
+              component="ul"
+              sx={{ pl: 2.25, m: 0, color: "text.secondary" }}
+            >
               {problem.constraints.map((c) => (
-                <li key={c}>
-                  <code>{c}</code>
-                </li>
+                <Box component="li" key={c}>
+                  <Typography
+                    component="code"
+                    sx={{
+                      fontFamily: MONO,
+                      fontSize: 14,
+                      lineHeight: 2.1,
+                      overflowWrap: "anywhere",
+                    }}
+                  >
+                    {c}
+                  </Typography>
+                </Box>
               ))}
-            </ul>
-          </div>
-        </section>
-        <div
-          className="resize-handle"
+            </Box>
+          </Box>
+        </Paper>
+        <Box
           role="separator"
           aria-label="Resize problem and editor panels"
           aria-orientation="vertical"
@@ -1052,20 +1635,65 @@ function MatchWorkspace({
               );
             }
           }}
+          sx={{
+            display: narrow ? "none" : "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderLeft: 1,
+            borderRight: 1,
+            borderColor: "divider",
+            bgcolor: "#141414",
+            color: "#949494",
+            cursor: "col-resize",
+            touchAction: "none",
+            "&:hover, &:focus-visible": {
+              bgcolor: "#373737",
+              color: "#e0e0e0",
+            },
+          }}
         >
           <GripVertical size={14} />
-        </div>
-        <section
+        </Box>
+        <Paper
+          component="section"
+          square
           id="code-panel"
-          className="editor-panel"
+          role={narrow ? "tabpanel" : undefined}
+          aria-labelledby={narrow ? "code-tab" : undefined}
           aria-label="Code editor"
+          sx={{
+            display: !narrow || tab === "code" ? "flex" : "none",
+            flexDirection: "column",
+            minWidth: 0,
+            minHeight: 0,
+            height: "100%",
+            overflow: "hidden",
+          }}
         >
-          <div className="editor-actions">
-            <span className="overline">
-              {demo ? "ILLUSTRATIVE ONLY" : "SAMPLE / HIDDEN TESTS"}
-            </span>
-            <button
-              className="button"
+          <Stack
+            direction="row"
+            sx={{
+              px: 1.5,
+              py: 1,
+              minHeight: 51,
+              borderBottom: 1,
+              borderColor: "divider",
+              bgcolor: "#171717",
+              flexShrink: 0,
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 1,
+            }}
+          >
+            {!compact && (
+              <Typography variant="overline" sx={{ mr: "auto", fontSize: 11 }}>
+                {demo ? "ILLUSTRATIVE ONLY" : "SAMPLE / HIDDEN TESTS"}
+              </Typography>
+            )}
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Play size={14} />}
               disabled={
                 !active ||
                 busy ||
@@ -1074,12 +1702,24 @@ function MatchWorkspace({
                 match.attempts.runs >= limits.runs
               }
               onClick={() => onAttempt("run", language, source)}
+              sx={{
+                fontSize: narrow ? 12 : 14,
+                minHeight: 35,
+                whiteSpace: "nowrap",
+              }}
             >
-              <Play size={14} />
               {demo ? "Preview run" : "Run"}
-            </button>
-            <button
-              className="button primary"
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={
+                busy ? (
+                  <CircularProgress size={15} color="inherit" />
+                ) : (
+                  <ArrowRight size={15} />
+                )
+              }
               disabled={
                 !active ||
                 busy ||
@@ -1088,54 +1728,74 @@ function MatchWorkspace({
                 match.attempts.submits >= limits.submits
               }
               onClick={() => onAttempt("submit", language, source)}
+              sx={{
+                fontSize: narrow ? 12 : 14,
+                minHeight: 35,
+                whiteSpace: "nowrap",
+              }}
             >
-              {busy ? (
-                <LoaderCircle size={15} className="spin" />
-              ) : (
-                <ArrowRight size={15} />
-              )}{" "}
               {demo ? "Preview submission" : "Submit"}
-            </button>
-          </div>
-          <div className="panel-heading editor-heading">
-            <label>
+            </Button>
+          </Stack>
+          <PanelHeading>
+            <Stack
+              direction="row"
+              sx={{ minWidth: 0, alignItems: "center", gap: 1 }}
+            >
               <Code2 size={16} />
-              <select
-                aria-label="Programming language"
+              <NativeSelect
                 value={language}
+                inputProps={{ "aria-label": "Programming language" }}
                 onChange={(e) => setLang(e.target.value as Language)}
+                sx={{ maxWidth: 150, fontSize: 14 }}
               >
                 {Object.entries(LANGUAGES).map(([id, l]) => (
                   <option value={id} key={id}>
                     {l.name}
                   </option>
                 ))}
-              </select>
-            </label>
-            <div className="editor-tools">
-              <span className="saved-label">
-                <Check size={12} />
-                {saved
-                  ? demo
-                    ? "Session draft"
-                    : "Saved locally"
-                  : "Draft not saved"}
-              </span>
-              <button
-                className="icon-button"
+              </NativeSelect>
+            </Stack>
+            <Stack direction="row" sx={{ alignItems: "center", gap: 1.5 }}>
+              {!compact && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                >
+                  <Check size={12} />
+                  {saved
+                    ? demo
+                      ? "Session draft"
+                      : "Saved locally"
+                    : "Draft not saved"}
+                </Typography>
+              )}
+              {compact && !saved && (
+                <Typography variant="caption" color="warning.main">
+                  Draft not saved
+                </Typography>
+              )}
+              <IconButton
+                size="small"
                 disabled={!!match.result}
                 title="Reset starter code"
                 aria-label="Reset starter code"
                 onClick={() => setResetOpen(true)}
               >
                 <RotateCcw size={15} />
-              </button>
-            </div>
-          </div>
-          <div className="editor-wrap">
-            <Suspense
-              fallback={<div className="panel-loading">Opening editor…</div>}
-            >
+              </IconButton>
+            </Stack>
+          </PanelHeading>
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: narrow ? 90 : 120,
+              position: "relative",
+              bgcolor: "#101010",
+            }}
+          >
+            <Suspense fallback={<EditorLoading />}>
               <Editor
                 height="100%"
                 language={LANGUAGES[language].monaco}
@@ -1171,7 +1831,7 @@ function MatchWorkspace({
                       "editorSuggestWidget.highlightForeground": "#f5f5f5",
                       "editorHoverWidget.background": "#202020",
                       "editorHoverWidget.border": "#444444",
-                      "focusBorder": "#bdbdbd",
+                      focusBorder: "#bdbdbd",
                       "input.background": "#161616",
                       "input.border": "#555555",
                       "input.foreground": "#e8e8e8",
@@ -1203,107 +1863,246 @@ function MatchWorkspace({
                   ariaLabel: "Solution code editor",
                   tabFocusMode: true,
                 }}
-                loading={
-                  <div className="panel-loading">
-                    <LoaderCircle size={18} className="spin" />
-                    Opening editor…
-                  </div>
-                }
+                loading={<EditorLoading />}
               />
             </Suspense>
-          </div>
-          <div className="console-panel">
-            <div className="console-heading">
-              <span>{demo ? "Example verdicts" : "Test results"}</span>
-              <span>
+          </Box>
+          <Box
+            sx={{
+              height: narrow ? 104 : 144,
+              minHeight: 60,
+              flexShrink: 0,
+              borderTop: 1,
+              borderColor: "divider",
+              display: "flex",
+              flexDirection: "column",
+              bgcolor: "#0c0c0c",
+            }}
+          >
+            <Stack
+              direction="row"
+              sx={{
+                px: 2,
+                py: 1,
+                borderBottom: 1,
+                borderColor: "divider",
+                flexShrink: 0,
+                justifyContent: "space-between",
+                gap: 1.5,
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">
+                {demo ? "Example verdicts" : "Test results"}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
                 {latest
                   ? latest.kind === "run"
                     ? "Samples"
                     : "Submission"
                   : `${problem.examples.length} sample case${problem.examples.length === 1 ? "" : "s"}`}
-              </span>
-            </div>
-            <div className="console-body" aria-live="polite">
+              </Typography>
+            </Stack>
+            <Box
+              aria-live="polite"
+              sx={{ overflow: "auto", px: 2, py: 1.5, minHeight: 0 }}
+            >
               {latest ? (
                 <>
-                  <div className={"verdict " + latest.verdict}>
+                  <Stack
+                    direction="row"
+                    sx={{
+                      color:
+                        latest.verdict === "accepted"
+                          ? "success.main"
+                          : [
+                                "judge_error",
+                                "compile_error",
+                                "runtime_error",
+                              ].includes(latest.verdict)
+                            ? "error.main"
+                            : "warning.main",
+                      mb: 0.5,
+                      alignItems: "center",
+                      gap: 1,
+                    }}
+                  >
                     {latest.verdict === "pending" ? (
-                      <LoaderCircle size={15} className="spin" />
+                      <CircularProgress size={15} color="inherit" />
                     ) : latest.verdict === "accepted" ? (
                       <CheckCircle2 size={15} />
                     ) : (
                       <AlertCircle size={15} />
                     )}
-                    <strong>
+                    <Typography
+                      variant="body2"
+                      component="strong"
+                      sx={{ textTransform: "capitalize", fontWeight: 600 }}
+                    >
                       {demo ? "Illustrative · " : ""}
                       {latest.verdict.replaceAll("_", " ")}
-                    </strong>
-                  </div>
-                  <p>{latest.message}</p>
+                    </Typography>
+                  </Stack>
+                  <Typography variant="body2" color="text.secondary">
+                    {latest.message}
+                  </Typography>
                   {latest.kind === "run" && latest.sampleResults && (
-                    <div className="console-cases">
+                    <Box sx={{ mt: 1 }}>
                       {latest.sampleResults.map((r, i) => (
-                        <details className="console-case" key={i}>
-                          <summary>
-                            Case {i + 1} · {r.passed ? "passed" : "failed"}
-                          </summary>
-                          <div>
-                            <strong>Expected</strong>
-                            <pre>
-                              <code>{sampleValue(r.expected)}</code>
-                            </pre>
-                            <strong>Actual</strong>
-                            <pre>
-                              <code>{sampleValue(r.actual)}</code>
-                            </pre>
-                          </div>
-                        </details>
+                        <Accordion
+                          key={i}
+                          disableGutters
+                          square
+                          elevation={0}
+                          sx={{
+                            bgcolor: "#1c1c1c",
+                            border: "1px solid #3e3e3e",
+                            borderRadius: 1,
+                            mt: 1,
+                            "&::before": { display: "none" },
+                          }}
+                        >
+                          <AccordionSummary
+                            expandIcon={<ChevronDown size={14} />}
+                            sx={{
+                              minHeight: 30,
+                              px: 1,
+                              "& .MuiAccordionSummary-content": { my: 0.75 },
+                            }}
+                          >
+                            <Typography variant="caption">
+                              Case {i + 1} · {r.passed ? "passed" : "failed"}
+                            </Typography>
+                          </AccordionSummary>
+                          <AccordionDetails sx={{ px: 1, py: 1 }}>
+                            <Typography
+                              variant="caption"
+                              component="strong"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              Expected
+                            </Typography>
+                            <Typography
+                              component="pre"
+                              sx={{
+                                fontFamily: MONO,
+                                whiteSpace: "pre-wrap",
+                                overflowWrap: "anywhere",
+                                maxHeight: 120,
+                                overflow: "auto",
+                                my: 0.75,
+                                fontSize: 12,
+                              }}
+                            >
+                              <Box component="code">
+                                {sampleValue(r.expected)}
+                              </Box>
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              component="strong"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              Actual
+                            </Typography>
+                            <Typography
+                              component="pre"
+                              sx={{
+                                fontFamily: MONO,
+                                whiteSpace: "pre-wrap",
+                                overflowWrap: "anywhere",
+                                maxHeight: 120,
+                                overflow: "auto",
+                                my: 0.75,
+                                fontSize: 12,
+                              }}
+                            >
+                              <Box component="code">
+                                {sampleValue(r.actual)}
+                              </Box>
+                            </Typography>
+                          </AccordionDetails>
+                        </Accordion>
                       ))}
-                    </div>
+                    </Box>
                   )}
                 </>
               ) : (
-                <p>
+                <Typography variant="body2" color="text.secondary">
                   {demo
                     ? "Preview run shows the supplied example outputs. Your code is not executed."
                     : "Run the samples to check your code. Submit to judge every hidden test."}
-                </p>
+                </Typography>
               )}
-            </div>
-          </div>
-        </section>
-      </div>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
       {demoControls && (
-        <div className="demo-controls">
-          <div>
-            <span className="overline">DEMO CONTROLS</span>
-            <select
-              aria-label="Example result scenario"
+        <Stack
+          direction="row"
+          sx={{
+            px: narrow ? 1.75 : 3,
+            py: 1.25,
+            borderTop: 1,
+            borderColor: "divider",
+            bgcolor: "#151515",
+            flexShrink: 0,
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1,
+          }}
+        >
+          <Stack
+            direction="row"
+            sx={{
+              flexWrap: "wrap",
+              minWidth: 0,
+              flex: narrow ? 1 : undefined,
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            {!compact && (
+              <Typography variant="overline" sx={{ fontSize: 11 }}>
+                DEMO CONTROLS
+              </Typography>
+            )}
+            <NativeSelect
               value={demoControls.scenario}
+              inputProps={{ "aria-label": "Example result scenario" }}
               disabled={busy || !!match.result}
               onChange={(e) =>
                 demoControls.onScenario(e.target.value as DemoScenario)
               }
+              sx={{ fontSize: 12, maxWidth: narrow ? 140 : 180 }}
             >
               {scenarios.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.label}
                 </option>
               ))}
-            </select>
-            <button
-              className="button"
+            </NativeSelect>
+            <Button
+              variant="outlined"
+              size="small"
               disabled={busy || !!match.result}
               onClick={demoControls.onShow}
+              sx={{ fontSize: 12 }}
             >
               Show example result
-            </button>
-          </div>
-          <button className="quiet-button" onClick={demoControls.onRestart}>
-            <RotateCcw size={14} />
+            </Button>
+          </Stack>
+          <Button
+            variant="text"
+            size="small"
+            startIcon={<RotateCcw size={14} />}
+            onClick={demoControls.onRestart}
+            sx={{ fontSize: 12 }}
+          >
             Restart demo
-          </button>
-        </div>
+          </Button>
+        </Stack>
       )}
       {resigning && (
         <Modal
@@ -1312,27 +2111,33 @@ function MatchWorkspace({
             if (!resignBusy) setResigning(false);
           }}
         >
-          <h2>{demo ? "Preview a resignation?" : "Resign this match?"}</h2>
-          <p>
+          <Typography variant="h2" sx={{ fontSize: 26, mb: 1.5 }}>
+            {demo ? "Preview a resignation?" : "Resign this match?"}
+          </Typography>
+          <Typography color="text.secondary">
             {demo
               ? "This displays an illustrative loss. Your real rating is unchanged."
               : "Resigning counts as a loss and changes this arena’s rating."}
-          </p>
+          </Typography>
           {resignError && (
-            <p className="error" role="alert">
+            <Alert severity="error" sx={{ mt: 2 }}>
               {resignError}
-            </p>
+            </Alert>
           )}
-          <div className="dialog-actions">
-            <button
-              className="button"
+          <Stack
+            direction="row"
+            sx={{ mt: 3, justifyContent: "flex-end", gap: 1.5 }}
+          >
+            <Button
+              variant="outlined"
               disabled={resignBusy}
               onClick={() => setResigning(false)}
             >
               Keep playing
-            </button>
-            <button
-              className="button danger"
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
               disabled={resignBusy}
               onClick={async () => {
                 setResignBusy(true);
@@ -1352,31 +2157,36 @@ function MatchWorkspace({
                 : demo
                   ? "Resign demo"
                   : "Resign match"}
-            </button>
-          </div>
+            </Button>
+          </Stack>
         </Modal>
       )}
       {resetOpen && (
         <Modal title="Reset starter" onClose={() => setResetOpen(false)}>
-          <h2>Reset this draft?</h2>
-          <p>
+          <Typography variant="h2" sx={{ fontSize: 26, mb: 1.5 }}>
+            Reset this draft?
+          </Typography>
+          <Typography color="text.secondary">
             Your {LANGUAGES[language].name} code will be replaced by the starter
             function.
-          </p>
-          <div className="dialog-actions">
-            <button className="button" onClick={() => setResetOpen(false)}>
+          </Typography>
+          <Stack
+            direction="row"
+            sx={{ mt: 3, justifyContent: "flex-end", gap: 1.5 }}
+          >
+            <Button variant="outlined" onClick={() => setResetOpen(false)}>
               Keep code
-            </button>
-            <button
-              className="button primary"
+            </Button>
+            <Button
+              variant="contained"
               onClick={() => {
                 update(problem.starter[language]);
                 setResetOpen(false);
               }}
             >
               Reset code
-            </button>
-          </div>
+            </Button>
+          </Stack>
         </Modal>
       )}
       {match.result && !resultDismissed && (
@@ -1393,11 +2203,46 @@ function MatchWorkspace({
           />
         </Modal>
       )}
-    </main>
+    </Box>
   );
 }
-function BookIcon() {
-  return <Code2 size={15} />;
+function PanelHeading({ children }: { children: ReactNode }) {
+  return (
+    <Stack
+      direction="row"
+      sx={{
+        minHeight: 48,
+        px: 2,
+        py: 1,
+        borderBottom: 1,
+        borderColor: "divider",
+        bgcolor: "#111111",
+        flexShrink: 0,
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 1.25,
+      }}
+    >
+      {children}
+    </Stack>
+  );
+}
+function EditorLoading() {
+  return (
+    <Stack
+      direction="row"
+      sx={{
+        height: "100%",
+        color: "text.secondary",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 1.25,
+      }}
+    >
+      <CircularProgress size={18} color="inherit" />
+      <Typography variant="body2">Opening editor…</Typography>
+    </Stack>
+  );
 }
 function ResultSheet({
   match,
@@ -1419,15 +2264,15 @@ function ResultSheet({
   const delta = result.deltas[userId] ?? 0;
   const before = match.players.find((p) => p.id === userId)?.rating ?? 1200;
   return (
-    <section className="result-sheet">
-      <span className="overline">
+    <Box component="section">
+      <Typography variant="overline" sx={{ fontSize: 11 }}>
         {demo
           ? "ILLUSTRATIVE / NO RATINGS SAVED"
           : result.settled
             ? "MATCH SETTLED"
             : "SAVING RESULT"}
-      </span>
-      <h2>
+      </Typography>
+      <Typography variant="h2" sx={{ fontSize: { xs: 32, sm: 40 }, my: 1.75 }}>
         {isVoid
           ? "Match voided."
           : draw
@@ -1435,8 +2280,8 @@ function ResultSheet({
             : won
               ? "You win."
               : "Opponent wins."}
-      </h2>
-      <p>
+      </Typography>
+      <Typography color="text.secondary">
         {isVoid
           ? "The judge could not produce a reliable result. Both ratings remain unchanged."
           : result.reason === "resigned"
@@ -1451,78 +2296,153 @@ function ResultSheet({
         {demo
           ? " This is a selected example, not an assessment of your code."
           : ""}
-      </p>
-      <div className="result-score">
-        <div className={delta > 0 ? "positive" : delta < 0 ? "negative" : ""}>
-          {delta > 0 ? "+" : ""}
-          {delta}
-          <span>{demo ? "Illustrative Elo change" : "Elo change"}</span>
-        </div>
-        <div className="result-rating-example">
-          {before.toLocaleString()} <span style={{ display: "inline" }}>→</span>{" "}
-          {(before + delta).toLocaleString()}
-          <span>
+      </Typography>
+      {/* Retained as a browser test hook; all presentation is provided by MUI. */}
+      <Stack
+        className="result-score"
+        direction="row"
+        sx={{
+          my: 3,
+          py: 2.5,
+          borderTop: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Typography
+            component="div"
+            sx={{
+              fontFamily: MONO,
+              fontSize: { xs: 38, sm: 48 },
+              lineHeight: 1.2,
+              color:
+                delta > 0
+                  ? "success.main"
+                  : delta < 0
+                    ? "error.main"
+                    : "text.primary",
+            }}
+          >
+            {delta > 0 ? "+" : ""}
+            {delta}
+          </Typography>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            component="span"
+            sx={{ display: "block", mt: 1 }}
+          >
+            {demo ? "Illustrative Elo change" : "Elo change"}
+          </Typography>
+        </Box>
+        <Box sx={{ textAlign: "right" }}>
+          <Typography sx={{ fontFamily: MONO, fontSize: { xs: 15, sm: 18 } }}>
+            {before.toLocaleString()} → {(before + delta).toLocaleString()}
+          </Typography>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            component="span"
+            sx={{ display: "block", mt: 1 }}
+          >
             {ARENAS[match.arena].name} ·{" "}
             {match.mode === "bot" ? "Bot" : "Human"} rating
             {demo ? " example" : ""}
-          </span>
-        </div>
-      </div>
-      <div className="result-submissions">
-        <span className="overline">
+          </Typography>
+        </Box>
+      </Stack>
+      <Box sx={{ my: 2.5 }}>
+        <Typography variant="overline" sx={{ fontSize: 11 }}>
           {demo ? "EXAMPLE VERDICTS" : "YOUR SUBMISSIONS"}
-        </span>
+        </Typography>
         {match.submissions.length ? (
-          match.submissions.map((s, i) => (
-            <div key={s.id} className="result-submission">
-              <span>
-                {s.kind === "run" ? "Run" : "Submission"} {i + 1} ·{" "}
-                {LANGUAGES[s.language].name}
-              </span>
-              <strong>{s.verdict.replaceAll("_", " ")}</strong>
-            </div>
-          ))
+          <Stack divider={<Divider />} sx={{ mt: 1 }}>
+            {match.submissions.map((s, i) => (
+              <Stack
+                key={s.id}
+                direction="row"
+                sx={{ py: 1.25, justifyContent: "space-between", gap: 1.5 }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {s.kind === "run" ? "Run" : "Submission"} {i + 1} ·{" "}
+                  {LANGUAGES[s.language].name}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  component="strong"
+                  sx={{
+                    textTransform: "capitalize",
+                    textAlign: "right",
+                    fontWeight: 500,
+                  }}
+                >
+                  {s.verdict.replaceAll("_", " ")}
+                </Typography>
+              </Stack>
+            ))}
+          </Stack>
         ) : (
-          <p className="fine-print">
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             {demo
               ? "This outcome was opened with the demo controls. No code was judged."
               : "No submissions were received."}
-          </p>
+          </Typography>
         )}
-      </div>
+      </Box>
       {!result.settled && (
-        <p className="fine-print">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          component="p"
+          sx={{ mt: 1.5 }}
+        >
           Your result is being saved. A new ranked match will become available
           when settlement completes.
-        </p>
+        </Typography>
       )}
       {demo && (
-        <p className="fine-print">
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          component="p"
+          sx={{ mt: 1.5 }}
+        >
           Demo results never appear in your history or the leaderboard.
-        </p>
+        </Typography>
       )}
-      <div className="result-actions">
-        <button className="button" onClick={onReview}>
+      <Stack
+        direction="row"
+        sx={{ mt: 3, justifyContent: "space-between", gap: 1.5 }}
+      >
+        <Button variant="outlined" onClick={onReview}>
           Review workspace
-        </button>
+        </Button>
         {demo ? (
-          <button
-            className="button primary"
+          <Button
+            variant="contained"
+            endIcon={<ArrowRight size={16} />}
             onClick={() => {
               onReview();
               onRestart?.();
             }}
           >
             New demo
-            <ArrowRight size={16} />
-          </button>
+          </Button>
         ) : (
-          <Link className="button primary" to="/">
+          <Button
+            component={Link}
+            to="/"
+            variant="contained"
+            endIcon={<ArrowRight size={16} />}
+          >
             Back to lobby
-            <ArrowRight size={16} />
-          </Link>
+          </Button>
         )}
-      </div>
-    </section>
+      </Stack>
+    </Box>
   );
 }

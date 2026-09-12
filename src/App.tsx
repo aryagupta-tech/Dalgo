@@ -13,7 +13,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   BookOpen,
-  Check,
   ChevronRight,
   Clock3,
   Flag,
@@ -23,6 +22,30 @@ import {
   Trophy,
   UserRound,
 } from "lucide-react";
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Chip,
+  FormControlLabel,
+  List,
+  ListItem,
+  ListItemButton,
+  Paper,
+  Radio,
+  RadioGroup,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
 import { useAuth } from "./auth";
 import { api } from "./api";
 import { useDalgoTools } from "./webmcp";
@@ -54,6 +77,12 @@ const arenaDetails = {
     note: "A deeper problem with tighter constraints. Correctness and complexity both matter.",
   },
 };
+const navigation = [
+  { to: "/", label: "Play", icon: Swords },
+  { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { to: "/history", label: "Match history", icon: Clock3 },
+  { to: "/profile", label: "Your profile", icon: UserRound },
+];
 export default function App() {
   useDalgoTools();
   const { user, client, config } = useAuth();
@@ -61,76 +90,244 @@ export default function App() {
   const location = useLocation();
   const matchRoute = /^\/(demo|match|preview)\//.test(location.pathname);
   return (
-    <div className={matchRoute ? "app match-app" : "app"}>
+    <Box
+      sx={{
+        minHeight: "100dvh",
+        display: matchRoute ? "block" : { xs: "block", sm: "grid" },
+        gridTemplateColumns: {
+          sm: "74px minmax(0, 1fr)",
+          md: "180px minmax(0, 1fr)",
+          lg: "208px minmax(0, 1fr)",
+        },
+      }}
+    >
       {!matchRoute && (
-        <aside className="sidebar">
-          <div className="sidebar-brand">
-            <Brand />
-            <span className="club-label">THE CODING CLUB</span>
-          </div>
-          <nav className="side-nav" aria-label="Main navigation">
-            <NavLink to="/" end>
-              <Swords size={18} />
-              Play<span className="nav-index">01</span>
-            </NavLink>
-            <NavLink to="/leaderboard">
-              <Trophy size={18} />
-              Leaderboard<span className="nav-index">02</span>
-            </NavLink>
-            <NavLink to="/history">
-              <Clock3 size={18} />
-              Match history<span className="nav-index">03</span>
-            </NavLink>
-            <NavLink to="/profile">
-              <UserRound size={18} />
-              Your profile<span className="nav-index">04</span>
-            </NavLink>
-          </nav>
-          <div className="sidebar-bottom">
-            <div className="sidebar-status">
-              <span className="status-square" />
-              {config.playEnabled
-                ? config.admissionMode === "staging"
-                  ? "Tester matches open"
-                  : "Ranked play open"
-                : "Demo available"}
-              <small>
+        <Box
+          component="aside"
+          sx={{
+            position: { xs: "static", sm: "sticky" },
+            top: 0,
+            height: { xs: "auto", sm: "100dvh" },
+            display: { xs: "grid", sm: "flex" },
+            gridTemplateColumns: "1fr auto",
+            flexDirection: "column",
+            alignItems: { xs: "center", sm: "stretch" },
+            px: { xs: 2.25, sm: 1.4, md: 1.5, lg: 2.4 },
+            pt: { xs: 2, sm: 3.25, lg: 4.5 },
+            pb: { xs: 0, sm: 2.5 },
+            backgroundColor: "#0c0c0c",
+            borderRight: { xs: 0, sm: 1 },
+            borderBottom: { xs: 1, sm: 0 },
+            borderColor: "divider",
+          }}
+        >
+          <Box
+            sx={{
+              px: { xs: 0, md: 1 },
+              pb: { xs: 0, sm: 3.75, md: 5 },
+              textAlign: { sm: "center", md: "left" },
+            }}
+          >
+            <Brand compactAtMedium />
+            <Typography
+              component="span"
+              variant="overline"
+              sx={{
+                display: { xs: "none", md: "block" },
+                mt: 1.25,
+                fontFamily: '"JetBrains Mono", monospace',
+                fontSize: ".75rem",
+                letterSpacing: ".12em",
+                color: "text.secondary",
+              }}
+            >
+              THE CODING CLUB
+            </Typography>
+          </Box>
+          <List
+            component="nav"
+            aria-label="Main navigation"
+            disablePadding
+            sx={{
+              display: { xs: "grid", sm: "flex" },
+              gridColumn: "1/-1",
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              flexDirection: "column",
+              gap: { xs: 0, sm: 0.75 },
+              mt: { xs: 2, sm: 0 },
+            }}
+          >
+            {navigation.map(({ to, label, icon: Icon }, index) => (
+              <ListItemButton
+                key={to}
+                component={NavLink}
+                to={to}
+                end={to === "/"}
+                aria-label={label}
+                selected={location.pathname === to}
+                sx={{
+                  minWidth: 0,
+                  minHeight: { xs: 54, sm: 46 },
+                  px: { xs: 0.25, sm: 1.5 },
+                  py: 1.25,
+                  gap: { xs: 0.65, sm: 1.4 },
+                  flexDirection: { xs: "column", sm: "row" },
+                  justifyContent: { xs: "center", md: "flex-start" },
+                  color: "text.secondary",
+                  borderRadius: { xs: 0, sm: 1 },
+                  borderBottom: { xs: "2px solid transparent", sm: 0 },
+                  "&.Mui-selected": {
+                    color: "text.primary",
+                    backgroundColor: { xs: "transparent", sm: "#202020" },
+                    borderBottomColor: { xs: "#eeeeee" },
+                  },
+                  "&:hover, &.Mui-selected:hover": {
+                    backgroundColor: "#191919",
+                  },
+                }}
+              >
+                <Icon size={18} aria-hidden="true" />
+                <Typography
+                  component="span"
+                  sx={{
+                    display: { xs: "inline", sm: "none", md: "inline" },
+                    fontSize: { xs: ".7rem", md: ".875rem" },
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {label}
+                </Typography>
+                <Typography
+                  component="span"
+                  sx={{
+                    display: { xs: "none", lg: "inline" },
+                    ml: "auto",
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: ".75rem",
+                    color: "#949494",
+                  }}
+                >
+                  0{index + 1}
+                </Typography>
+              </ListItemButton>
+            ))}
+          </List>
+          <Box sx={{ mt: { xs: 0, sm: "auto" }, gridColumn: 2, gridRow: 1 }}>
+            <Box
+              sx={{ display: { xs: "none", md: "block" }, px: 1.1, pb: 2.75 }}
+            >
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{
+                  alignItems: "center",
+                }}
+              >
+                <Box
+                  aria-hidden="true"
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    backgroundColor: "#eeeeee",
+                    flexShrink: 0,
+                  }}
+                />
+                <Typography variant="body2">
+                  {config.playEnabled
+                    ? config.admissionMode === "staging"
+                      ? "Tester matches open"
+                      : "Ranked play open"
+                    : "Demo available"}
+                </Typography>
+              </Stack>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mt: 0.75 }}
+              >
                 {config.admissionMode === "staging"
                   ? "Private staging"
                   : config.playEnabled
                     ? "Free beta"
                     : "Ranked play not open yet"}
-              </small>
-            </div>
+              </Typography>
+            </Box>
             {user ? (
-              <>
-                <Link className="account-button" to="/profile">
-                  <span className="avatar small">
-                    {(user.user_metadata?.full_name || "You")[0]}
-                  </span>
-                  <span>{user.user_metadata?.full_name || "Your account"}</span>
-                </Link>
-                <button
-                  className="quiet-button sign-out"
-                  onClick={() => client?.auth.signOut()}
+              <Stack spacing={1}>
+                <Button
+                  component={Link}
+                  to="/profile"
+                  aria-label="Your account"
+                  variant="text"
+                  color="inherit"
+                  sx={{
+                    justifyContent: {
+                      xs: "flex-end",
+                      sm: "center",
+                      md: "flex-start",
+                    },
+                    p: { xs: 0, sm: 1 },
+                    minWidth: 0,
+                    gap: 1,
+                    textAlign: "left",
+                    overflowWrap: "anywhere",
+                  }}
                 >
-                  <LogOut size={15} />
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      width: 29,
+                      height: 29,
+                      backgroundColor: "#202020",
+                      border: "1px solid #494949",
+                      color: "text.primary",
+                      fontSize: ".875rem",
+                    }}
+                  >
+                    {(user.user_metadata?.full_name || "You")[0]}
+                  </Avatar>
+                  <Box
+                    component="span"
+                    sx={{ display: { xs: "none", md: "inline" } }}
+                  >
+                    {user.user_metadata?.full_name || "Your account"}
+                  </Box>
+                </Button>
+                <Button
+                  size="small"
+                  variant="text"
+                  color="inherit"
+                  startIcon={<LogOut size={15} />}
+                  onClick={() => client?.auth.signOut()}
+                  sx={{
+                    display: { xs: "none", sm: "none", md: "inline-flex" },
+                    justifyContent: "flex-start",
+                    color: "text.secondary",
+                  }}
+                >
                   Sign out
-                </button>
-              </>
+                </Button>
+              </Stack>
             ) : (
-              <button
-                className="button sidebar-signin"
+              <Button
+                variant="outlined"
                 onClick={() => setSignIn(true)}
+                endIcon={<ArrowUpRight size={17} />}
+                sx={{
+                  display: { xs: "inline-flex", sm: "none", md: "flex" },
+                  width: { md: "100%" },
+                  minHeight: { xs: 36, md: 42 },
+                  justifyContent: "space-between",
+                  whiteSpace: "nowrap",
+                }}
               >
                 Sign in
-                <ArrowUpRight size={17} />
-              </button>
+              </Button>
             )}
-          </div>
-        </aside>
+          </Box>
+        </Box>
       )}
-      <div className="app-content">
+      <Box sx={{ minWidth: 0 }}>
         <Routes>
           <Route
             path="/"
@@ -154,19 +351,25 @@ export default function App() {
           <Route
             path="*"
             element={
-              <main className="page">
-                <h1>Page not found.</h1>
-                <Link className="button primary" to="/">
+              <Page>
+                <Typography component="h1" variant="h2" sx={{ mb: 3 }}>
+                  Page not found.
+                </Typography>
+                <Button
+                  component={Link}
+                  to="/"
+                  variant="contained"
+                  endIcon={<ArrowRight size={17} />}
+                >
                   Back to the lobby
-                  <ArrowRight size={17} />
-                </Link>
-              </main>
+                </Button>
+              </Page>
             }
           />
         </Routes>
-      </div>
+      </Box>
       {signIn && <SignIn onClose={() => setSignIn(false)} />}
-    </div>
+    </Box>
   );
 }
 function PreviewRedirect() {
@@ -178,6 +381,21 @@ function PreviewRedirect() {
     />
   );
 }
+function Page({ children }: { children: ReactNode }) {
+  return (
+    <Box
+      component="main"
+      sx={{
+        maxWidth: 1370,
+        mx: "auto",
+        px: { xs: 2.25, sm: 3.5, lg: 5.75 },
+        pt: { xs: 2.5, sm: 3, lg: 3.75 },
+      }}
+    >
+      {children}
+    </Box>
+  );
+}
 function PageTop({
   section,
   children,
@@ -186,12 +404,124 @@ function PageTop({
   children?: ReactNode;
 }) {
   return (
-    <div className="page-top">
-      <span className="overline">
-        CLUBHOUSE <span>/</span> {section}
-      </span>
-      <div>{children || <span className="badge">FREE BETA</span>}</div>
-    </div>
+    <Stack
+      direction="row"
+      spacing={1.5}
+      sx={{
+        alignItems: "center",
+        justifyContent: "space-between",
+        minHeight: 32,
+      }}
+    >
+      <Typography
+        component="span"
+        variant="overline"
+        sx={{
+          fontFamily: '"JetBrains Mono", monospace',
+          fontSize: ".75rem",
+          letterSpacing: ".075em",
+          color: "text.secondary",
+        }}
+      >
+        CLUBHOUSE{" "}
+        <Box
+          component="span"
+          sx={{ px: { xs: 0.75, sm: 1.6 }, color: "#949494" }}
+        >
+          /
+        </Box>{" "}
+        {section}
+      </Typography>
+      {children || (
+        <Chip
+          label="FREE BETA"
+          size="small"
+          variant="outlined"
+          sx={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: ".7rem",
+            borderRadius: "3px",
+          }}
+        />
+      )}
+    </Stack>
+  );
+}
+function PageHeading({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children?: ReactNode;
+}) {
+  return (
+    <Stack
+      component="header"
+      direction="row"
+      spacing={2.5}
+      sx={{
+        alignItems: "center",
+        justifyContent: "space-between",
+        my: { xs: 3, lg: 4 },
+      }}
+    >
+      <Box sx={{ minWidth: 0 }}>
+        <Typography
+          component="h1"
+          variant="h2"
+          sx={{
+            fontSize: { xs: "2.375rem", sm: "2.5rem", lg: "2.8rem" },
+            fontWeight: 500,
+            lineHeight: 1.15,
+            letterSpacing: "-.05em",
+            overflowWrap: "anywhere",
+          }}
+        >
+          {title}.
+        </Typography>
+        <Typography
+          color="text.secondary"
+          sx={{
+            mt: 1.25,
+            fontSize: { xs: ".875rem", sm: "1rem" },
+            lineHeight: 1.65,
+          }}
+        >
+          {subtitle}
+        </Typography>
+      </Box>
+      {children}
+    </Stack>
+  );
+}
+function SectionHeading({
+  title,
+  children,
+}: {
+  title: string;
+  children?: ReactNode;
+}) {
+  return (
+    <Stack
+      direction="row"
+      spacing={1.5}
+      sx={{
+        justifyContent: "space-between",
+        alignItems: "center",
+        pb: 2.25,
+      }}
+    >
+      <Typography
+        component="h2"
+        variant="h6"
+        sx={{ fontSize: "1.12rem", fontWeight: 500 }}
+      >
+        {title}
+      </Typography>
+      {children}
+    </Stack>
   );
 }
 function RatingSwitch({
@@ -202,13 +532,23 @@ function RatingSwitch({
   onChange: (m: Mode) => void;
 }) {
   return (
-    <div className="segmented" role="group" aria-label="Rating type">
+    <ToggleButtonGroup
+      value={mode}
+      exclusive
+      onChange={(_, value: Mode | null) => {
+        if (value) onChange(value);
+      }}
+      aria-label="Rating type"
+      size="small"
+      fullWidth
+      sx={{ backgroundColor: "#141414" }}
+    >
       {(["human", "bot"] as Mode[]).map((m) => (
-        <button key={m} aria-pressed={mode === m} onClick={() => onChange(m)}>
+        <ToggleButton key={m} value={m} sx={{ flex: 1, px: 2 }}>
           {m === "human" ? "Human" : "Bot"}
-        </button>
+        </ToggleButton>
       ))}
-    </div>
+    </ToggleButtonGroup>
   );
 }
 function Lobby({ onSignIn }: { onSignIn: () => void }) {
@@ -268,49 +608,71 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
   const nav = useNavigate();
   const rating = ratings.find((r) => r.arena === arena && r.mode === mode);
   return (
-    <main className="page lobby">
+    <Page>
       <PageTop section="PLAY" />
-      <header className="page-heading">
-        <div>
-          <h1>
-            The arena<span className="heading-period">.</span>
-          </h1>
-          <p>One problem. Two players. First correct solution wins.</p>
-        </div>
-        <span className="heading-side">
+      <PageHeading
+        title="The arena"
+        subtitle="One problem. Two players. First correct solution wins."
+      >
+        <Typography
+          sx={{
+            display: { xs: "none", lg: "block" },
+            flexShrink: 0,
+            textAlign: "right",
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: ".75rem",
+            lineHeight: 1.9,
+            letterSpacing: ".06em",
+            color: "#c9c9c9",
+          }}
+        >
           RATED 1v1
-          <br />
-          <span>10 / 20 / 30 MIN</span>
-        </span>
-      </header>
+          <Box
+            component="span"
+            sx={{ display: "block", color: "text.secondary" }}
+          >
+            10 / 20 / 30 MIN
+          </Box>
+        </Typography>
+      </PageHeading>
       {user &&
         (currentQueue?.matchId || currentQueue?.status === "waiting") && (
-          <section
-            className="notice"
+          <Alert
+            component="section"
+            severity="info"
+            icon={false}
+            role="region"
             aria-label="Your current match"
-            style={{ marginBottom: 24 }}
+            sx={{ mb: 3 }}
           >
-            <strong>
+            <Typography
+              component="strong"
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+              }}
+            >
               {currentQueue.matchId
                 ? "You have a match to return to."
                 : "Your opponent search is still active."}
-            </strong>
-            <p>
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1, mb: 2 }}>
               {currentQueue.matchId
                 ? "Reconnect to the server clock, your drafts, and the latest result. Existing matches remain available while new admissions are paused."
                 : "Reopen your existing search. This will not create a new queue entry."}
-            </p>
+            </Typography>
             {currentQueue.matchId ? (
-              <Link
-                className="button primary"
+              <Button
+                component={Link}
                 to={"/match/" + currentQueue.matchId}
+                variant="contained"
+                endIcon={<ArrowRight size={16} />}
               >
                 Resume match
-                <ArrowRight size={16} />
-              </Link>
+              </Button>
             ) : (
-              <button
-                className="button primary"
+              <Button
+                variant="contained"
                 onClick={() =>
                   setQueue({
                     arena: currentQueue.arena ?? arena,
@@ -318,99 +680,262 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                     userId: user.id,
                   })
                 }
+                endIcon={<ArrowRight size={16} />}
               >
                 Resume search
-                <ArrowRight size={16} />
-              </button>
+              </Button>
             )}
-          </section>
+          </Alert>
         )}
       {user && recoveryError && (
-        <div className="notice" role="alert" style={{ marginBottom: 24 }}>
-          <p>{recoveryError}</p>
-          <button
-            className="button"
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ mb: 1.5 }}>
+            {recoveryError}
+          </Typography>
+          <Button
+            variant="outlined"
             onClick={() => setRecoveryVersion((version) => version + 1)}
           >
             Retry current match
-          </button>
-        </div>
+          </Button>
+        </Alert>
       )}
-      <div className="lobby-layout">
-        <div className="lobby-main">
-          <section className="match-setup" aria-label="Choose your match">
-            <div className="section-heading">
-              <h2>Choose your match</h2>
-              <span className="overline">01 — DIFFICULTY</span>
-            </div>
-            <div
-              className="arena-options"
-              role="radiogroup"
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "minmax(0, 1fr)",
+            lg: "minmax(0, 1fr) 248px",
+          },
+          gap: { xs: 3, lg: 4.5 },
+        }}
+      >
+        <Box sx={{ minWidth: 0 }}>
+          <Paper
+            component="section"
+            variant="outlined"
+            aria-label="Choose your match"
+            sx={{
+              borderRadius: "6px",
+              backgroundColor: "#111111",
+              overflow: "hidden",
+            }}
+          >
+            <Box sx={{ px: { xs: 2.25, sm: 3 }, pt: 2.75 }}>
+              <SectionHeading title="Choose your match">
+                <Typography
+                  variant="overline"
+                  sx={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: ".7rem",
+                    color: "text.secondary",
+                  }}
+                >
+                  01 — DIFFICULTY
+                </Typography>
+              </SectionHeading>
+            </Box>
+            <RadioGroup
+              name="arena"
+              value={arena}
+              onChange={(_, value) => setArena(value as Arena)}
               aria-label="Arena difficulty"
+              sx={{ borderTop: 1, borderBottom: 1, borderColor: "divider" }}
             >
               {arenaKeys.map((a, i) => (
-                <label
+                <FormControlLabel
                   key={a}
-                  className={"arena-option " + (arena === a ? "selected" : "")}
-                >
-                  <input
-                    type="radio"
-                    name="arena"
-                    value={a}
-                    checked={arena === a}
-                    onChange={() => setArena(a)}
-                  />
-                  <span className="arena-order">0{i + 1}</span>
-                  <span className="arena-option-name">
-                    <strong>{ARENAS[a].name}</strong>
-                    <span>{arenaDetails[a].topics}</span>
-                  </span>
-                  <span className="arena-option-time">
-                    {formatClock(ARENAS[a].duration)}
-                    <small>minutes</small>
-                  </span>
-                  <span className="radio-mark">
-                    {arena === a && <Check size={14} />}
-                  </span>
-                </label>
+                  value={a}
+                  labelPlacement="start"
+                  disableTypography
+                  control={
+                    <Radio
+                      size="small"
+                      sx={{ p: 0, ml: { xs: 1, sm: 1.8 }, flexShrink: 0 }}
+                    />
+                  }
+                  label={
+                    <Box
+                      sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        display: "grid",
+                        gridTemplateColumns: {
+                          xs: "minmax(0, 1fr) 48px",
+                          sm: "31px minmax(0, 1fr) 62px",
+                        },
+                        alignItems: "center",
+                        gap: { xs: 1.3, sm: 1.9 },
+                      }}
+                    >
+                      <Typography
+                        component="span"
+                        aria-hidden="true"
+                        sx={{
+                          display: { xs: "none", sm: "inline" },
+                          fontFamily: '"JetBrains Mono", monospace',
+                          fontSize: ".75rem",
+                          color:
+                            arena === a ? "text.primary" : "text.secondary",
+                        }}
+                      >
+                        0{i + 1}
+                      </Typography>
+                      <Box>
+                        <Typography
+                          component="strong"
+                          sx={{
+                            display: "block",
+                            fontFamily: '"Space Grotesk", Inter, sans-serif',
+                            fontSize: "1.25rem",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {ARENAS[a].name}
+                        </Typography>
+                        <Typography
+                          component="span"
+                          color="text.secondary"
+                          sx={{
+                            display: "block",
+                            mt: 0.6,
+                            fontSize: { xs: ".75rem", sm: ".875rem" },
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {arenaDetails[a].topics}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: "right" }}>
+                        <Typography
+                          component="span"
+                          sx={{
+                            fontFamily: '"JetBrains Mono", monospace',
+                            fontSize: { xs: ".875rem", sm: "1rem" },
+                          }}
+                        >
+                          {formatClock(ARENAS[a].duration)}
+                        </Typography>
+                        <Typography
+                          component="span"
+                          color="text.secondary"
+                          sx={{ display: "block", mt: 0.75, fontSize: ".7rem" }}
+                        >
+                          minutes
+                        </Typography>
+                      </Box>
+                    </Box>
+                  }
+                  sx={{
+                    m: 0,
+                    px: { xs: 2.25, sm: 3 },
+                    py: 2.4,
+                    minHeight: 84,
+                    backgroundColor: arena === a ? "#202020" : "#0c0c0c",
+                    boxShadow: arena === a ? "inset 3px 0 #eeeeee" : "none",
+                    borderBottom: i < 2 ? 1 : 0,
+                    borderColor: "divider",
+                    "&:hover": { backgroundColor: "#1c1c1c" },
+                    "&:has(input:focus-visible)": {
+                      outline: "2px solid #eeeeee",
+                      outlineOffset: "-3px",
+                    },
+                  }}
+                />
               ))}
-            </div>
-            <div className="selection-details">
-              <span className="overline">
+            </RadioGroup>
+            <Box sx={{ p: { xs: 2.25, sm: 3 } }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: ".75rem",
+                }}
+              >
                 {ARENAS[arena].name.toUpperCase()} /{" "}
                 {ARENAS[arena].duration / 60} MINUTES
-              </span>
-              <h3>{arenaDetails[arena].subtitle}</h3>
-              <p>{arenaDetails[arena].note}</p>
-              <div className="format-line">
-                <span>
-                  <Swords size={15} />1 vs 1
-                </span>
-                <span>
-                  <Flag size={15} />
-                  First correct wins
-                </span>
-                <span>
-                  <BookOpen size={15} />
-                  Same problem
-                </span>
-              </div>
-            </div>
-            <div className="play-row">
-              <div>
-                <span className="play-label">
+              </Typography>
+              <Typography
+                component="h3"
+                variant="h6"
+                sx={{ fontSize: "1.125rem", mt: 1.1, mb: 0.9 }}
+              >
+                {arenaDetails[arena].subtitle}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ lineHeight: 1.65, maxWidth: 480, minHeight: 45 }}
+              >
+                {arenaDetails[arena].note}
+              </Typography>
+              <Stack
+                direction="row"
+                useFlexGap
+                spacing={2.4}
+                sx={{
+                  flexWrap: "wrap",
+                  mt: 2.5,
+                  color: "#cecece",
+                }}
+              >
+                {[
+                  { icon: Swords, text: "1 vs 1" },
+                  { icon: Flag, text: "First correct wins" },
+                  { icon: BookOpen, text: "Same problem" },
+                ].map(({ icon: Icon, text }) => (
+                  <Stack
+                    key={text}
+                    direction="row"
+                    spacing={0.75}
+                    sx={{
+                      alignItems: "center",
+                    }}
+                  >
+                    <Icon size={15} aria-hidden="true" />
+                    <Typography variant="caption">{text}</Typography>
+                  </Stack>
+                ))}
+              </Stack>
+            </Box>
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1.75}
+              sx={{
+                justifyContent: "space-between",
+                alignItems: { xs: "stretch", sm: "center" },
+                p: { xs: 2.25, sm: 3 },
+                borderTop: 1,
+                borderColor: "divider",
+                backgroundColor: "#151515",
+              }}
+            >
+              <Box>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 500,
+                  }}
+                >
                   {config.playEnabled
                     ? "Ready to queue"
                     : "A full match, in demo mode"}
-                </span>
-                <span className="muted">
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mt: 0.6, maxWidth: { sm: 240 } }}
+                >
                   {config.playEnabled
                     ? "Human opponent first. Bot fallback after 15s."
                     : "Try the clock, editor, and example results."}
-                </span>
-              </div>
-              <button
-                className="button primary play-button"
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                startIcon={<Play size={17} fill="currentColor" />}
+                endIcon={<ArrowRight size={18} />}
+                sx={{ minHeight: 47, px: 2.4, flexShrink: 0 }}
                 onClick={() =>
                   config.playEnabled
                     ? user
@@ -419,87 +944,215 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                     : nav("/demo/" + arena)
                 }
               >
-                <Play size={17} fill="currentColor" />
                 {config.playEnabled ? "Find a match" : "Try demo"}
-                <ArrowRight size={18} />
-              </button>
-            </div>
+              </Button>
+            </Stack>
             {!config.playEnabled && (
-              <div className="setup-note">
-                <p>No account required. No code execution or saved ratings.</p>
-                {config.admissionMode === "staging" && <p>{config.reason}</p>}
-              </div>
+              <Box
+                sx={{
+                  px: { xs: 2.25, sm: 3 },
+                  pb: 1.9,
+                  backgroundColor: "#151515",
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block" }}
+                >
+                  No account required. No code execution or saved ratings.
+                </Typography>
+                {config.admissionMode === "staging" && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", mt: 0.5 }}
+                  >
+                    {config.reason}
+                  </Typography>
+                )}
+              </Box>
             )}
-          </section>
+          </Paper>
           <RecentHistory />
-        </div>
-        <aside className="lobby-rail">
-          <section className="rating-panel">
-            <div className="section-heading">
-              <h2>Your rating</h2>
-              <span className="overline">ELO</span>
-            </div>
+        </Box>
+        <Box
+          component="aside"
+          sx={{
+            display: { xs: "grid", lg: "block" },
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+            gap: 4,
+            borderTop: { xs: 1, lg: 0 },
+            borderColor: "divider",
+            pt: { xs: 3.5, lg: 0 },
+          }}
+        >
+          <Box component="section">
+            <SectionHeading title="Your rating">
+              <Typography
+                variant="overline"
+                color="text.secondary"
+                sx={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: ".75rem",
+                }}
+              >
+                ELO
+              </Typography>
+            </SectionHeading>
             <RatingSwitch mode={mode} onChange={setMode} />
-            <div className="rating-value">
-              {rating ? rating.rating.toLocaleString() : "—"}
-              <span>
+            <Box sx={{ mt: 3.5, mb: 2.75 }}>
+              <Typography
+                sx={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: { xs: "3rem", lg: "3.75rem" },
+                  lineHeight: 1,
+                  letterSpacing: "-.065em",
+                  color: "#eeeeee",
+                }}
+              >
+                {rating ? rating.rating.toLocaleString() : "—"}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 1.6 }}
+              >
                 {ARENAS[arena].name} ·{" "}
                 {mode === "human" ? "Human matches" : "Bot matches"}
-              </span>
-            </div>
-            <div className="rating-foot">
-              <span>
+              </Typography>
+            </Box>
+            <Stack
+              direction="row"
+              spacing={1.5}
+              sx={{
+                justifyContent: "space-between",
+                borderTop: 1,
+                borderColor: "divider",
+                pt: 2,
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
                 {rating
                   ? `${rating.matches} matches played`
                   : "Starting rating"}
-              </span>
-              <strong>{rating ? `${rating.wins} wins` : "1,200"}</strong>
-            </div>
-            <p className="muted">
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ fontFamily: '"JetBrains Mono", monospace' }}
+              >
+                {rating ? `${rating.wins} wins` : "1,200"}
+              </Typography>
+            </Stack>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1.6, lineHeight: 1.65 }}
+            >
               {user
                 ? "Each arena has separate human and bot ratings."
                 : "Sign in when ranked play opens to establish your rating."}
-            </p>
+            </Typography>
             {error && (
-              <p className="error" role="alert">
+              <Alert severity="error" sx={{ mt: 1.5 }}>
                 {error}
-              </p>
+              </Alert>
             )}
-          </section>
-          <section className="rules-panel">
-            <span className="overline">THE MATCH RULES</span>
-            <ol>
-              <li>
-                <span>01</span>
-                <div>
-                  <strong>Same starting line</strong>
-                  <p>Identical problem and a shared clock.</p>
-                </div>
-              </li>
-              <li>
-                <span>02</span>
-                <div>
-                  <strong>Correctness comes first</strong>
-                  <p>Pass every hidden test to win.</p>
-                </div>
-              </li>
-              <li>
-                <span>03</span>
-                <div>
-                  <strong>A separate bot ladder</strong>
-                  <p>Simulated opponents never change your human rating.</p>
-                </div>
-              </li>
-            </ol>
-            <div className="supported-languages">
-              <span className="overline">YOUR LANGUAGE</span>
-              <p>
-                Python <b>·</b> C++ <b>·</b> Java <b>·</b> JavaScript
-              </p>
-            </div>
-          </section>
-        </aside>
-      </div>
+          </Box>
+          <Box
+            component="section"
+            sx={{
+              mt: { lg: 3.5 },
+              borderTop: { lg: 1 },
+              borderColor: "divider",
+              pt: { lg: 3 },
+            }}
+          >
+            <Typography
+              variant="overline"
+              sx={{
+                fontFamily: '"JetBrains Mono", monospace',
+                fontSize: ".75rem",
+                color: "text.secondary",
+              }}
+            >
+              THE MATCH RULES
+            </Typography>
+            <Stack
+              component="ol"
+              spacing={2.6}
+              sx={{ listStyle: "none", p: 0, mt: 2.75, mb: 0 }}
+            >
+              {[
+                ["Same starting line", "Identical problem and a shared clock."],
+                ["Correctness comes first", "Pass every hidden test to win."],
+                [
+                  "A separate bot ladder",
+                  "Simulated opponents never change your human rating.",
+                ],
+              ].map(([title, description], i) => (
+                <Stack
+                  component="li"
+                  key={title}
+                  direction="row"
+                  spacing={1.75}
+                >
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: ".75rem",
+                      color: "text.secondary",
+                      pt: 0.4,
+                    }}
+                  >
+                    0{i + 1}
+                  </Typography>
+                  <Box>
+                    <Typography
+                      component="strong"
+                      variant="body2"
+                      sx={{
+                        fontWeight: 500,
+                      }}
+                    >
+                      {title}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 0.6, lineHeight: 1.6 }}
+                    >
+                      {description}
+                    </Typography>
+                  </Box>
+                </Stack>
+              ))}
+            </Stack>
+            <Box
+              sx={{ mt: 3.25, pt: 2.75, borderTop: 1, borderColor: "divider" }}
+            >
+              <Typography
+                variant="overline"
+                sx={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: ".75rem",
+                  color: "text.secondary",
+                }}
+              >
+                YOUR LANGUAGE
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mt: 1.1, lineHeight: 1.8 }}
+              >
+                Python · C++ · Java · JavaScript
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
       <Footer />
       {queue && user?.id === queue.userId && (
         <LiveQueue
@@ -509,23 +1162,31 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
           onClose={closeQueue}
         />
       )}
-    </main>
+    </Page>
   );
 }
 function RecentHistory() {
   const { user } = useAuth();
   const { rows, error, loading } = useHistory();
   return (
-    <section className="recent-history">
-      <div className="section-heading">
-        <h2>Recent matches</h2>
-        <Link className="text-link" to="/history">
-          View history
-          <ArrowUpRight size={15} />
-        </Link>
-      </div>
+    <Box component="section" sx={{ mt: 3.6 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <SectionHeading title="Recent matches">
+          <Button
+            component={Link}
+            to="/history"
+            variant="text"
+            color="inherit"
+            size="small"
+            endIcon={<ArrowUpRight size={15} />}
+            sx={{ color: "text.secondary", whiteSpace: "nowrap" }}
+          >
+            View history
+          </Button>
+        </SectionHeading>
+      </Box>
       {user && rows.length ? (
-        <MatchRows rows={rows.slice(0, 3)} userId={user!.id} />
+        <MatchRows rows={rows.slice(0, 3)} userId={user.id} />
       ) : (
         <EmptyState
           title={loading ? "Loading matches…" : "No matches played yet."}
@@ -536,7 +1197,7 @@ function RecentHistory() {
               : "Your match history starts with your first ranked game. Demo results stay out of the record.")}
         </EmptyState>
       )}
-    </section>
+    </Box>
   );
 }
 function ArenaTabs({
@@ -547,13 +1208,22 @@ function ArenaTabs({
   onChange: (a: Arena) => void;
 }) {
   return (
-    <div className="segmented arena-tabs" role="group" aria-label="Arena">
+    <ToggleButtonGroup
+      value={arena}
+      exclusive
+      onChange={(_, value: Arena | null) => {
+        if (value) onChange(value);
+      }}
+      aria-label="Arena"
+      size="small"
+      sx={{ backgroundColor: "#141414", minWidth: { sm: 280 } }}
+    >
       {arenaKeys.map((a) => (
-        <button key={a} aria-pressed={a === arena} onClick={() => onChange(a)}>
+        <ToggleButton key={a} value={a} sx={{ flex: 1, px: 2 }}>
           {ARENAS[a].name}
-        </button>
+        </ToggleButton>
       ))}
-    </div>
+    </ToggleButtonGroup>
   );
 }
 function Leaderboard() {
@@ -587,122 +1257,273 @@ function Leaderboard() {
     };
   }, [arena, mode, config.playEnabled]);
   return (
-    <main className="page">
+    <Page>
       <PageTop section="LEADERBOARD" />
-      <header className="page-heading">
-        <div>
-          <h1>
-            The standings<span className="heading-period">.</span>
-          </h1>
-          <p>Rankings by arena. Human and bot results are kept separate.</p>
-        </div>
-      </header>
-      <div className="list-controls">
+      <PageHeading
+        title="The standings"
+        subtitle="Rankings by arena. Human and bot results are kept separate."
+      />
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2.5}
+        sx={{
+          justifyContent: "space-between",
+          mb: 3,
+        }}
+      >
         <ArenaTabs arena={arena} onChange={setArena} />
-        <RatingSwitch mode={mode} onChange={setMode} />
-      </div>
-      <div className="table-surface">
-        <div className="leader-row table-head">
-          <span>RANK</span>
-          <span>PLAYER</span>
-          <span>MATCHES</span>
-          <span>RATING</span>
-        </div>
-        {rows.length ? (
-          rows.map((r, i) => (
-            <div className="leader-row" key={r.user_id}>
-              <span className="rank-number">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <strong className="table-player">
-                <span className="avatar small">
-                  {(r.profiles?.display_name || r.profiles?.username || "?")[0]}
-                </span>
-                {r.profiles?.display_name || r.profiles?.username}
-              </strong>
-              <span>{r.matches}</span>
-              <strong className="mono">{r.rating.toLocaleString()}</strong>
-            </div>
-          ))
-        ) : (
-          <EmptyState
-            title={loading ? "Loading rankings…" : "The board is empty."}
+        <Box sx={{ minWidth: 170 }}>
+          <RatingSwitch mode={mode} onChange={setMode} />
+        </Box>
+      </Stack>
+      <Paper
+        variant="outlined"
+        square
+        sx={{
+          backgroundColor: "#0d0d0d",
+          borderLeft: 0,
+          borderRight: 0,
+          px: { xs: 1.5, sm: 3 },
+        }}
+      >
+        <TableContainer>
+          <Table
+            size="small"
+            aria-label={`${ARENAS[arena].name} ${mode} ratings`}
+            sx={{ tableLayout: "fixed" }}
           >
-            {error ||
-              (config.playEnabled
-                ? "Complete a match to establish a rating in this arena."
-                : "Rankings open with the live beta. Demo matches don’t enter the standings.")}
-          </EmptyState>
-        )}
-      </div>
-      <p className="under-note">
+            <TableHead>
+              <TableRow>
+                {["RANK", "PLAYER", "MATCHES", "RATING"].map((label, i) => (
+                  <TableCell
+                    key={label}
+                    align={i > 1 ? "right" : "left"}
+                    sx={{
+                      px: { xs: 0.5, sm: 1 },
+                      py: 2.4,
+                      fontFamily: '"JetBrains Mono", monospace',
+                      color: "text.secondary",
+                      fontSize: { xs: ".6rem", sm: ".75rem" },
+                      width: i === 0 ? "13%" : i === 1 ? "43%" : "22%",
+                    }}
+                  >
+                    {label}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rows.length ? (
+                rows.map((r, i) => (
+                  <TableRow key={r.user_id}>
+                    <TableCell
+                      sx={{
+                        px: { xs: 0.5, sm: 1 },
+                        py: 2.4,
+                        fontFamily: '"JetBrains Mono", monospace',
+                        color: "text.secondary",
+                      }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </TableCell>
+                    <TableCell sx={{ px: { xs: 0.5, sm: 1 }, py: 2.4 }}>
+                      <Stack
+                        direction="row"
+                        spacing={1.5}
+                        sx={{
+                          alignItems: "center",
+                        }}
+                      >
+                        <Avatar
+                          variant="rounded"
+                          sx={{
+                            width: 29,
+                            height: 29,
+                            display: { xs: "none", sm: "flex" },
+                            backgroundColor: "#202020",
+                            color: "text.primary",
+                            border: "1px solid #494949",
+                            fontSize: ".875rem",
+                          }}
+                        >
+                          {
+                            (r.profiles?.display_name ||
+                              r.profiles?.username ||
+                              "?")[0]
+                          }
+                        </Avatar>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 500,
+                            overflowWrap: "anywhere",
+                          }}
+                        >
+                          {r.profiles?.display_name || r.profiles?.username}
+                        </Typography>
+                      </Stack>
+                    </TableCell>
+                    <TableCell align="right" sx={{ px: { xs: 0.5, sm: 1 } }}>
+                      {r.matches}
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{
+                        px: { xs: 0.5, sm: 1 },
+                        fontFamily: '"JetBrains Mono", monospace',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {r.rating.toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    sx={{ borderBottom: 0, px: 0, py: 1.8 }}
+                  >
+                    <EmptyState
+                      title={
+                        loading ? "Loading rankings…" : "The board is empty."
+                      }
+                    >
+                      {error ||
+                        (config.playEnabled
+                          ? "Complete a match to establish a rating in this arena."
+                          : "Rankings open with the live beta. Demo matches don’t enter the standings.")}
+                    </EmptyState>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 2.5 }}>
         {mode === "human"
           ? "Human matches only."
           : "Simulated bot matches only."}{" "}
         Every new rating starts at 1,200.
-      </p>
+      </Typography>
       <Footer />
-    </main>
+    </Page>
   );
 }
 function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
   return (
-    <div className="history-rows">
+    <List disablePadding aria-label="Completed matches">
       {rows.map((r) => {
         const win = r.result.winnerId === userId;
         const delta = r.result.deltas[userId] ?? 0;
         return (
-          <Link className="history-row" to={"/match/" + r.id} key={r.id}>
-            <span className={"result-label " + (win ? "positive" : "")}>
-              {r.result.reason === "void"
-                ? "Void"
-                : !r.result.winnerId
-                  ? "Draw"
-                  : win
-                    ? "Win"
-                    : "Loss"}
-            </span>
-            <div>
-              <strong>
-                {r.problem_title || ARENAS[r.arena].name + " arena"}
-              </strong>
-              <span>
-                {r.mode === "bot" ? "Simulated bot" : "Human opponent"} ·{" "}
-                {new Date(r.ended_at).toLocaleDateString()}
-              </span>
-            </div>
-            <span className={"mono " + (delta > 0 ? "positive" : "")}>
-              {delta > 0 ? "+" : ""}
-              {delta}
-            </span>
-            <ChevronRight size={15} />
-          </Link>
+          <ListItem key={r.id} disablePadding>
+            <ListItemButton
+              component={Link}
+              to={"/match/" + r.id}
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "44px minmax(0, 1fr) 38px 15px",
+                  sm: "62px minmax(0, 1fr) 50px 18px",
+                },
+                alignItems: "center",
+                gap: { xs: 1, sm: 1.9 },
+                px: 0,
+                py: 2.5,
+                borderBottom: 1,
+                borderColor: "divider",
+                "&:hover": { backgroundColor: "#191919" },
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ color: win ? "#8dd3b5" : "text.primary" }}
+              >
+                {r.result.reason === "void"
+                  ? "Void"
+                  : !r.result.winnerId
+                    ? "Draw"
+                    : win
+                      ? "Win"
+                      : "Loss"}
+              </Typography>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  component="strong"
+                  variant="body2"
+                  sx={{
+                    fontWeight: 500,
+                    display: "block",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {r.problem_title || ARENAS[r.arena].name + " arena"}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mt: 0.75 }}
+                >
+                  {r.mode === "bot" ? "Simulated bot" : "Human opponent"} ·{" "}
+                  {new Date(r.ended_at).toLocaleDateString()}
+                </Typography>
+              </Box>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  color: delta > 0 ? "#8dd3b5" : "text.primary",
+                  textAlign: "right",
+                }}
+              >
+                {delta > 0 ? "+" : ""}
+                {delta}
+              </Typography>
+              <ChevronRight size={15} aria-hidden="true" />
+            </ListItemButton>
+          </ListItem>
         );
       })}
-    </div>
+    </List>
   );
 }
 function History({ onSignIn }: { onSignIn: () => void }) {
   const { user } = useAuth();
   const { rows, error, loading } = useHistory();
   return (
-    <main className="page">
+    <Page>
       <PageTop section="MATCH HISTORY" />
-      <header className="page-heading">
-        <div>
-          <h1>
-            Your record<span className="heading-period">.</span>
-          </h1>
-          <p>Completed matches, verdicts, and rating changes.</p>
-        </div>
-      </header>
-      <section className="table-surface">
-        <div className="section-heading">
-          <h2>All matches</h2>
-          <span className="overline">{rows.length} RECORDED</span>
-        </div>
+      <PageHeading
+        title="Your record"
+        subtitle="Completed matches, verdicts, and rating changes."
+      />
+      <Paper
+        component="section"
+        variant="outlined"
+        square
+        sx={{
+          backgroundColor: "#0d0d0d",
+          borderLeft: 0,
+          borderRight: 0,
+          p: { xs: 2.25, sm: 3 },
+        }}
+      >
+        <SectionHeading title="All matches">
+          <Typography
+            variant="overline"
+            sx={{
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: ".75rem",
+              color: "text.secondary",
+            }}
+          >
+            {rows.length} RECORDED
+          </Typography>
+        </SectionHeading>
         {user && rows.length ? (
-          <MatchRows rows={rows} userId={user!.id} />
+          <MatchRows rows={rows} userId={user.id} />
         ) : (
           <EmptyState
             title={loading ? "Loading your record…" : "No matches on record."}
@@ -713,80 +1534,157 @@ function History({ onSignIn }: { onSignIn: () => void }) {
                 : "Sign in when the beta opens to keep your match history. Demo results are never saved here.")}
           </EmptyState>
         )}
-      </section>
-      <div className="page-actions">
+      </Paper>
+      <Stack
+        direction="row"
+        useFlexGap
+        spacing={1.5}
+        sx={{
+          flexWrap: "wrap",
+          mt: 3,
+        }}
+      >
         {!user && (
-          <button className="button" onClick={onSignIn}>
+          <Button
+            variant="outlined"
+            onClick={onSignIn}
+            endIcon={<ArrowUpRight size={16} />}
+          >
             Sign in
-            <ArrowUpRight size={16} />
-          </button>
+          </Button>
         )}
-        <Link className="button primary" to="/">
+        <Button
+          component={Link}
+          to="/"
+          variant="contained"
+          endIcon={<ArrowRight size={16} />}
+        >
           Back to the lobby
-          <ArrowRight size={16} />
-        </Link>
-      </div>
+        </Button>
+      </Stack>
       <Footer />
-    </main>
+    </Page>
   );
 }
 function Profile({ onSignIn }: { onSignIn: () => void }) {
   const { user } = useAuth();
   const { ratings, error } = useRatings();
   return (
-    <main className="page">
+    <Page>
       <PageTop section="YOUR PROFILE" />
-      <header className="page-heading">
-        <div>
-          <h1>
-            {user?.user_metadata?.full_name || "Your profile"}
-            <span className="heading-period">.</span>
-          </h1>
-          <p>Three arenas. Six independent ratings.</p>
-        </div>
-      </header>
-      {user ? (
-        <section className="table-surface">
-          <div className="profile-row table-head">
-            <span>ARENA</span>
-            <span>HUMAN RATING</span>
-            <span>BOT RATING</span>
-          </div>
-          {arenaKeys.map((a) => (
-            <div className="profile-row" key={a}>
-              <strong>{ARENAS[a].name}</strong>
-              {(["human", "bot"] as Mode[]).map((m) => {
-                const r = ratings.find((r) => r.arena === a && r.mode === m);
-                return (
-                  <div key={m}>
-                    <strong className="mono">{r?.rating ?? "—"}</strong>
-                    <span className="muted">
-                      {r ? `${r.matches} played` : "Loading…"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-          {error && (
-            <p className="error" role="alert">
-              {error}
-            </p>
-          )}
-        </section>
-      ) : (
-        <section className="table-surface">
-          <EmptyState title="Your seat is waiting.">
-            Sign in when ranked play opens. You’ll start at 1,200 in each arena,
-            with separate ratings for human and simulated bot matches.
-          </EmptyState>
-          <button className="button primary" onClick={onSignIn}>
-            Sign in
-            <ArrowUpRight size={16} />
-          </button>
-        </section>
-      )}
+      <PageHeading
+        title={user?.user_metadata?.full_name || "Your profile"}
+        subtitle="Three arenas. Six independent ratings."
+      />
+      <Paper
+        component="section"
+        variant="outlined"
+        square
+        sx={{
+          backgroundColor: "#0d0d0d",
+          borderLeft: 0,
+          borderRight: 0,
+          p: { xs: 2, sm: 3 },
+        }}
+      >
+        {user ? (
+          <>
+            <TableContainer>
+              <Table
+                size="small"
+                aria-label="Your arena ratings"
+                sx={{ tableLayout: "fixed" }}
+              >
+                <TableHead>
+                  <TableRow>
+                    {["ARENA", "HUMAN RATING", "BOT RATING"].map((label) => (
+                      <TableCell
+                        key={label}
+                        sx={{
+                          px: { xs: 0.5, sm: 1 },
+                          py: 2,
+                          fontFamily: '"JetBrains Mono", monospace',
+                          fontSize: { xs: ".65rem", sm: ".75rem" },
+                          color: "text.secondary",
+                        }}
+                      >
+                        {label}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {arenaKeys.map((a) => (
+                    <TableRow key={a}>
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        sx={{
+                          px: { xs: 0.5, sm: 1 },
+                          py: 2.75,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {ARENAS[a].name}
+                      </TableCell>
+                      {(["human", "bot"] as Mode[]).map((m) => {
+                        const r = ratings.find(
+                          (r) => r.arena === a && r.mode === m,
+                        );
+                        return (
+                          <TableCell
+                            key={m}
+                            sx={{ px: { xs: 0.5, sm: 1 }, py: 2.75 }}
+                          >
+                            <Typography
+                              sx={{
+                                fontFamily: '"JetBrains Mono", monospace',
+                                fontSize: { xs: "1.15rem", sm: "1.5rem" },
+                              }}
+                            >
+                              {r?.rating ?? "—"}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{
+                                mt: 1,
+                                fontSize: { xs: ".75rem", sm: ".875rem" },
+                              }}
+                            >
+                              {r ? `${r.matches} played` : "Loading…"}
+                            </Typography>
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {error && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            )}
+          </>
+        ) : (
+          <>
+            <EmptyState title="Your seat is waiting.">
+              Sign in when ranked play opens. You’ll start at 1,200 in each
+              arena, with separate ratings for human and simulated bot matches.
+            </EmptyState>
+            <Button
+              variant="contained"
+              onClick={onSignIn}
+              endIcon={<ArrowUpRight size={16} />}
+            >
+              Sign in
+            </Button>
+          </>
+        )}
+      </Paper>
       <Footer />
-    </main>
+    </Page>
   );
 }

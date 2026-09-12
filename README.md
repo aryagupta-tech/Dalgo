@@ -1,6 +1,6 @@
 # Dalgo
 
-A dark DSA duel arena built with React, TypeScript, Vite, Monaco, Supabase, and Cloudflare Durable Objects. Three arenas, shared clocks, separate human/bot Elo ratings, and function-style Python, C++, Java, and JavaScript submissions.
+A dark DSA duel arena built with React, TypeScript, Material UI, Vite, Monaco, Supabase, and Cloudflare Durable Objects. Three arenas, shared clocks, separate human/bot Elo ratings, and function-style Python, C++, Java, and JavaScript submissions.
 
 ## Current state
 
@@ -8,9 +8,13 @@ The redesigned lobby and full `/demo/:arena` journey are implemented. The demo i
 
 The backend includes Supabase OAuth verification, durable human matchmaking and bot fallback, quota reservations, a server-only **JDoodle** adapter, receipt-ordered adjudication, and transactional settlement. New admissions support disabled, tester-only staging, and public modes, with a durable request budget. Active matches can finish after admissions close.
 
-Cloudflare staging is deployed at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev) with live play disabled. Supabase still needs project provisioning; OAuth, JDoodle credentials/evidence and actual integration checks remain pending. Public play stays disabled. See [docs/SETUP.md](docs/SETUP.md) for account setup and [docs/LAUNCH.md](docs/LAUNCH.md) for evidence gates.
+Cloudflare staging is deployed at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev) with live play disabled. Supabase is provisioned with all 30 problems, and the saved service credentials are connected. Complete OAuth browser testing, judge verification and multiplayer acceptance remain pending. Public play stays disabled. See [docs/SETUP.md](docs/SETUP.md) for account setup and [docs/LAUNCH.md](docs/LAUNCH.md) for evidence gates.
 
 The private Sites preview hosts only the frontend. Cloudflare staging/production configurations deploy the complete frontend and API with isolated SQLite Durable Objects. All implementation work belongs in `/Users/arya/Developer/Dalgo`.
+
+## Frontend components
+
+Material UI supplies the navigation controls, buttons, dialogs, selection controls, tables, progress indicators, and responsive layout primitives. `src/theme.ts` centralizes the black/charcoal palette, typography, focus styles and reduced-motion behavior. Component layout uses the library's `sx` API; there is no handwritten application stylesheet. Fonts are bundled locally and registered by the theme. Monaco manages its own editor styling.
 
 ## Account setup
 

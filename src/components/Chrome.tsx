@@ -1,10 +1,38 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Github, X } from "lucide-react";
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { useAuth } from "../auth";
-export function Brand() {
+export function Brand({
+  compactAtMedium = false,
+}: {
+  compactAtMedium?: boolean;
+}) {
   return (
-    <Link className="brand" to="/" aria-label="Dalgo home">
+    <Box
+      component={Link}
+      to="/"
+      aria-label="Dalgo home"
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 1.1,
+        color: "text.primary",
+        textDecoration: "none",
+      }}
+    >
       <svg width="29" height="29" viewBox="0 0 29 29" aria-hidden="true">
         <path
           d="m3 5 9 9.5L3 24M17 5l9 9.5L17 24"
@@ -13,8 +41,21 @@ export function Brand() {
           strokeWidth="4"
         />
       </svg>
-      <span>dalgo</span>
-    </Link>
+      <Typography
+        component="span"
+        sx={{
+          fontFamily: '"Space Grotesk", Inter, sans-serif',
+          fontSize: "1.8rem",
+          fontWeight: 700,
+          letterSpacing: "-0.055em",
+          display: compactAtMedium
+            ? { xs: "inline", sm: "none", md: "inline" }
+            : "inline",
+        }}
+      >
+        dalgo
+      </Typography>
+    </Box>
   );
 }
 export function Modal({
@@ -26,52 +67,68 @@ export function Modal({
   onClose: () => void;
   children: ReactNode;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const closeRef = useRef(onClose);
-  closeRef.current = onClose;
-  useEffect(() => {
-    const dialog = ref.current!;
-    dialog.showModal();
-    const cancel = (e: Event) => {
-      e.preventDefault();
-      closeRef.current();
-    };
-    dialog.addEventListener("cancel", cancel);
-    return () => {
-      dialog.removeEventListener("cancel", cancel);
-      dialog.close();
-    };
-  }, []);
+  const titleId = useId();
   return (
-    <dialog
-      ref={ref}
+    <Dialog
+      open
+      onClose={onClose}
       aria-label={title}
-      className="modal"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          const r = e.currentTarget.getBoundingClientRect();
-          if (
-            e.clientX < r.left ||
-            e.clientX > r.right ||
-            e.clientY < r.top ||
-            e.clientY > r.bottom
-          )
-            onClose();
-        }
+      aria-labelledby={titleId}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            width: "calc(100% - 32px)",
+            maxWidth: 520,
+            m: 2,
+            maxHeight: "calc(100dvh - 32px)",
+            border: "1px solid #505050",
+            borderRadius: "7px",
+            backgroundColor: "#161616",
+            backgroundImage: "none",
+          },
+        },
+        backdrop: {
+          sx: { backgroundColor: "#000000b8", backdropFilter: "blur(3px)" },
+        },
       }}
     >
-      <div className="modal-heading">
-        <span className="overline">DALGO / {title.toUpperCase()}</span>
-        <button
-          className="icon-button"
-          aria-label="Close dialog"
-          onClick={onClose}
+      <DialogTitle
+        id={`${titleId}-header`}
+        component="div"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1.5,
+          p: 3,
+          pb: 2,
+        }}
+      >
+        <Typography
+          id={titleId}
+          component="span"
+          variant="overline"
+          sx={{
+            textTransform: "uppercase",
+            fontFamily: '"JetBrains Mono", monospace',
+            color: "text.secondary",
+            fontSize: ".75rem",
+            letterSpacing: ".075em",
+          }}
         >
+          <Box component="span" aria-hidden="true">
+            DALGO /{" "}
+          </Box>
+          {title}
+        </Typography>
+        <IconButton aria-label="Close dialog" onClick={onClose} size="small">
           <X size={19} />
-        </button>
-      </div>
-      {children}
-    </dialog>
+        </IconButton>
+      </DialogTitle>
+      <DialogContent sx={{ px: 3, pb: 3, pt: 0 }}>{children}</DialogContent>
+    </Dialog>
   );
 }
 /** Preserve known application routes without accepting arbitrary redirect input. */
@@ -92,6 +149,7 @@ export function SignIn({ onClose }: { onClose: () => void }) {
   async function login(provider: "google" | "github") {
     if (!client) return;
     setBusy(true);
+    setError("");
     try {
       const r = await client.auth.signInWithOAuth({
         provider,
@@ -105,58 +163,127 @@ export function SignIn({ onClose }: { onClose: () => void }) {
   }
   return (
     <Modal title="Sign in" onClose={onClose}>
-      <h2>Your place at the table.</h2>
-      <p>Keep your ratings and match history with a Dalgo account.</p>
+      <Typography
+        component="h2"
+        variant="h4"
+        sx={{ fontSize: "1.875rem", mb: 2 }}
+      >
+        Your place at the table.
+      </Typography>
+      <Typography color="text.secondary">
+        Keep your ratings and match history with a Dalgo account.
+      </Typography>
       {client ? (
-        <div className="auth-options">
-          <button
-            className="button"
+        <Stack spacing={1.25} sx={{ mt: 3 }}>
+          <Button
+            variant="outlined"
             disabled={busy}
             onClick={() => login("google")}
+            endIcon={<ArrowUpRight size={17} />}
+            sx={{
+              minHeight: 48,
+              justifyContent: "flex-start",
+              "& .MuiButton-endIcon": { ml: "auto" },
+            }}
           >
-            <span className="google-mark">G</span>Continue with Google
-            <ArrowUpRight size={17} />
-          </button>
-          <button
-            className="button"
+            <Typography
+              component="span"
+              aria-hidden="true"
+              sx={{ mr: 1.5, fontSize: "1.2rem", fontWeight: 700 }}
+            >
+              G
+            </Typography>
+            Continue with Google
+          </Button>
+          <Button
+            variant="outlined"
             disabled={busy}
             onClick={() => login("github")}
+            startIcon={<Github size={19} />}
+            endIcon={<ArrowUpRight size={17} />}
+            sx={{
+              minHeight: 48,
+              justifyContent: "flex-start",
+              "& .MuiButton-endIcon": { ml: "auto" },
+            }}
           >
-            <Github size={19} />
             Continue with GitHub
-            <ArrowUpRight size={17} />
-          </button>
-        </div>
+          </Button>
+        </Stack>
       ) : (
-        <div className="notice">
-          <strong>Sign-in isn’t connected yet.</strong>
-          <p>
+        <Alert severity="info" icon={false} sx={{ mt: 3 }}>
+          <Typography
+            component="strong"
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+            }}
+          >
+            Sign-in isn’t connected yet.
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1, mb: 2 }}>
             You can try the complete demo without an account. Real matches and
             saved ratings open after service verification.
-          </p>
-          <Link className="button primary" to="/demo/easy" onClick={onClose}>
+          </Typography>
+          <Button
+            component={Link}
+            variant="contained"
+            to="/demo/easy"
+            onClick={onClose}
+            endIcon={<ArrowUpRight size={17} />}
+          >
             Try the demo
-            <ArrowUpRight size={17} />
-          </Link>
-        </div>
+          </Button>
+        </Alert>
       )}
       {error && (
-        <p className="error" role="alert">
+        <Alert severity="error" sx={{ mt: 2 }}>
           {error}
-        </p>
+        </Alert>
       )}
-      <p className="fine-print">
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: "block", mt: 3 }}
+      >
         Each arena starts at 1,200. Human and bot ratings are separate.
-      </p>
+      </Typography>
     </Modal>
   );
 }
 export function DemoNotice() {
   return (
-    <div className="demo-notice">
-      <span className="badge badge-demo">DEMO</span>
-      <span>Demo: code is not executed and ratings are not saved.</span>
-    </div>
+    <Stack
+      direction="row"
+      spacing={1.5}
+      sx={{
+        alignItems: "center",
+        px: { xs: 2, sm: 3 },
+        py: 1.2,
+        borderBottom: 1,
+        borderColor: "divider",
+        backgroundColor: "#191919",
+        color: "text.secondary",
+      }}
+    >
+      <Chip
+        label="DEMO"
+        size="small"
+        variant="outlined"
+        sx={{
+          borderColor: "#505050",
+          backgroundColor: "#202020",
+          fontFamily: '"JetBrains Mono", monospace',
+          fontSize: ".75rem",
+        }}
+      />
+      <Typography
+        variant="body2"
+        sx={{ fontSize: { xs: ".75rem", sm: ".875rem" }, lineHeight: 1.6 }}
+      >
+        Demo: code is not executed and ratings are not saved.
+      </Typography>
+    </Stack>
   );
 }
 export function EmptyState({
@@ -167,24 +294,75 @@ export function EmptyState({
   children: ReactNode;
 }) {
   return (
-    <div className="empty-state">
-      <span className="empty-symbol" aria-hidden="true">
+    <Stack
+      direction="row"
+      spacing={2.25}
+      sx={{
+        alignItems: "flex-start",
+        py: 3.6,
+      }}
+    >
+      <Avatar
+        variant="square"
+        aria-hidden="true"
+        sx={{
+          width: 24,
+          height: 26,
+          backgroundColor: "transparent",
+          color: "#949494",
+          fontSize: "1.75rem",
+        }}
+      >
         —
-      </span>
-      <div>
-        <h3>{title}</h3>
-        <p>{children}</p>
-      </div>
-    </div>
+      </Avatar>
+      <Box>
+        <Typography
+          component="h3"
+          variant="body2"
+          sx={{
+            fontWeight: 500,
+            mb: 0.75,
+          }}
+        >
+          {title}
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ maxWidth: 440, lineHeight: 1.7 }}
+        >
+          {children}
+        </Typography>
+      </Box>
+    </Stack>
   );
 }
 export function Footer() {
   return (
-    <footer className="page-footer">
-      <span>
-        DALGO <span className="footer-divider">/</span> DSA COMPETITION
-      </span>
-      <span>Free beta · v0.2</span>
-    </footer>
+    <Stack
+      component="footer"
+      direction={{ xs: "column", sm: "row" }}
+      spacing={1.2}
+      sx={{
+        justifyContent: "space-between",
+        py: 2.75,
+        mt: 3.5,
+        borderTop: 1,
+        borderColor: "divider",
+        color: "text.secondary",
+        fontFamily: '"JetBrains Mono", monospace',
+        fontSize: ".75rem",
+        letterSpacing: ".03em",
+      }}
+    >
+      <Box component="span">
+        DALGO{" "}
+        <Box component="span" sx={{ px: 1, color: "#949494" }}>
+          /
+        </Box>{" "}
+        DSA COMPETITION
+      </Box>
+      <Box component="span">Free beta · v0.2</Box>
+    </Stack>
   );
 }
