@@ -9,13 +9,24 @@
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "deploy:cloudflare": "npm run build && wrangler deploy",
+    "deploy:cloudflare": "npm run deploy:staging",
     "verify:judge": "node --env-file-if-exists=.env scripts/verify-judge.mjs",
-    "seed:problems": "node --env-file-if-exists=.env scripts/seed-problems.mjs"
+    "seed:problems": "node --env-file-if-exists=.env scripts/seed-problems.mjs",
+    "dev:staging": "wrangler dev --env staging --port 8787",
+    "deploy:staging": "npm run build && wrangler deploy --env staging",
+    "deploy:production": "npm run build && wrangler deploy --env production",
+    "check:staging": "wrangler deploy --env staging --dry-run --outdir artifacts/worker-staging",
+    "check:production": "wrangler deploy --env production --dry-run --outdir artifacts/worker-production",
+    "test:browser": "playwright test",
+    "setup:local": "node scripts/setup-local.mjs",
+    "check:setup": "node --env-file-if-exists=.dev.vars.staging scripts/check-setup.mjs",
+    "verify:judge:staging": "node --env-file-if-exists=.dev.vars.staging scripts/verify-judge.mjs",
+    "seed:problems:staging": "node --env-file-if-exists=.dev.vars.staging scripts/seed-problems.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.6",
     "@fontsource/jetbrains-mono": "^5.2.6",
+    "@fontsource/space-grotesk": "^5.3.0",
     "@monaco-editor/react": "^4.7.0",
     "@supabase/supabase-js": "^2.57.0",
     "jose": "^6.1.0",
@@ -28,6 +39,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260911.1",
     "@electric-sql/pglite": "^0.5.8",
+    "@playwright/test": "1.63.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
@@ -36,7 +48,7 @@
     "prettier": "^3.9.6",
     "typescript": "^5.9.2",
     "vite": "^7.1.5",
-    "vitest": "^3.2.4",
+    "vitest": "^4.1.11",
     "wrangler": "^4.35.0"
   }
 }

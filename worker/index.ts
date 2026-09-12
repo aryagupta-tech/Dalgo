@@ -1,6 +1,14 @@
 import { createRemoteJWKSet, jwtVerify, SignJWT } from "jose";
 import type { Env } from "./env";
-import { launchReady } from "./env";
+import {
+  admissionMode,
+  launchReady,
+  supabasePublicKey,
+  supabaseSecretKey,
+} from "./env";
+import { admissionStatus } from "./admission";
+import { configuredAttemptLimits } from "./limits";
+import { DEFAULT_ATTEMPT_LIMITS } from "../shared/types";
 import { AppError, json, parseArena } from "./core";
 import { db } from "./db";
 export { Coordinator } from "./coordinator";
@@ -31,7 +39,7 @@ async function user(request: Request, env: Env) {
   } catch {
     const r = await fetch(origin + "/auth/v1/user", {
       headers: {
-        apikey: env.SUPABASE_ANON_KEY,
+        apikey: supabasePublicKey(env),
         Authorization: "Bearer " + token,
       },
       signal: AbortSignal.timeout(8000),
@@ -42,6 +50,16 @@ async function user(request: Request, env: Env) {
     if (!uuid.test(data.id)) throw new AppError("Invalid session.", 401);
     return data.id;
   }
+}
+function websocketKey(env: Env) {
+  const secret = env.WEBSOCKET_SIGNING_SECRET?.trim() ?? "";
+  const bytes = new TextEncoder().encode(secret);
+  if (bytes.byteLength < 32)
+    throw new AppError(
+      "Live connections are being configured. Please try again later.",
+      503,
+    );
+  return bytes;
 }
 const coordinator = (env: Env) =>
   env.COORDINATOR.get(env.COORDINATOR.idFromName("global"));
@@ -76,7 +94,9 @@ async function api(request: Request, env: Env) {
   if (path === "/config")
     return json({
       supabaseUrl: env.SUPABASE_URL ?? "",
-      supabaseKey: env.SUPABASE_ANON_KEY ?? "",
+      supabaseKey: supabasePublicKey(env),
+      admissionMode: admissionMode(env),
+      attemptLimits: configuredAttemptLimits(env) ?? DEFAULT_ATTEMPT_LIMITS,
       playEnabled: launchReady(env),
       reason: launchReady(env)
         ? ""
@@ -106,15 +126,16 @@ async function api(request: Request, env: Env) {
       throw new AppError("A WebSocket upgrade is required.", 426);
     const ticket = url.searchParams.get("ticket");
     if (!ticket) throw new AppError("A connection ticket is required.", 401);
-    const { payload } = await jwtVerify(
-      ticket,
-      new TextEncoder().encode(env.SUPABASE_SERVICE_ROLE_KEY),
-      { audience: "dalgo-websocket", issuer: "dalgo" },
-    );
+    const { payload } = await jwtVerify(ticket, websocketKey(env), {
+      audience: "dalgo-websocket",
+      issuer: "dalgo",
+    });
     if (payload.path !== path || !payload.sub || !uuid.test(payload.sub))
       throw new AppError("Invalid connection ticket.", 401);
     id = payload.sub;
   } else id = await user(request, env);
+  if (path === "/admission" && request.method === "GET")
+    return json(admissionStatus(env, id));
   if (path === "/socket-ticket" && request.method === "POST") {
     const b = (await request.json()) as { path: string };
     if (!/^\/queue\/events$|^\/matches\/[a-f0-9-]{36}\/events$/.test(b.path))
@@ -127,7 +148,7 @@ async function api(request: Request, env: Env) {
       .setJti(crypto.randomUUID())
       .setIssuedAt()
       .setExpirationTime("30s")
-      .sign(new TextEncoder().encode(env.SUPABASE_SERVICE_ROLE_KEY));
+      .sign(websocketKey(env));
     return json({ ticket });
   }
   if (path === "/ratings" && request.method === "GET")
@@ -267,6 +288,7 @@ export default {
     }
     headers.set("Access-Control-Allow-Headers", "Authorization,Content-Type");
     headers.set("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+    headers.set("Access-Control-Expose-Headers", "Retry-After");
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("Referrer-Policy", "no-referrer");
     return new Response(response.body, { status: response.status, headers });
@@ -276,7 +298,7 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ) {
-    if (env.SUPABASE_SERVICE_ROLE_KEY)
+    if (supabaseSecretKey(env))
       ctx.waitUntil(
         db(env, "rpc/purge_submission_sources", {
           method: "POST",

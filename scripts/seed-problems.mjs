@@ -19,17 +19,21 @@ if (!process.argv.includes("--apply")) {
   );
   process.exit(0);
 }
-const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY)
+const { SUPABASE_URL } = process.env;
+const backendKey =
+  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SUPABASE_URL || !backendKey)
   throw new Error(
-    "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your local .env. Never use a VITE_ variable for the service key.",
+    "Set SUPABASE_URL and SUPABASE_SECRET_KEY in your local .env. Never use a VITE_ variable for the service key.",
   );
 const endpoint = new URL("/rest/v1/problems", SUPABASE_URL);
 if (endpoint.protocol !== "https:")
   throw new Error("A HTTPS Supabase URL is required.");
 const headers = {
-  apikey: SUPABASE_SERVICE_ROLE_KEY,
-  Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+  apikey: backendKey,
+  ...(!backendKey.startsWith("sb_secret_")
+    ? { Authorization: `Bearer ${backendKey}` }
+    : {}),
   "Content-Type": "application/json",
 };
 async function request(url, options = {}) {

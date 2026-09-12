@@ -36,9 +36,9 @@ export function useDalgoTools() {
     });
     register({
       name: "open_arena_preview",
-      title: "Explore a Dalgo arena",
+      title: "Open a Dalgo demo",
       description:
-        "Open the requested arena preview. This only navigates; it does not start a ranked match, run code, or change ratings.",
+        "Start or resume a clearly labelled local arena demo with a countdown and illustrative outcomes. It does not execute code, contact an opponent, or change ratings.",
       inputSchema: {
         type: "object",
         properties: {
@@ -55,14 +55,30 @@ export function useDalgoTools() {
           Object.keys(input).some((k) => k !== "arena")
         )
           throw new Error("Choose easy, medium, or hard.");
-        navigate("/preview/" + input.arena);
-        await new Promise((resolve) =>
-          requestAnimationFrame(() => requestAnimationFrame(resolve)),
-        );
+        navigate("/demo/" + input.arena);
+        await new Promise<void>((resolve, reject) => {
+          const deadline = Date.now() + 10000;
+          const check = () => {
+            if (document.querySelector(`[data-demo-arena="${input.arena}"]`)) {
+              resolve();
+              return;
+            }
+            if (Date.now() > deadline) {
+              reject(
+                new Error(
+                  "The demo did not finish loading. Retry from the lobby.",
+                ),
+              );
+              return;
+            }
+            requestAnimationFrame(check);
+          };
+          requestAnimationFrame(check);
+        });
         return {
           arena: input.arena,
-          path: "/preview/" + input.arena,
-          mode: "preview",
+          path: "/demo/" + input.arena,
+          mode: "demo",
           ratingChanges: false,
         };
       },

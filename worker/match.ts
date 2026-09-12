@@ -1,5 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import type { Env } from "./env";
+import { EXECUTION_RETRY_LIMIT } from "./limits";
 import {
   adjudicate,
   AppError,
@@ -14,6 +15,7 @@ import { db, settle } from "./db";
 import { execute } from "./judge";
 import {
   LANGUAGES,
+  DEFAULT_ATTEMPT_LIMITS,
   type MatchView,
   type Problem,
   type Submission,
@@ -90,6 +92,7 @@ export class MatchRoom extends DurableObject<Env> {
           sampleResults: s.sampleResults,
           completedAt: s.completedAt,
         })),
+      attemptLimits: m.attemptLimits ?? DEFAULT_ATTEMPT_LIMITS,
       attempts: {
         runs: m.submissions.filter(
           (s) => s.userId === userId && s.kind === "run",
@@ -244,15 +247,17 @@ export class MatchRoom extends DurableObject<Env> {
           )
             throw new AppError("Wait for your current attempt to finish.", 409);
           const kind = url.pathname === "/run" ? "run" : "submit";
+          const limits = this.record.attemptLimits ?? DEFAULT_ATTEMPT_LIMITS;
+          const limit = kind === "run" ? limits.runs : limits.submits;
           if (
             this.record.submissions.filter(
               (s) => s.userId === userId && s.kind === kind,
-            ).length >= (kind === "run" ? 3 : 5)
+            ).length >= limit
           )
             throw new AppError(
               kind === "run"
-                ? "You have used all three sample runs."
-                : "You have used all five submissions.",
+                ? `You have used all ${limit} sample runs.`
+                : `You have used all ${limit} submissions.`,
               429,
             );
           const s: InternalSubmission = {
@@ -362,7 +367,7 @@ export class MatchRoom extends DurableObject<Env> {
             m.result ||
             m.submissions.filter(
               (s) => s.userId === submission.userId && s.attempt === 2,
-            ).length >= 2
+            ).length >= EXECUTION_RETRY_LIMIT
           )
             return false;
           const lease = await this.coordinator("/lease", {

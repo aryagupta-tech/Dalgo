@@ -7,6 +7,8 @@ import type { Problem } from "../shared/types";
 
 const configured = {
   LIVE_MATCHES_ENABLED: "true",
+  ADMISSION_MODE: "public",
+  WEBSOCKET_SIGNING_SECRET: "offline-test-websocket-signing-secret",
   SUPABASE_URL: "https://offline.invalid",
   SUPABASE_ANON_KEY: "test",
   SUPABASE_SERVICE_ROLE_KEY: "test",
@@ -46,6 +48,10 @@ describe("launch gates and public content", () => {
       ]) {
         expect(launchReady({ ...configured, [key]: value })).toBe(false);
       }
+    }
+    for (const key of ["MATCH_RUN_LIMIT", "MATCH_SUBMISSION_LIMIT"]) {
+      for (const value of ["", " ", "0", "-1", "1.5", "NaN", "21"])
+        expect(launchReady({ ...configured, [key]: value })).toBe(false);
     }
     for (const value of ["", " ", "-1", "24", "0.5", "NaN"]) {
       expect(launchReady({ ...configured, JUDGE_RESET_HOUR_UTC: value })).toBe(

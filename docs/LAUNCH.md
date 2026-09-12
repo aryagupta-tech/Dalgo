@@ -1,6 +1,6 @@
 # Capped beta launch record
 
-**Current decision: online play disabled.** No account credentials were available during implementation, so no external judge executions, live OAuth sessions, or public ranked matches were claimed as verified. Never set `JUDGE_VERIFIED_AT` merely because offline tests pass.
+**Current decision: online play disabled.** Cloudflare staging is deployed at https://dalgo-staging.dalgo-arya.workers.dev with live play disabled. Supabase schema/seeding and enabled OAuth providers are verified. Complete browser OAuth, real JDoodle execution/sandbox evidence, and two-account staging acceptance remain pending. Offline verification is recorded separately from external evidence. Never set `JUDGE_VERIFIED_AT` merely because offline tests pass.
 
 ## Verification already performed locally
 
@@ -8,8 +8,21 @@
 - PostgreSQL migration tests cover profile creation, six default ratings, browser RLS, atomic settlement, zero-sum human points, bot isolation, conflicting and duplicate settlement, rollback, and source retention.
 - Durable Object tests use durable-storage mocks and controlled asynchronous judging. They exercise submission order, bot races, judging timeout, retries, account ownership, quota reservations, cancellation, source validation, and recovery. They do not prove production WebSocket hibernation or cross-region timing.
 - Generated Python, C++, and JavaScript programs for all 30 problems were run against sample and hidden suites locally: 180 harness executions, 822 test cases. Java harnesses and all four JDoodle runtimes still require provider testing. Hard-problem references also received independent small-input oracle checks.
-- The interface was inspected at 375, 768, and 1440 CSS pixels. It includes keyboard resizing, mobile Problem/Code tabs, focus states, native modal dialogs, and reduced-motion CSS.
+- The redesigned demo has browser acceptance coverage at 375, 768, and 1440 CSS pixels, including a 15-second/5-second sequence advanced with a controlled browser clock, draft restoration, all four language starters, preview verdicts, cancellation, restart, and unavailable problem service. It includes keyboard resizing, mobile Problem/Code tabs, focus states, native modal dialogs, and reduced-motion CSS.
 - Runtime HTTP checks confirm preview configuration, unauthenticated rejection, blocked foreign origins, body size limits, and required WebSocket upgrades.
+
+## Latest local run — 12 September 2026
+
+- `npm test`: 140 tests passed across 13 files, using patched Vitest 4.1.11.
+- `npm run test:browser`: 17 browser tests passed. Live admission uses mocked account/API responses; these tests do not verify real OAuth or hosted services. A stopped search stays stopped after admissions reopen or another tab cancels it. Active matches/searches can be resumed while admissions are paused; mocked OAuth preserves the match route and sample output remains inspectable.
+- `npm run build`: TypeScript and production frontend build passed. Monaco remains a large, lazy-loaded editor chunk.
+- Staging and production Worker deployment dry runs passed with separate Durable Objects and live matches disabled.
+- Seven fresh HTTP smoke checks passed against local workerd: disabled staging configuration, unauthenticated admission/join, foreign-origin rejection, oversize-body rejection, required WebSocket upgrade and demo asset routing.
+- Dependency installation audit reports zero known vulnerabilities after the Vitest patch.
+
+The earlier Cloudflare authentication error `10000` is resolved. The staging Worker, assets, SQLite Durable Object namespaces and retention schedule are deployed at https://dalgo-staging.dalgo-arya.workers.dev. Hosted configuration/demo/problem-bank smoke checks returned 200, and unauthenticated admission returned 401. The saved Supabase and JDoodle credentials are connected in the updated staging deployment. Supabase has 30 seeded problems and zero registered users at the last check. Google/GitHub are enabled; their complete browser redirect journey has not been tested in this run. JDoodle's counter accepted the credentials and returned zero used credits; the owner confirms 20/day. Actual judge execution, reset/concurrency and sandbox verification remain outstanding. The black theme and configurable attempt limits passed all 140 offline regressions; the owner requested to perform browser testing personally.
+
+The setup checker now identifies missing local provider settings without printing values and flags allowances too small to reserve a two-human match. The private staging file is initialized with owner-only permissions and is ignored by Git. An eight-probe dry-run plan was verified (10 estimated credits at an explicitly provisional one-credit cost); no provider requests were made. Partial probe reports identify omitted coverage and cannot certify full verification.
 
 ## Verify the actual judge account
 
@@ -26,7 +39,7 @@ Record the provider account, date, reviewer, and evidence separately from commit
 | Provider isolation is suitable for arbitrary untrusted code                                                                                              | Provider documentation/confirmation plus sandbox probes     |
 | No credentials, expected answers, or hidden results are delivered to the sandbox or players                                                              | Payload and response inspection                             |
 
-`scripts/verify-judge.mjs` is an opt-in account probe. Review its dry-run estimate first. A full sample+hidden matrix needs at least 240 executions before safety probes, so split reports across free-quota days as necessary. Never enable paid billing to finish verification. A passing script alone does not establish provider concurrency, recurring allowance, reset behavior, or complete sandbox isolation.
+`scripts/verify-judge.mjs` is an opt-in account probe. Review its dry-run estimate first. A full sample+hidden matrix needs 240 executions plus 32 probes (including wrong-answer and bounded-memory checks), so split reports across free-quota days as necessary. Never enable paid billing to finish verification. A passing script alone does not establish provider concurrency, recurring allowance, reset behavior, or complete sandbox isolation.
 
 Current official references:
 
@@ -41,7 +54,7 @@ The adapter sends `internetEnabled: false`. Expected outputs remain in the Worke
 
 ## Two-account staging acceptance
 
-After the account checks pass, use two test accounts in separate browser profiles against a restricted staging deployment. Set the verified date and positive integer limits only with recorded evidence. Keep public launch disabled until these checks pass.
+After the account checks pass, use two test accounts in separate browser profiles against `dalgo-staging`. Set `ADMISSION_MODE=staging`, configure server-only `TESTER_USER_IDS`, then set the verified date, positive integer limits and `LIVE_MATCHES_ENABLED=true` only with recorded judge evidence. This enables invited staging tests while the separate production deployment remains disabled. Empty or malformed tester lists deny admission.
 
 - Verify Google and GitHub sign-in, six ratings, sign-out, expired tokens, and redirect URLs.
 - Queue suitable humans in the same arena. Confirm identical problem versions and clocks, widening rating windows, human priority, 15-second bot fallback, and permanently fixed opponents.
@@ -60,6 +73,6 @@ Supabase Free may pause after inactivity. Confirm explicit unavailable states an
 
 The Worker emits structured `judge_result`, `match_settled`, `settlement_pending`, `database_error`, `api_error`, `coordinator_alarm_failed`, and `retention_failed`, `queue_assigned`, and `quota_reconciled` logs without submission source. Monitor judge latency/errors, pending settlements, database growth, and account credit usage. Match history supports human frequency and bot-win analysis. Queue assignment timing tracks queue wait distributions.
 
-Only after the preceding evidence is recorded, set `LIVE_MATCHES_ENABLED` to `true` on the intended beta deployment. The coordinator admits reservations within 80% of the configured daily allowance and reconciles usage with JDoodle. Existing reservations remain protected when capacity is exhausted. Leave billing and paid upgrades under deliberate account-owner control.
+Only after the preceding evidence is recorded, set both `ADMISSION_MODE=public` and `LIVE_MATCHES_ENABLED=true` on the intended production beta deployment. Publish the operator contact/privacy information and verify the documented data-request process before opening registration. The coordinator admits reservations within 80% of the configured daily allowance and reconciles usage with JDoodle. Existing reservations remain protected when capacity is exhausted. Leave billing and paid upgrades under deliberate account-owner control.
 
-If any gate fails, retain preview mode and resolve it before ranked play. Changing to Judge0 or another provider requires repeating the runtime, credit/concurrency, and sandbox verification with the replacement adapter.
+If any gate fails, retain demo mode and resolve it before ranked play. Changing to Judge0 or another provider requires repeating the runtime, credit/concurrency, and sandbox verification with the replacement adapter.

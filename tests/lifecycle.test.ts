@@ -31,8 +31,8 @@ vi.mock("../worker/judge.ts", () => ({
 
 import { MatchRoom } from "../worker/match.ts";
 import { Coordinator } from "../worker/coordinator.ts";
-import { execute } from "../worker/judge.ts";
-import { settle } from "../worker/db.ts";
+import { execute, creditSpent } from "../worker/judge.ts";
+import { settle, getPlayer } from "../worker/db.ts";
 import { MAX_JUDGE_MS, type MatchRecord } from "../worker/core.ts";
 import bank from "../worker/problems.json";
 
@@ -123,6 +123,8 @@ function env(overrides: Record<string, any> = {}) {
     JDOODLE_CLIENT_ID: "offline",
     JDOODLE_CLIENT_SECRET: "offline",
     LIVE_MATCHES_ENABLED: "true",
+    ADMISSION_MODE: "public",
+    WEBSOCKET_SIGNING_SECRET: "offline-test-websocket-signing-secret",
     JUDGE_VERIFIED_AT: new Date(T0).toISOString(),
     JUDGE_DAILY_QUOTA: "200",
     JUDGE_CREDIT_COST: "1",
@@ -205,6 +207,8 @@ beforeEach(() => {
   vi.spyOn(Date, "now").mockImplementation(() => now);
   vi.mocked(execute).mockReset();
   vi.mocked(settle).mockClear();
+  vi.mocked(creditSpent).mockClear();
+  vi.mocked(getPlayer).mockClear();
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubGlobal(
@@ -551,5 +555,467 @@ describe("global admission and execution reservations", () => {
       base: 0,
       retries: 0,
     });
+  });
+});
+
+describe("durable staged admission", () => {
+  async function createCoordinator(
+    runtimeEnv = env(),
+    ctx = new MemoryContext(),
+  ) {
+    const coordinator = new Coordinator(ctx as any, runtimeEnv);
+    await ctx.ready;
+    return { coordinator, ctx, runtimeEnv };
+  }
+  const joinRequest = (
+    userId: string,
+    requestId = crypto.randomUUID(),
+    arena = "easy",
+  ) => request("/join", { userId, requestId, arena }, userId);
+  async function cancel(
+    coordinator: Coordinator,
+    userId: string,
+    requestId: string,
+  ) {
+    const response = await coordinator.fetch(
+      request("/cancel", { userId, requestId }, userId),
+    );
+    expect(response.status).toBe(200);
+  }
+
+  it("rejects an unlisted tester before spending credits or reading their profile", async () => {
+    const { coordinator, ctx } = await createCoordinator(
+      env({ ADMISSION_MODE: "staging", TESTER_USER_IDS: A }),
+    );
+    expect((await coordinator.fetch(joinRequest(B))).status).toBe(403);
+    expect(creditSpent).not.toHaveBeenCalled();
+    expect(getPlayer).not.toHaveBeenCalled();
+    expect(await ctx.storage.get("state")).toBeUndefined();
+    expect((await coordinator.fetch(joinRequest(A))).status).toBe(200);
+    expect(getPlayer).toHaveBeenCalledOnce();
+  });
+
+  it("limits cancellation churn, exempts canonical retries, and survives restart", async () => {
+    const { coordinator, ctx, runtimeEnv } = await createCoordinator();
+    const originalId = crypto.randomUUID();
+    await coordinator.fetch(joinRequest(A, originalId));
+    for (let i = 0; i < 10; i++) {
+      const duplicate = await coordinator.fetch(
+        joinRequest(A, crypto.randomUUID(), "hard"),
+      );
+      expect(await duplicate.json()).toMatchObject({
+        status: "waiting",
+        requestId: originalId,
+        arena: "easy",
+      });
+    }
+    expect((await ctx.storage.get("state")).admissions[A]).toHaveLength(1);
+    await cancel(coordinator, A, originalId);
+    for (let i = 1; i < 6; i++) {
+      const id = crypto.randomUUID();
+      expect((await coordinator.fetch(joinRequest(A, id))).status).toBe(200);
+      await cancel(coordinator, A, id);
+    }
+    const rebuilt = new Coordinator(
+      new MemoryContext(ctx.storage) as any,
+      runtimeEnv,
+    );
+    // Constructors load the same durable state; wait for their blockConcurrencyWhile callback.
+    await eventually(() => Boolean((rebuilt as any).data));
+    const denied = await rebuilt.fetch(joinRequest(A));
+    expect(denied.status).toBe(429);
+    expect(denied.headers.get("Retry-After")).toBe("60");
+    expect((await ctx.storage.get("state")).admissions[A]).toHaveLength(6);
+    expect((await ctx.storage.get("state")).reservations).toEqual({});
+    now += 60_000;
+    expect((await rebuilt.fetch(joinRequest(A))).status).toBe(200);
+    expect((await ctx.storage.get("state")).admissions[A]).toHaveLength(7);
+  });
+
+  it("enforces thirty new searches per hour after individual minute windows recover", async () => {
+    const { coordinator, ctx } = await createCoordinator();
+    for (let group = 0; group < 5; group++) {
+      now = T0 + group * 60_000;
+      for (let i = 0; i < 6; i++) {
+        const id = crypto.randomUUID();
+        expect((await coordinator.fetch(joinRequest(A, id))).status).toBe(200);
+        await cancel(coordinator, A, id);
+      }
+    }
+    now = T0 + 5 * 60_000;
+    const denied = await coordinator.fetch(joinRequest(A));
+    expect(denied.status).toBe(429);
+    expect(denied.headers.get("Retry-After")).toBe("3300");
+    now = T0 + 3_600_000;
+    expect((await coordinator.fetch(joinRequest(A))).status).toBe(200);
+    expect((await ctx.storage.get("state")).admissions[A]).toHaveLength(25);
+  });
+
+  it("persists admission budget even when free capacity prevents a reservation", async () => {
+    const { coordinator, ctx } = await createCoordinator(
+      env({ JUDGE_DAILY_QUOTA: "1" }),
+    );
+    for (let i = 0; i < 6; i++)
+      expect(
+        await (await coordinator.fetch(joinRequest(A))).json(),
+      ).toMatchObject({ status: "capacity" });
+    expect((await coordinator.fetch(joinRequest(A))).status).toBe(429);
+    expect(getPlayer).not.toHaveBeenCalled();
+    expect((await ctx.storage.get("state")).reservations).toEqual({});
+    expect((await ctx.storage.get("state")).admissions[A]).toHaveLength(6);
+  });
+
+  it("releases paused waiting searches but preserves matched reservations and recovery", async () => {
+    const { coordinator, ctx, runtimeEnv } = await createCoordinator();
+    const originalId = crypto.randomUUID();
+    await coordinator.fetch(joinRequest(A, originalId));
+    const matched = (await (
+      await coordinator.fetch(joinRequest(B))
+    ).json()) as any;
+    await coordinator.fetch(joinRequest(C, crypto.randomUUID(), "hard"));
+    runtimeEnv.ADMISSION_MODE = "disabled";
+    expect(
+      await (await coordinator.fetch(joinRequest(A))).json(),
+    ).toMatchObject({ requestId: originalId, matchId: matched.matchId });
+    await coordinator.alarm();
+    const saved = await ctx.storage.get("state");
+    expect(saved.entries[C]).toBeUndefined();
+    expect(saved.reservations[C]).toBeUndefined();
+    expect(saved.entries[A].matchId).toBe(matched.matchId);
+    expect(saved.entries[B].matchId).toBe(matched.matchId);
+    expect(saved.reservations[matched.matchId].remaining).toBe(20);
+    const waiting = (await (
+      await coordinator.fetch(request("/status?userId=" + C))
+    ).json()) as any;
+    expect(waiting).toMatchObject({ status: "idle" });
+    expect(waiting.message).toContain("paused");
+    expect(
+      await (
+        await coordinator.fetch(
+          request("/lease", {
+            matchId: matched.matchId,
+            userId: A,
+            jobId: "reserved-after-pause",
+            retry: false,
+          }),
+        )
+      ).json(),
+    ).toEqual({ ok: true });
+    expect(
+      (
+        await coordinator.fetch(
+          request("/settled", { matchId: matched.matchId }),
+        )
+      ).status,
+    ).toBe(200);
+    expect((await ctx.storage.get("state")).reservations).toEqual({});
+    expect((await coordinator.fetch(joinRequest(A))).status).toBe(503);
+  });
+
+  it("removes waiting users whose tester access was withdrawn", async () => {
+    const { coordinator, ctx, runtimeEnv } = await createCoordinator(
+      env({ ADMISSION_MODE: "staging", TESTER_USER_IDS: `${A},${B}` }),
+    );
+    await coordinator.fetch(joinRequest(A));
+    runtimeEnv.TESTER_USER_IDS = B;
+    await coordinator.alarm();
+    expect((await ctx.storage.get("state")).entries[A]).toBeUndefined();
+    expect((await ctx.storage.get("state")).reservations[A]).toBeUndefined();
+    const status = (await (
+      await coordinator.fetch(request("/status?userId=" + A))
+    ).json()) as any;
+    expect(status.message).toContain("invited testers");
+    expect((await coordinator.fetch(joinRequest(A))).status).toBe(403);
+    expect((await coordinator.fetch(joinRequest(B))).status).toBe(200);
+  });
+
+  it("does not pair a newly admitted tester with a withdrawn waiting tester before the next alarm", async () => {
+    const { coordinator, ctx, runtimeEnv } = await createCoordinator(
+      env({ ADMISSION_MODE: "staging", TESTER_USER_IDS: `${A},${B}` }),
+    );
+    await coordinator.fetch(joinRequest(A));
+    runtimeEnv.TESTER_USER_IDS = B;
+    const joined = (await (
+      await coordinator.fetch(joinRequest(B))
+    ).json()) as any;
+    expect(joined.status).toBe("waiting");
+    const saved = await ctx.storage.get("state");
+    expect(saved.entries[A]).toBeUndefined();
+    expect(saved.reservations[A]).toBeUndefined();
+    expect(saved.entries[B].status).toBe("waiting");
+    expect(Object.keys(saved.reservations)).toEqual([B]);
+  });
+
+  it("retries a persisted assignment after closing admissions", async () => {
+    const init = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({ error: "transient" }, { status: 503 }),
+      )
+      .mockResolvedValue(Response.json({ ok: true }));
+    const { coordinator, ctx, runtimeEnv } = await createCoordinator(
+      env({
+        MATCHES: {
+          idFromName: (name: string) => name,
+          get: () => ({ fetch: init }),
+        },
+      }),
+    );
+    await coordinator.fetch(joinRequest(A));
+    expect((await coordinator.fetch(joinRequest(B))).status).toBe(500);
+    const assigned = await ctx.storage.get("state");
+    const id = assigned.entries[A].matchId;
+    expect(assigned.entries[A].status).toBe("assigning");
+    runtimeEnv.ADMISSION_MODE = "disabled";
+    await coordinator.alarm();
+    const saved = await ctx.storage.get("state");
+    expect(saved.entries[A]).toMatchObject({ status: "matched", matchId: id });
+    expect(saved.entries[B]).toMatchObject({ status: "matched", matchId: id });
+    expect(saved.reservations[id].remaining).toBe(20);
+    expect(saved.assignments).toEqual({});
+  });
+});
+
+describe("immutable match execution allowances", () => {
+  it("reserves a complete two-human match within 16 admission credits when lower limits are configured", async () => {
+    const initialized: MatchRecord[] = [];
+    const ctx = new MemoryContext();
+    const runtimeEnv = env({
+      JUDGE_DAILY_QUOTA: "20",
+      MATCH_RUN_LIMIT: "2",
+      MATCH_SUBMISSION_LIMIT: "4",
+      MATCHES: {
+        idFromName: (name: string) => name,
+        get: () => ({
+          fetch: vi.fn(async (_url: string, init: any) => {
+            initialized.push(JSON.parse(init.body));
+            return Response.json({ ok: true });
+          }),
+        }),
+      },
+    });
+    const coordinator = new Coordinator(ctx as any, runtimeEnv);
+    await ctx.ready;
+    const first = (await (
+      await coordinator.fetch(
+        request("/join", { userId: A, requestId: "a", arena: "easy" }),
+      )
+    ).json()) as any;
+    expect(first).toMatchObject({
+      status: "waiting",
+      attemptLimits: { runs: 2, submits: 4 },
+    });
+    const matched = (await (
+      await coordinator.fetch(
+        request("/join", { userId: B, requestId: "b", arena: "easy" }),
+      )
+    ).json()) as any;
+    expect(matched.status).toBe("matched");
+    const saved = await ctx.storage.get("state");
+    expect(saved.reservations[matched.matchId]).toMatchObject({
+      remaining: 16,
+      creditCost: 1,
+      budgets: { [A]: { base: 6, retries: 2 }, [B]: { base: 6, retries: 2 } },
+    });
+    expect(initialized[0].attemptLimits).toEqual({ runs: 2, submits: 4 });
+    const full = (await (
+      await coordinator.fetch(
+        request("/join", { userId: C, requestId: "c", arena: "easy" }),
+      )
+    ).json()) as any;
+    expect(full.status).toBe("capacity");
+    expect((await ctx.storage.get("state")).entries[C]).toBeUndefined();
+  });
+
+  it("preserves active budgets and their credit cost across a deployment and restart", async () => {
+    const ctx = new MemoryContext();
+    const coordinator = new Coordinator(ctx as any, env());
+    await ctx.ready;
+    await coordinator.fetch(
+      request("/join", { userId: A, requestId: "a", arena: "easy" }),
+    );
+    const matched = (await (
+      await coordinator.fetch(
+        request("/join", { userId: B, requestId: "b", arena: "easy" }),
+      )
+    ).json()) as any;
+    const restoredCtx = new MemoryContext(ctx.storage);
+    const restored = new Coordinator(
+      restoredCtx as any,
+      env({
+        MATCH_RUN_LIMIT: "2",
+        MATCH_SUBMISSION_LIMIT: "4",
+        JUDGE_CREDIT_COST: "3",
+      }),
+    );
+    await restoredCtx.ready;
+    for (let i = 0; i < 8; i++) {
+      const jobId = `old-${i}`;
+      expect(
+        await (
+          await restored.fetch(
+            request("/lease", {
+              matchId: matched.matchId,
+              userId: A,
+              jobId,
+              retry: false,
+            }),
+          )
+        ).json(),
+      ).toEqual({ ok: true });
+      await restored.fetch(request("/release-lease", { jobId }));
+    }
+    expect(
+      await (
+        await restored.fetch(
+          request("/lease", {
+            matchId: matched.matchId,
+            userId: A,
+            jobId: "old-extra",
+            retry: false,
+          }),
+        )
+      ).json(),
+    ).toEqual({ ok: false, reason: "quota" });
+    let saved = await ctx.storage.get("state");
+    expect(saved.spent).toBe(8);
+    expect(saved.reservations[matched.matchId]).toMatchObject({
+      remaining: 12,
+      creditCost: 1,
+      budgets: { [A]: { base: 0, retries: 2 }, [B]: { base: 8, retries: 2 } },
+    });
+    await restored.fetch(
+      request("/join", { userId: C, requestId: "new", arena: "easy" }),
+    );
+    saved = await ctx.storage.get("state");
+    expect(saved.entries[C].attemptLimits).toEqual({ runs: 2, submits: 4 });
+    expect(saved.reservations[C]).toMatchObject({
+      remaining: 24,
+      creditCost: 3,
+      budgets: { [C]: { base: 18, retries: 6 } },
+    });
+  });
+
+  it("keeps legacy waiting allowances and avoids pairing humans with unequal limits", async () => {
+    const initialized: MatchRecord[] = [];
+    const ctx = new MemoryContext();
+    const coordinator = new Coordinator(ctx as any, env());
+    await ctx.ready;
+    await coordinator.fetch(
+      request("/join", { userId: A, requestId: "old", arena: "easy" }),
+    );
+    const legacy = await ctx.storage.get("state");
+    delete legacy.entries[A].attemptLimits;
+    delete legacy.reservations[A].creditCost;
+    await ctx.storage.put("state", legacy);
+    const restoredCtx = new MemoryContext(ctx.storage);
+    const restored = new Coordinator(
+      restoredCtx as any,
+      env({
+        MATCH_RUN_LIMIT: "2",
+        MATCH_SUBMISSION_LIMIT: "4",
+        MATCHES: {
+          idFromName: (name: string) => name,
+          get: () => ({
+            fetch: vi.fn(async (_url: string, init: any) => {
+              initialized.push(JSON.parse(init.body));
+              return Response.json({ ok: true });
+            }),
+          }),
+        },
+      }),
+    );
+    await restoredCtx.ready;
+    const second = (await (
+      await restored.fetch(
+        request("/join", { userId: B, requestId: "new", arena: "easy" }),
+      )
+    ).json()) as any;
+    expect(second.status).toBe("waiting");
+    expect((await ctx.storage.get("state")).entries[A].attemptLimits).toEqual({
+      runs: 3,
+      submits: 5,
+    });
+    now += 15_000;
+    await restored.alarm();
+    expect(initialized).toHaveLength(2);
+    expect(initialized.map((m) => m.mode)).toEqual(["bot", "bot"]);
+    expect(initialized.map((m) => m.attemptLimits)).toEqual([
+      { runs: 3, submits: 5 },
+      { runs: 2, submits: 4 },
+    ]);
+  });
+
+  it.each([
+    ["run", 2],
+    ["submit", 4],
+  ] as const)(
+    "enforces snapshotted %s limits despite later larger environment settings",
+    async (kind, cap) => {
+      const submissions = Array.from({ length: cap - 1 }, (_, sequence) => ({
+        id: `previous-${sequence}`,
+        userId: A,
+        kind,
+        language: "javascript" as const,
+        source: "function solve() {}",
+        receivedAt: T0 - 900 + sequence,
+        sequence,
+        verdict: "wrong_answer" as const,
+        completedAt: T0 - 500 + sequence,
+      }));
+      vi.mocked(execute).mockResolvedValue({
+        verdict: "wrong_answer",
+        message: "Wrong answer.",
+      });
+      const { room, ctx } = await newRoom(
+        record({ attemptLimits: { runs: 2, submits: 4 }, submissions }),
+        env({ MATCH_RUN_LIMIT: "3", MATCH_SUBMISSION_LIMIT: "5" }),
+      );
+      const last = await submit(room, A, "last", kind);
+      expect(last.status).toBe(202);
+      expect(await last.json()).toMatchObject({
+        attemptLimits: { runs: 2, submits: 4 },
+      });
+      await idle(ctx);
+      const restoredCtx = new MemoryContext(ctx.storage);
+      const restored = new MatchRoom(
+        restoredCtx as any,
+        env({ MATCH_RUN_LIMIT: "20", MATCH_SUBMISSION_LIMIT: "20" }),
+      );
+      await restoredCtx.ready;
+      expect((await submit(restored, A, "extra", kind)).status).toBe(429);
+      expect((await submit(restored, A, "last", kind)).status).toBe(200);
+      expect(execute).toHaveBeenCalledOnce();
+      expect((await ctx.storage.get("match")).submissions).toHaveLength(cap);
+    },
+  );
+
+  it("retains three runs for legacy matches even when deployment defaults become smaller", async () => {
+    const submissions = Array.from({ length: 2 }, (_, sequence) => ({
+      id: `previous-${sequence}`,
+      userId: A,
+      kind: "run" as const,
+      language: "javascript" as const,
+      source: "function solve() {}",
+      receivedAt: T0 - 900 + sequence,
+      sequence,
+      verdict: "wrong_answer" as const,
+      completedAt: T0 - 500 + sequence,
+    }));
+    vi.mocked(execute).mockResolvedValue({
+      verdict: "wrong_answer",
+      message: "Wrong answer.",
+    });
+    const { room, ctx } = await newRoom(
+      record({ submissions }),
+      env({ MATCH_RUN_LIMIT: "1", MATCH_SUBMISSION_LIMIT: "1" }),
+    );
+    const last = await submit(room, A, "legacy-third", "run");
+    expect(last.status).toBe(202);
+    expect(await last.json()).toMatchObject({
+      attemptLimits: { runs: 3, submits: 5 },
+    });
+    await idle(ctx);
+    expect((await submit(room, A, "legacy-fourth", "run")).status).toBe(429);
   });
 });

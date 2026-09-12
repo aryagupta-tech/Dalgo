@@ -1,4 +1,4 @@
-import type { Env } from "./env";
+import { supabaseSecretKey, type Env } from "./env";
 import type { Arena, Mode, Player } from "../shared/types";
 import type { MatchRecord } from "./core";
 import { AppError } from "./core";
@@ -7,15 +7,18 @@ export async function db<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
-  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY)
+  const key = supabaseSecretKey(env);
+  if (!env.SUPABASE_URL || !key)
     throw new AppError("Accounts and match history are being connected.", 503);
   const r = await fetch(
     env.SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/" + path,
     {
       ...init,
       headers: {
-        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-        Authorization: "Bearer " + env.SUPABASE_SERVICE_ROLE_KEY,
+        apikey: key,
+        ...(key.startsWith("sb_secret_")
+          ? {}
+          : { Authorization: "Bearer " + key }),
         "Content-Type": "application/json",
         ...init.headers,
       },

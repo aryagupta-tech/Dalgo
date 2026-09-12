@@ -93,6 +93,15 @@ export interface Result {
   deltas: Record<string, number>;
   settled: boolean;
 }
+export interface AttemptLimits {
+  runs: number;
+  submits: number;
+}
+// Older live matches and the isolated demo retain their original allowance.
+export const DEFAULT_ATTEMPT_LIMITS: Readonly<AttemptLimits> = Object.freeze({
+  runs: 3,
+  submits: 5,
+});
 export interface MatchView {
   id: string;
   arena: Arena;
@@ -106,6 +115,7 @@ export interface MatchView {
   opponentStatus?: "Ready" | "Solving" | "Judging" | "Finished";
   submissions: Omit<Submission, "source">[];
   attempts: { runs: number; submits: number };
+  attemptLimits?: AttemptLimits;
   result: Result | null;
 }
 export interface Rating {
@@ -117,7 +127,14 @@ export interface Rating {
   losses: number;
   draws: number;
 }
+export interface Admission {
+  mode: "disabled" | "staging" | "public";
+  canJoin: boolean;
+  reason: string;
+}
 export interface Config {
+  admissionMode?: Admission["mode"];
+  attemptLimits?: AttemptLimits;
   supabaseUrl: string;
   supabaseKey: string;
   playEnabled: boolean;
@@ -126,6 +143,7 @@ export interface Config {
   apiBase?: string;
 }
 export interface QueueView {
+  attemptLimits?: AttemptLimits;
   requestId?: string;
   status: "idle" | "waiting" | "matched" | "capacity";
   joinedAt?: number;

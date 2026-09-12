@@ -11,7 +11,7 @@ import {
   type User,
 } from "@supabase/supabase-js";
 import { api, fallbackConfig, setTokenGetter } from "./api";
-import type { Config } from "../shared/types";
+import type { Admission, Config } from "../shared/types";
 const AuthContext = createContext<{
   user: User | null;
   config: Config;
@@ -64,7 +64,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       dispose();
     };
   }, []);
-  return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
+  const [eligibility, setEligibility] = useState<{
+    userId: string;
+    value: Admission;
+  } | null>(null);
+  useEffect(() => {
+    let stopped = false;
+    setEligibility(null);
+    if (state.user && state.client && state.config.admissionMode) {
+      const userId = state.user.id;
+      api<Admission>("/admission")
+        .then((value) => {
+          if (!stopped) setEligibility({ userId, value });
+        })
+        .catch(() => {
+          if (!stopped)
+            setEligibility({
+              userId,
+              value: {
+                mode: "disabled",
+                canJoin: false,
+                reason:
+                  "Match availability could not be checked. Reload to retry.",
+              },
+            });
+        });
+    }
+    return () => {
+      stopped = true;
+    };
+  }, [state.user?.id, state.client, state.config.admissionMode]);
+  const admission =
+    state.user && eligibility?.userId === state.user.id
+      ? eligibility.value
+      : null;
+  const needsEligibility =
+    !!state.config.admissionMode &&
+    (!!state.user || state.config.admissionMode === "staging");
+  const config = needsEligibility
+    ? {
+        ...state.config,
+        playEnabled: state.config.playEnabled && !!admission?.canJoin,
+        reason:
+          admission?.reason ||
+          (state.user
+            ? "Checking match availability…"
+            : "Live staging matches are limited to invited testers."),
+      }
+    : state.config;
+  return (
+    <AuthContext.Provider value={{ ...state, config }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 export function useAuth() {
   return useContext(AuthContext);

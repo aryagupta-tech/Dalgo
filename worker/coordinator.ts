@@ -1,6 +1,17 @@
 import { DurableObject } from "cloudflare:workers";
 import type { Env } from "./env";
-import { launchReady } from "./env";
+import { launchReady, testerUserIds } from "./env";
+import {
+  configuredAttemptLimits,
+  executionReservation,
+  sameAttemptLimits,
+} from "./limits";
+import {
+  admissionStatus,
+  ADMISSION_WINDOW_MS,
+  AdmissionRateLimitError,
+  recordAdmission,
+} from "./admission";
 import {
   Serial,
   AppError,
@@ -15,6 +26,8 @@ import { getPlayer, recentProblems } from "./db";
 import { creditSpent } from "./judge";
 import {
   ARENAS,
+  DEFAULT_ATTEMPT_LIMITS,
+  type AttemptLimits,
   type Arena,
   type Player,
   type Problem,
@@ -30,13 +43,16 @@ interface Entry {
   player: Player;
   status: "waiting" | "assigning" | "matched";
   matchId?: string;
+  attemptLimits?: AttemptLimits;
 }
 interface Reservation {
   remaining: number;
+  creditCost?: number;
   userIds: string[];
   budgets: Record<string, { base: number; retries: number }>;
 }
 interface CoordinatorState {
+  admissions: Record<string, number[]>;
   entries: Record<string, Entry>;
   reservations: Record<string, Reservation>;
   day: string;
@@ -60,6 +76,7 @@ export class Coordinator extends DurableObject<Env> {
     super(ctx, env);
     ctx.blockConcurrencyWhile(async () => {
       this.data = (await ctx.storage.get("state")) ?? {
+        admissions: {},
         entries: {},
         reservations: {},
         day: "",
@@ -70,6 +87,23 @@ export class Coordinator extends DurableObject<Env> {
         healthy: false,
         assignments: {},
       };
+      this.data.admissions ??= {};
+      // Legacy queue entries predate configurable limits and keep the original
+      // policy. Persist their migration before a later deployment changes it.
+      let migrated = false;
+      for (const entry of Object.values(this.data.entries)) {
+        if (!entry.attemptLimits) {
+          entry.attemptLimits = { ...DEFAULT_ATTEMPT_LIMITS };
+          migrated = true;
+        }
+      }
+      for (const reservation of Object.values(this.data.reservations)) {
+        if (reservation.creditCost === undefined) {
+          reservation.creditCost = this.cost();
+          migrated = true;
+        }
+      }
+      if (migrated) await this.save();
     });
   }
   private async save() {
@@ -85,6 +119,13 @@ export class Coordinator extends DurableObject<Env> {
       this.data.healthy = false;
       for (const [id, t] of Object.entries(this.data.charged))
         if (t < now - 172800000) delete this.data.charged[id];
+    }
+    for (const [id, timestamps] of Object.entries(this.data.admissions)) {
+      const recent = timestamps.filter(
+        (time) => time > now - ADMISSION_WINDOW_MS,
+      );
+      if (recent.length) this.data.admissions[id] = recent;
+      else delete this.data.admissions[id];
     }
     for (const [id, l] of Object.entries(this.data.leases))
       if (l.until < now) delete this.data.leases[id];
@@ -111,9 +152,16 @@ export class Coordinator extends DurableObject<Env> {
           requestId: e.requestId,
           serverNow: Date.now(),
           arena: e.arena,
+          attemptLimits: e.attemptLimits ?? DEFAULT_ATTEMPT_LIMITS,
           ...(e.matchId ? { matchId: e.matchId } : {}),
         }
-      : { status: "idle", serverNow: Date.now() };
+      : {
+          status: "idle",
+          serverNow: Date.now(),
+          ...(admissionStatus(this.env, userId).canJoin
+            ? {}
+            : { message: admissionStatus(this.env, userId).reason }),
+        };
   }
   private broadcast(userId: string) {
     for (const ws of this.ctx.getWebSockets(userId)) {
@@ -164,14 +212,27 @@ export class Coordinator extends DurableObject<Env> {
         if (url.pathname === "/status")
           return json(this.snapshot(url.searchParams.get("userId")!));
         if (url.pathname === "/join") {
-          if (!launchReady(this.env))
-            throw new AppError(
-              "Online matches are not open yet. Explore an arena in the meantime.",
-              503,
-            );
-          const arena = parseArena(body.arena),
-            userId = body.userId as string;
+          const userId = body.userId as string;
+          // A reconnect or a second tab must recover the original assignment even
+          // when new admissions have since been paused or the tester list changed.
           if (this.data.entries[userId]) return json(this.snapshot(userId));
+          const arena = parseArena(body.arena);
+          const admission = admissionStatus(this.env, userId);
+          if (!admission.canJoin)
+            throw new AppError(
+              admission.reason,
+              admission.mode === "staging" &&
+                !testerUserIds(this.env).has(userId.toLowerCase())
+                ? 403
+                : 503,
+            );
+          this.data.admissions[userId] = recordAdmission(
+            this.data.admissions[userId],
+            Date.now(),
+          );
+          // Persist before quota reconciliation or profile requests: failed new
+          // searches still consume admission budget, while duplicate joins do not.
+          await this.save();
           if (Date.now() - this.data.lastReconciled > 60000)
             await this.reconcile();
           if (!this.data.healthy)
@@ -179,7 +240,9 @@ export class Coordinator extends DurableObject<Env> {
               "We are checking judging capacity. Try again shortly.",
               503,
             );
-          if (this.remaining() < 10 * this.cost())
+          const attemptLimits = configuredAttemptLimits(this.env)!;
+          const reserved = executionReservation(attemptLimits, this.cost());
+          if (this.remaining() < reserved.total)
             return json({
               status: "capacity",
               serverNow: Date.now(),
@@ -195,12 +258,14 @@ export class Coordinator extends DurableObject<Env> {
             player,
             requestId: body.requestId,
             status: "waiting",
+            attemptLimits: { ...attemptLimits },
           };
           this.data.reservations[userId] = {
-            remaining: 10 * this.cost(),
+            remaining: reserved.total,
+            creditCost: this.cost(),
             userIds: [userId],
             budgets: {
-              [userId]: { base: 8 * this.cost(), retries: 2 * this.cost() },
+              [userId]: { base: reserved.base, retries: reserved.retries },
             },
           };
           await this.save();
@@ -232,17 +297,14 @@ export class Coordinator extends DurableObject<Env> {
             Number(this.env.JUDGE_CONCURRENCY)
           )
             return json({ ok: false, reason: "busy" });
+          const cost = r.creditCost ?? this.cost();
           const budget = r.budgets[body.userId];
           const bucket = body.retry ? "retries" : "base";
-          if (
-            !budget ||
-            budget[bucket] < this.cost() ||
-            r.remaining < this.cost()
-          )
+          if (!budget || budget[bucket] < cost || r.remaining < cost)
             return json({ ok: false, reason: "quota" });
-          budget[bucket] -= this.cost();
-          r.remaining -= this.cost();
-          this.data.spent += this.cost();
+          budget[bucket] -= cost;
+          r.remaining -= cost;
+          this.data.spent += cost;
           this.data.charged[jobId] = Date.now();
           this.data.leases[jobId] = {
             until: Date.now() + 170000,
@@ -280,10 +342,30 @@ export class Coordinator extends DurableObject<Env> {
         throw new AppError("Not found.", 404);
       });
     } catch (e) {
-      return json(
+      const response = json(
         { error: (e as Error).message },
         e instanceof AppError ? e.status : 500,
       );
+      if (e instanceof AdmissionRateLimitError)
+        response.headers.set("Retry-After", String(e.retryAfter));
+      return response;
+    }
+  }
+  private async releaseIneligibleWaiting() {
+    const removed: string[] = [];
+    for (const [userId, entry] of Object.entries(this.data.entries)) {
+      if (
+        entry.status !== "waiting" ||
+        admissionStatus(this.env, userId).canJoin
+      )
+        continue;
+      delete this.data.entries[userId];
+      delete this.data.reservations[userId];
+      removed.push(userId);
+    }
+    if (removed.length) {
+      await this.save();
+      for (const userId of removed) this.broadcast(userId);
     }
   }
   private async createMatch(entries: Entry[]) {
@@ -331,6 +413,9 @@ export class Coordinator extends DurableObject<Env> {
       startsAt,
       endsAt: startsAt + ARENAS[arena].duration * 1000,
       submissions: [],
+      attemptLimits: {
+        ...(entries[0].attemptLimits ?? DEFAULT_ATTEMPT_LIMITS),
+      },
       bot,
       result: null,
       settlementComplete: false,
@@ -343,6 +428,8 @@ export class Coordinator extends DurableObject<Env> {
       reservationKeys: entries.map((e) => e.userId),
     };
     this.data.reservations[id] = {
+      creditCost:
+        this.data.reservations[entries[0].userId].creditCost ?? this.cost(),
       remaining: entries.reduce(
         (sum, e) => sum + (this.data.reservations[e.userId]?.remaining ?? 0),
         0,
@@ -392,6 +479,9 @@ export class Coordinator extends DurableObject<Env> {
     await this.save();
   }
   private async pairWaiting() {
+    // Recheck before pairing as well as on alarms: a new join must not match
+    // with a tester whose eligibility changed while they were waiting.
+    await this.releaseIneligibleWaiting();
     const now = Date.now();
     const waiting = Object.values(this.data.entries)
       .filter((e) => e.status === "waiting")
@@ -403,6 +493,12 @@ export class Coordinator extends DurableObject<Env> {
           (b) =>
             b.userId !== a.userId &&
             b.status === "waiting" &&
+            sameAttemptLimits(
+              a.attemptLimits ?? DEFAULT_ATTEMPT_LIMITS,
+              b.attemptLimits ?? DEFAULT_ATTEMPT_LIMITS,
+            ) &&
+            this.data.reservations[a.userId]?.creditCost ===
+              this.data.reservations[b.userId]?.creditCost &&
             canPair(a, b, now),
         )
         .sort(
@@ -434,6 +530,7 @@ export class Coordinator extends DurableObject<Env> {
     await this.serial.run(async () => {
       try {
         this.roll();
+        await this.releaseIneligibleWaiting();
         for (const id of Object.keys(this.data.assignments))
           await this.finishAssignment(id);
         if (launchReady(this.env)) {

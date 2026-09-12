@@ -4,11 +4,17 @@ A dark DSA duel arena built with React, TypeScript, Vite, Monaco, Supabase, and 
 
 ## Current state
 
-The interface and backend implementation are present. The site opens in **arena preview mode** until the launch gate is explicitly configured. Preview supports browsing problem statements, switching languages, editing local drafts, and resizing the editor. It does not execute code or award points.
+The redesigned lobby and full `/demo/:arena` journey are implemented. The demo includes a 15-second search, labelled simulated opponent, five-second preparation, timed workspace, four language starters, preview actions, and illustrative results. Drafts/countdowns survive reload within the browser session. `/preview/:arena` redirects to the demo. Demo actions never execute code or save ratings.
 
-The backend includes OAuth session verification, durable human matchmaking and bot fallback, execution reservations, a server-only **JDoodle** adapter, receipt-ordered adjudication, WebSockets with polling recovery, and transactional Supabase settlement. JDoodle credentials, an actual Supabase project, and Cloudflare deployment are still required for online matches. Public play is intentionally disabled pending the checks in [docs/LAUNCH.md](docs/LAUNCH.md).
+The backend includes Supabase OAuth verification, durable human matchmaking and bot fallback, quota reservations, a server-only **JDoodle** adapter, receipt-ordered adjudication, and transactional settlement. New admissions support disabled, tester-only staging, and public modes, with a durable request budget. Active matches can finish after admissions close.
 
-The private Sites preview hosts the frontend only. The supplied `wrangler.jsonc` deploys the complete frontend and API together on Cloudflare Workers, with the required Durable Object bindings. Do not enable ranked matches on an unverified provider.
+Cloudflare staging is deployed at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev) with live play disabled. Supabase still needs project provisioning; OAuth, JDoodle credentials/evidence and actual integration checks remain pending. Public play stays disabled. See [docs/SETUP.md](docs/SETUP.md) for account setup and [docs/LAUNCH.md](docs/LAUNCH.md) for evidence gates.
+
+The private Sites preview hosts only the frontend. Cloudflare staging/production configurations deploy the complete frontend and API with isolated SQLite Durable Objects. All implementation work belongs in `/Users/arya/Developer/Dalgo`.
+
+## Account setup
+
+See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for the exact owner actions, credential locations and free-judge capacity constraint. `npm run setup:local` creates a private staging settings file without overwriting existing values; `npm run check:setup` reports missing configuration without printing secrets.
 
 ## Local development
 
@@ -26,12 +32,13 @@ In a second terminal:
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. Vite proxies `/api` and WebSockets to the local Worker on port 8787. Without service configuration, preview mode works and privileged routes reject unauthenticated requests.
+Open `http://127.0.0.1:5173`. Vite proxies `/api` and WebSockets to the local Worker on port 8787. Without service configuration, demo mode works and privileged routes reject unauthenticated requests.
 
 ```sh
 npm test
 npm run typecheck
 npm run build
+npm run test:browser
 ```
 
 The offline tests exercise rating conservation, queue windows, bots, receipt ordering, deadlines, retries, durable recovery, quota ownership, source privacy, launch gates, and the real SQL migration in embedded PostgreSQL. External judge and two-account production tests remain separate launch requirements.
@@ -40,7 +47,7 @@ The offline tests exercise rating conservation, queue windows, bots, receipt ord
 
 1. Create a Supabase project on the free plan. Apply `supabase/migrations/202609110001_dalgo.sql` using the Supabase SQL editor or a version-controlled Supabase CLI migration workflow.
 2. Enable Google and GitHub in Authentication → Providers. Create provider OAuth applications using the callback URL shown by Supabase. Set the Supabase site URL and allowed redirect URLs to your frontend origin; include `http://127.0.0.1:5173` for local development. The frontend redirects OAuth back to its own origin.
-3. Copy `.env.example` to an ignored `.env` for setup scripts. Copy the Worker variables to ignored `.dev.vars` for local Workers development. The URL and anonymous/publishable key can reach the frontend. **The service role and JDoodle credentials must never have a `VITE_` prefix.**
+3. Copy `.env.example` to an ignored `.env` for setup scripts. Copy the Worker variables to ignored `.dev.vars` for local Workers development. The URL and publishable key can reach the frontend. **The service role and JDoodle credentials must never have a `VITE_` prefix.**
 4. Seed all immutable problem versions after applying the migration:
 
 ```sh
@@ -48,7 +55,7 @@ npm run seed:problems
 npm run seed:problems -- --apply
 ```
 
-The dry run makes no network calls. The apply command requires `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; it refuses to change existing problem versions. OAuth creates a profile and six ratings automatically. Browser roles cannot execute settlement, write ratings, or read private tests.
+The dry run makes no network calls. The apply command requires `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (or the legacy service-role key); it refuses to change existing problem versions. OAuth creates a profile and six ratings automatically. Browser roles cannot execute settlement, write ratings, or read private tests.
 
 ## Judge and launch configuration
 
@@ -64,13 +71,14 @@ Use a dedicated judge application/account so reconciliation includes all consump
 
 The checked-in configuration uses a free Workers subdomain, SQLite-backed Durable Objects, Worker assets, and a daily source-purge trigger. Authenticate Wrangler with your own Cloudflare account. Keep all numeric launch settings at their disabled defaults until verified.
 
-Set these as Worker secrets using `npx wrangler secret put NAME`: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `JDOODLE_CLIENT_ID`, and `JDOODLE_CLIENT_SECRET`. Set non-secret limits and allowed frontend origins in `wrangler.jsonc`. Do not paste secrets into configuration committed to Git.
+Use [docs/SETUP.md](docs/SETUP.md) for modern Supabase keys, a separate WebSocket signing secret, and tester access. Secrets are scoped to the selected environment. `ALLOWED_ORIGINS` controls CORS, not tester eligibility.
 
 ```sh
-npm run deploy:cloudflare
+npm run check:staging
+npm run deploy:staging
 ```
 
-Add the resulting Workers origin to Supabase's allowed redirect URLs. A separate frontend deployment can use `VITE_API_BASE` at build time; add that frontend origin to the Worker's `ALLOWED_ORIGINS`. The default same-origin deployment needs no Vite credentials.
+Production has a separate `npm run deploy:production` command and starts with admission disabled. Configure the final origin in Supabase Auth after deployment. Keep `LIVE_MATCHES_ENABLED=false` until account-specific judge verification passes; staging must still pass the two-account acceptance before public mode is enabled.
 
 ## Source map
 

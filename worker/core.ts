@@ -1,6 +1,7 @@
 import {
   ARENAS,
   type Arena,
+  type AttemptLimits,
   type Mode,
   type Player,
   type Problem,
@@ -23,6 +24,7 @@ export interface MatchRecord {
   startsAt: number;
   endsAt: number;
   submissions: Submission[];
+  attemptLimits?: AttemptLimits;
   bot: BotPlan | null;
   result: Result | null;
   settlementComplete: boolean;

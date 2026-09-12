@@ -1,0 +1,13 @@
+# Dalgo beta privacy notice — operator review required
+
+This draft must receive the operator's name and public support email before public registration opens. It describes the implemented architecture, not a claim of legal compliance.
+
+Dalgo uses Google or GitHub sign-in through Supabase. It stores an account identifier, profile name/avatar, six arena ratings, match results, and submission records. Profile names and ratings appear on the leaderboard. Players cannot read an opponent's submitted code or the hidden problem answers.
+
+For real Run and Submit actions, Dalgo sends the source code and test inputs to JDoodle for execution. Credentials and expected hidden answers are excluded from the execution payload. The operator must confirm JDoodle's own retention terms before launch and document them here.
+
+Dalgo retains private submitted source for 30 days, then removes it from its database and live-match storage. Compact verdicts, match history, and rating changes remain. Live-match coordination runs on Cloudflare; account and match records use Supabase. Operational logs track errors, timing, quotas, and match identifiers without logging source code.
+
+Demo code is not executed or submitted to the judge, and demo ratings are not saved. Demo state and drafts use browser session storage. Live editor drafts use local browser storage. A player can clear these through the browser's site-data controls; restarting a demo creates a new session.
+
+The operator must publish a support contact and a process for account/data requests before public registration. A deletion request needs a reviewed retention/anonymization workflow for linked rating and match records; simply deleting an authentication row is not a complete account-deletion implementation.

@@ -1,1308 +1,558 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  lazy,
-  Suspense,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Link,
   NavLink,
+  Navigate,
   Route,
   Routes,
+  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
 import {
-  ArrowUpRight,
   ArrowRight,
-  ArrowLeft,
+  ArrowUpRight,
+  BookOpen,
   Check,
-  ChevronDown,
   ChevronRight,
   Clock3,
-  Code2,
-  Command,
   Flag,
-  Github,
-  Layers3,
-  LoaderCircle,
-  LockKeyhole,
+  LogOut,
   Play,
-  Radio,
-  RotateCcw,
-  ShieldCheck,
-  Sparkles,
   Swords,
-  Target,
   Trophy,
   UserRound,
-  Users,
-  X,
-  Zap,
-  WifiOff,
-  LogOut,
-  PanelLeft,
-  GripVertical,
-  CheckCircle2,
-  AlertCircle,
 } from "lucide-react";
 import { useAuth } from "./auth";
+import { api } from "./api";
 import { useDalgoTools } from "./webmcp";
-import { api, connectEvents } from "./api";
 import {
   ARENAS,
-  LANGUAGES,
   type Arena,
-  type Mode,
-  type Language,
-  type PublicProblem,
-  type MatchView,
-  type Rating,
-  type QueueView,
   type HistoryRow,
   type LeaderRow,
+  type Mode,
+  type QueueView,
 } from "../shared/types";
-const Editor = lazy(() => import("./components/CodeEditor"));
-const arenaKeys = Object.keys(ARENAS) as Arena[];
-const icons = { easy: Zap, medium: Layers3, hard: Command };
-function Logo() {
-  return (
-    <Link to="/" className="brand" aria-label="Dalgo home">
-      <span className="brand-mark">
-        <svg viewBox="0 0 28 28" aria-hidden="true">
-          <path d="M5 4h10l9 10-9 10H5l9-10z" fill="currentColor" />
-        </svg>
-      </span>
-      dalgo<span className="brand-period">.</span>
-    </Link>
-  );
-}
-function Dialog({
-  title,
-  onClose,
-  children,
-}: {
-  title: string;
-  onClose: () => void;
-  children: ReactNode;
-}) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    ref.current?.showModal();
-    const onCancel = (e: Event) => {
-      e.preventDefault();
-      onClose();
-    };
-    ref.current?.addEventListener("cancel", onCancel);
-    return () => ref.current?.removeEventListener("cancel", onCancel);
-  }, [onClose]);
-  return (
-    <dialog
-      ref={ref}
-      className="modal"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      aria-label={title}
-    >
-      <button
-        className="icon-button modal-close"
-        aria-label="Close"
-        onClick={onClose}
-      >
-        <X size={20} />
-      </button>
-      {children}
-    </dialog>
-  );
-}
-function GoogleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M21.6 12.23c0-.71-.06-1.39-.18-2.05H12v3.88h5.39a4.61 4.61 0 0 1-2 3.03v2.52h3.23c1.89-1.74 2.98-4.3 2.98-7.38ZM12 22c2.7 0 4.96-.9 6.62-2.39l-3.23-2.52c-.9.6-2.04.96-3.39.96-2.6 0-4.8-1.75-5.59-4.1H3.08v2.6A10 10 0 0 0 12 22ZM6.41 13.95a6 6 0 0 1 0-3.9v-2.6H3.08a10 10 0 0 0 0 9.1l3.33-2.6ZM12 5.95c1.47 0 2.79.51 3.82 1.51l2.87-2.87A9.62 9.62 0 0 0 12 2a10 10 0 0 0-8.92 5.45l3.33 2.6C7.2 7.7 9.4 5.95 12 5.95Z"
-      />
-    </svg>
-  );
-}
-function SignIn({ onClose }: { onClose: () => void }) {
-  const { client } = useAuth();
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  async function login(provider: "google" | "github") {
-    if (!client) return;
-    setBusy(true);
-    const { error } = await client.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo: window.location.origin + "/" },
-    });
-    if (error) {
-      setError(error.message);
-      setBusy(false);
-    }
-  }
-  return (
-    <Dialog title="Sign in to Dalgo" onClose={onClose}>
-      <div className="dialog-symbol">
-        <Swords size={27} />
-      </div>
-      <p className="eyebrow">YOUR NEXT CHALLENGE</p>
-      <h2>Make your move.</h2>
-      <p className="muted">
-        Sign in to compete, build your rating, and make every problem count.
-      </p>
-      {client ? (
-        <div className="auth-buttons">
-          <button
-            className="button auth-button"
-            disabled={busy}
-            onClick={() => login("google")}
-          >
-            <GoogleIcon />
-            Continue with Google
-          </button>
-          <button
-            className="button auth-button"
-            disabled={busy}
-            onClick={() => login("github")}
-          >
-            <Github size={19} />
-            Continue with GitHub
-          </button>
-        </div>
-      ) : (
-        <div className="notice">
-          <LockKeyhole size={18} />
-          <span>
-            Sign-in opens when the beta is connected. You can explore all three
-            arenas now.
-          </span>
-        </div>
-      )}
-      {error && (
-        <p role="alert" className="error">
-          {error}
-        </p>
-      )}
-      <p className="tiny muted">
-        A fresh start at 1,200. Your progress is yours.
-      </p>
-    </Dialog>
-  );
-}
-function useRatings() {
-  const { user } = useAuth();
-  const [ratings, setRatings] = useState<Rating[]>([]);
-  const [ratingsError, setRatingsError] = useState("");
-  useEffect(() => {
-    let stopped = false;
-    setRatings([]);
-    setRatingsError("");
-    if (!user) return;
-    api<Rating[]>("/ratings")
-      .then((value) => {
-        if (!stopped) setRatings(value);
-      })
-      .catch((error) => {
-        if (!stopped) setRatingsError(error.message);
-      });
-    return () => {
-      stopped = true;
-    };
-  }, [user?.id]);
-  return { ratings, ratingsError };
-}
-function Shell() {
+import { Brand, EmptyState, Footer, SignIn } from "./components/Chrome";
+import { arenaKeys, formatClock, useHistory, useRatings } from "./data";
+import { DemoPage, LiveMatchPage, LiveQueue } from "./components/MatchPage";
+const arenaDetails = {
+  easy: {
+    subtitle: "Start with the fundamentals.",
+    topics: "Arrays, strings, hash maps",
+    note: "A focused problem with a direct approach. Speed and careful edge cases make the difference.",
+  },
+  medium: {
+    subtitle: "Find the better approach.",
+    topics: "Trees, graphs, dynamic programming",
+    note: "A problem that rewards pattern recognition. Choose your approach before you start typing.",
+  },
+  hard: {
+    subtitle: "Make every decision count.",
+    topics: "Advanced graphs, DP, optimization",
+    note: "A deeper problem with tighter constraints. Correctness and complexity both matter.",
+  },
+};
+export default function App() {
   useDalgoTools();
-  const { user, client } = useAuth();
+  const { user, client, config } = useAuth();
   const [signIn, setSignIn] = useState(false);
+  const location = useLocation();
+  const matchRoute = /^\/(demo|match|preview)\//.test(location.pathname);
   return (
-    <>
-      <div className="site-glow" />
-      <header className="topbar">
-        <div className="topbar-inner">
-          <Logo />
-          <nav className="main-nav" aria-label="Main navigation">
+    <div className={matchRoute ? "app match-app" : "app"}>
+      {!matchRoute && (
+        <aside className="sidebar">
+          <div className="sidebar-brand">
+            <Brand />
+            <span className="club-label">THE CODING CLUB</span>
+          </div>
+          <nav className="side-nav" aria-label="Main navigation">
             <NavLink to="/" end>
-              <Swords size={17} />
-              Play
+              <Swords size={18} />
+              Play<span className="nav-index">01</span>
             </NavLink>
             <NavLink to="/leaderboard">
-              <Trophy size={17} />
-              Leaderboard
+              <Trophy size={18} />
+              Leaderboard<span className="nav-index">02</span>
             </NavLink>
             <NavLink to="/history">
-              <Clock3 size={17} />
-              History
+              <Clock3 size={18} />
+              Match history<span className="nav-index">03</span>
+            </NavLink>
+            <NavLink to="/profile">
+              <UserRound size={18} />
+              Your profile<span className="nav-index">04</span>
             </NavLink>
           </nav>
-          <div className="topbar-right">
-            <span className="beta-tag">BETA</span>
+          <div className="sidebar-bottom">
+            <div className="sidebar-status">
+              <span className="status-square" />
+              {config.playEnabled
+                ? config.admissionMode === "staging"
+                  ? "Tester matches open"
+                  : "Ranked play open"
+                : "Demo available"}
+              <small>
+                {config.admissionMode === "staging"
+                  ? "Private staging"
+                  : config.playEnabled
+                    ? "Free beta"
+                    : "Ranked play not open yet"}
+              </small>
+            </div>
             {user ? (
               <>
-                <Link
-                  className="avatar"
-                  to="/profile"
-                  aria-label="Your profile"
-                >
-                  {(user.user_metadata?.full_name ?? user.email ?? "D")
-                    .slice(0, 1)
-                    .toUpperCase()}
+                <Link className="account-button" to="/profile">
+                  <span className="avatar small">
+                    {(user.user_metadata?.full_name || "You")[0]}
+                  </span>
+                  <span>{user.user_metadata?.full_name || "Your account"}</span>
                 </Link>
                 <button
-                  className="icon-button sign-out"
-                  title="Sign out"
-                  aria-label="Sign out"
+                  className="quiet-button sign-out"
                   onClick={() => client?.auth.signOut()}
                 >
-                  <LogOut size={17} />
+                  <LogOut size={15} />
+                  Sign out
                 </button>
               </>
             ) : (
               <button
-                className="button button-small sign-in"
+                className="button sidebar-signin"
                 onClick={() => setSignIn(true)}
               >
                 Sign in
-                <ArrowUpRight size={16} />
+                <ArrowUpRight size={17} />
               </button>
             )}
           </div>
-        </div>
-      </header>
-      <Routes>
-        <Route path="/" element={<Home onSignIn={() => setSignIn(true)} />} />
-        <Route
-          path="/preview/:arena"
-          element={<MatchPage preview onSignIn={() => setSignIn(true)} />}
-        />
-        <Route
-          path="/match/:id"
-          element={<MatchPage onSignIn={() => setSignIn(true)} />}
-        />
-        <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route
-          path="/history"
-          element={<History onSignIn={() => setSignIn(true)} />}
-        />
-        <Route
-          path="/profile"
-          element={<Profile onSignIn={() => setSignIn(true)} />}
-        />
-        <Route
-          path="*"
-          element={
-            <main className="page empty-page">
-              <Code2 />
-              <h1>That page took a wrong turn.</h1>
-              <Link className="button" to="/">
-                Back to the arena
-              </Link>
-            </main>
-          }
-        />
-      </Routes>
+        </aside>
+      )}
+      <div className="app-content">
+        <Routes>
+          <Route
+            path="/"
+            element={<Lobby onSignIn={() => setSignIn(true)} />}
+          />
+          <Route path="/demo/:arena" element={<DemoPage />} />
+          <Route path="/preview/:arena" element={<PreviewRedirect />} />
+          <Route
+            path="/match/:id"
+            element={<LiveMatchPage onSignIn={() => setSignIn(true)} />}
+          />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route
+            path="/history"
+            element={<History onSignIn={() => setSignIn(true)} />}
+          />
+          <Route
+            path="/profile"
+            element={<Profile onSignIn={() => setSignIn(true)} />}
+          />
+          <Route
+            path="*"
+            element={
+              <main className="page">
+                <h1>Page not found.</h1>
+                <Link className="button primary" to="/">
+                  Back to the lobby
+                  <ArrowRight size={17} />
+                </Link>
+              </main>
+            }
+          />
+        </Routes>
+      </div>
       {signIn && <SignIn onClose={() => setSignIn(false)} />}
-    </>
-  );
-}
-function ModeSwitch({
-  value,
-  onChange,
-}: {
-  value: Mode;
-  onChange: (v: Mode) => void;
-}) {
-  return (
-    <div className="segmented" role="group" aria-label="Rating type">
-      <button
-        aria-pressed={value === "human"}
-        className={value === "human" ? "active" : ""}
-        onClick={() => onChange("human")}
-      >
-        <Users size={15} />
-        Human
-      </button>
-      <button
-        aria-pressed={value === "bot"}
-        className={value === "bot" ? "active" : ""}
-        onClick={() => onChange("bot")}
-      >
-        <Code2 size={15} />
-        Bot
-      </button>
     </div>
   );
 }
-function Home({ onSignIn }: { onSignIn: () => void }) {
-  const { user, config } = useAuth();
-  const { ratings, ratingsError } = useRatings();
-  const [mode, setMode] = useState<Mode>("human");
-  const [queue, setQueue] = useState<Arena | null>(null);
-  const nav = useNavigate();
-  const name = user?.user_metadata?.full_name?.split(" ")[0];
+function PreviewRedirect() {
+  const { arena } = useParams();
   return (
-    <main className="page home">
-      <section className="intro">
+    <Navigate
+      replace
+      to={"/demo/" + (arenaKeys.includes(arena as Arena) ? arena : "easy")}
+    />
+  );
+}
+function PageTop({
+  section,
+  children,
+}: {
+  section: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="page-top">
+      <span className="overline">
+        CLUBHOUSE <span>/</span> {section}
+      </span>
+      <div>{children || <span className="badge">FREE BETA</span>}</div>
+    </div>
+  );
+}
+function RatingSwitch({
+  mode,
+  onChange,
+}: {
+  mode: Mode;
+  onChange: (m: Mode) => void;
+}) {
+  return (
+    <div className="segmented" role="group" aria-label="Rating type">
+      {(["human", "bot"] as Mode[]).map((m) => (
+        <button key={m} aria-pressed={mode === m} onClick={() => onChange(m)}>
+          {m === "human" ? "Human" : "Bot"}
+        </button>
+      ))}
+    </div>
+  );
+}
+function Lobby({ onSignIn }: { onSignIn: () => void }) {
+  const { user, config } = useAuth();
+  const { ratings, error } = useRatings();
+  const [arena, setArena] = useState<Arena>("easy");
+  const [mode, setMode] = useState<Mode>("human");
+  const [queue, setQueue] = useState<{
+    arena: Arena;
+    resume: boolean;
+    userId: string;
+  } | null>(null);
+  const [recoveryVersion, setRecoveryVersion] = useState(0);
+  const [recovery, setRecovery] = useState<{
+    userId: string;
+    value: QueueView | null;
+    error: string;
+  } | null>(null);
+  useEffect(() => {
+    let stopped = false;
+    if (!user) {
+      setRecovery(null);
+      return;
+    }
+    const userId = user.id;
+    let refreshVersion = 0;
+    const refresh = () => {
+      const requested = ++refreshVersion;
+      void api<QueueView>("/queue")
+        .then((value) => {
+          if (!stopped && requested === refreshVersion)
+            setRecovery({ userId, value, error: "" });
+        })
+        .catch(() => {
+          if (!stopped && requested === refreshVersion)
+            setRecovery((prior) => ({
+              userId,
+              value: prior?.userId === userId ? prior.value : null,
+              error:
+                "Your current match could not be checked. Retry to reconnect.",
+            }));
+        });
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    return () => {
+      stopped = true;
+      window.removeEventListener("focus", refresh);
+    };
+  }, [user?.id, recoveryVersion]);
+  const currentQueue = recovery?.userId === user?.id ? recovery?.value : null;
+  const recoveryError = recovery?.userId === user?.id ? recovery?.error : "";
+  function closeQueue() {
+    setQueue(null);
+    setRecoveryVersion((version) => version + 1);
+  }
+  const nav = useNavigate();
+  const rating = ratings.find((r) => r.arena === arena && r.mode === mode);
+  return (
+    <main className="page lobby">
+      <PageTop section="PLAY" />
+      <header className="page-heading">
         <div>
-          <p className="eyebrow">
-            <span className="eyebrow-dash" />
-            THE DSA DUEL ARENA
-          </p>
           <h1>
-            {name ? (
-              <>
-                Your move, <span>{name}.</span>
-              </>
-            ) : (
-              <>
-                Great minds.
-                <br className="mobile-break" /> <span>Better rivals.</span>
-              </>
-            )}
+            The arena<span className="heading-period">.</span>
           </h1>
-          <p className="intro-copy">
-            Same problem. Same clock. First correct solution wins.
-          </p>
+          <p>One problem. Two players. First correct solution wins.</p>
         </div>
-        <div className="intro-aside">
-          <div className="overlap-icons">
-            <span>
-              <Code2 size={20} />
-            </span>
-            <span>
-              <Swords size={20} />
-            </span>
-          </div>
-          <p>
-            A little competition.
-            <br />
-            <strong>A lot of progress.</strong>
-          </p>
+        <span className="heading-side">
+          RATED 1v1
+          <br />
+          <span>10 / 20 / 30 MIN</span>
+        </span>
+      </header>
+      {user &&
+        (currentQueue?.matchId || currentQueue?.status === "waiting") && (
+          <section
+            className="notice"
+            aria-label="Your current match"
+            style={{ marginBottom: 24 }}
+          >
+            <strong>
+              {currentQueue.matchId
+                ? "You have a match to return to."
+                : "Your opponent search is still active."}
+            </strong>
+            <p>
+              {currentQueue.matchId
+                ? "Reconnect to the server clock, your drafts, and the latest result. Existing matches remain available while new admissions are paused."
+                : "Reopen your existing search. This will not create a new queue entry."}
+            </p>
+            {currentQueue.matchId ? (
+              <Link
+                className="button primary"
+                to={"/match/" + currentQueue.matchId}
+              >
+                Resume match
+                <ArrowRight size={16} />
+              </Link>
+            ) : (
+              <button
+                className="button primary"
+                onClick={() =>
+                  setQueue({
+                    arena: currentQueue.arena ?? arena,
+                    resume: true,
+                    userId: user.id,
+                  })
+                }
+              >
+                Resume search
+                <ArrowRight size={16} />
+              </button>
+            )}
+          </section>
+        )}
+      {user && recoveryError && (
+        <div className="notice" role="alert" style={{ marginBottom: 24 }}>
+          <p>{recoveryError}</p>
+          <button
+            className="button"
+            onClick={() => setRecoveryVersion((version) => version + 1)}
+          >
+            Retry current match
+          </button>
         </div>
-      </section>
-      <div className="arena-section-title">
-        <div>
-          <h2>
-            Choose your arena <span className="count-label">03</span>
-          </h2>
-          <p>Find your pace. Take on the challenge.</p>
-        </div>
-        <ModeSwitch value={mode} onChange={setMode} />
-      </div>
-      {ratingsError && (
-        <p className="error" role="alert">
-          {ratingsError}
-        </p>
       )}
-      <section className="arena-grid" aria-label="Arenas">
-        {arenaKeys.map((key, i) => {
-          const a = ARENAS[key],
-            Icon = icons[key],
-            rating = ratings.find((r) => r.arena === key && r.mode === mode);
-          return (
-            <article
-              key={key}
-              className={"arena-card arena-" + key}
-              style={{ "--arena-color": a.color } as React.CSSProperties}
+      <div className="lobby-layout">
+        <div className="lobby-main">
+          <section className="match-setup" aria-label="Choose your match">
+            <div className="section-heading">
+              <h2>Choose your match</h2>
+              <span className="overline">01 — DIFFICULTY</span>
+            </div>
+            <div
+              className="arena-options"
+              role="radiogroup"
+              aria-label="Arena difficulty"
             >
-              <div className="arena-top">
-                <span className="arena-emblem">
-                  <Icon size={29} strokeWidth={1.65} />
-                </span>
-                <span className="arena-time">
-                  <Clock3 size={14} />
-                  {a.duration / 60} min
-                </span>
-              </div>
-              <div className="arena-art" aria-hidden="true">
-                <span className="art-grid" />
-                <span className="arena-number">0{i + 1}</span>
-                <Icon className="arena-art-icon" size={88} strokeWidth={0.75} />
-                <span className="art-orbit" />
-              </div>
-              <div className="arena-copy">
-                <p className="eyebrow">{a.label}</p>
-                <h3>
-                  {a.name}
-                  <span className="difficulty-marks">
-                    {Array.from({ length: 3 }, (_, j) => (
-                      <i key={j} className={j <= i ? "filled" : ""} />
-                    ))}
+              {arenaKeys.map((a, i) => (
+                <label
+                  key={a}
+                  className={"arena-option " + (arena === a ? "selected" : "")}
+                >
+                  <input
+                    type="radio"
+                    name="arena"
+                    value={a}
+                    checked={arena === a}
+                    onChange={() => setArena(a)}
+                  />
+                  <span className="arena-order">0{i + 1}</span>
+                  <span className="arena-option-name">
+                    <strong>{ARENAS[a].name}</strong>
+                    <span>{arenaDetails[a].topics}</span>
                   </span>
-                </h3>
-                <p>{a.description}</p>
-                <div className="topic-line">{a.topics}</div>
-              </div>
-              <div className="card-rating">
+                  <span className="arena-option-time">
+                    {formatClock(ARENAS[a].duration)}
+                    <small>minutes</small>
+                  </span>
+                  <span className="radio-mark">
+                    {arena === a && <Check size={14} />}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="selection-details">
+              <span className="overline">
+                {ARENAS[arena].name.toUpperCase()} /{" "}
+                {ARENAS[arena].duration / 60} MINUTES
+              </span>
+              <h3>{arenaDetails[arena].subtitle}</h3>
+              <p>{arenaDetails[arena].note}</p>
+              <div className="format-line">
                 <span>
-                  {user
-                    ? "Your " + mode + " rating"
-                    : "Starting " + mode + " rating"}
+                  <Swords size={15} />1 vs 1
                 </span>
-                <strong>
-                  {(rating?.rating ?? (user ? "—" : 1200)).toLocaleString()}
-                  <span>
-                    {rating?.matches ? `${rating.matches} played` : "Unranked"}
-                  </span>
-                </strong>
+                <span>
+                  <Flag size={15} />
+                  First correct wins
+                </span>
+                <span>
+                  <BookOpen size={15} />
+                  Same problem
+                </span>
+              </div>
+            </div>
+            <div className="play-row">
+              <div>
+                <span className="play-label">
+                  {config.playEnabled
+                    ? "Ready to queue"
+                    : "A full match, in demo mode"}
+                </span>
+                <span className="muted">
+                  {config.playEnabled
+                    ? "Human opponent first. Bot fallback after 15s."
+                    : "Try the clock, editor, and example results."}
+                </span>
               </div>
               <button
-                className={
-                  "button arena-cta " + (key === "medium" ? "primary" : "")
-                }
+                className="button primary play-button"
                 onClick={() =>
                   config.playEnabled
                     ? user
-                      ? setQueue(key)
+                      ? setQueue({ arena, resume: false, userId: user.id })
                       : onSignIn()
-                    : nav("/preview/" + key)
+                    : nav("/demo/" + arena)
                 }
               >
-                {config.playEnabled ? "Enter arena" : "Explore arena"}
-                <ArrowUpRight size={18} />
+                <Play size={17} fill="currentColor" />
+                {config.playEnabled ? "Find a match" : "Try demo"}
+                <ArrowRight size={18} />
               </button>
-            </article>
-          );
-        })}
-      </section>
-      <div className="below-arena">
-        <div className="match-info">
-          <span className="soft-icon">
-            <Users size={20} />
-          </span>
-          <div>
-            <strong>A worthy opponent. Every time.</strong>
-            <p>
-              We look for a player near your rating for 15 seconds, then pair
-              you with a clearly marked bot.
+            </div>
+            {!config.playEnabled && (
+              <div className="setup-note">
+                <p>No account required. No code execution or saved ratings.</p>
+                {config.admissionMode === "staging" && <p>{config.reason}</p>}
+              </div>
+            )}
+          </section>
+          <RecentHistory />
+        </div>
+        <aside className="lobby-rail">
+          <section className="rating-panel">
+            <div className="section-heading">
+              <h2>Your rating</h2>
+              <span className="overline">ELO</span>
+            </div>
+            <RatingSwitch mode={mode} onChange={setMode} />
+            <div className="rating-value">
+              {rating ? rating.rating.toLocaleString() : "—"}
+              <span>
+                {ARENAS[arena].name} ·{" "}
+                {mode === "human" ? "Human matches" : "Bot matches"}
+              </span>
+            </div>
+            <div className="rating-foot">
+              <span>
+                {rating
+                  ? `${rating.matches} matches played`
+                  : "Starting rating"}
+              </span>
+              <strong>{rating ? `${rating.wins} wins` : "1,200"}</strong>
+            </div>
+            <p className="muted">
+              {user
+                ? "Each arena has separate human and bot ratings."
+                : "Sign in when ranked play opens to establish your rating."}
             </p>
-          </div>
-          <span className="info-pill">Human first</span>
-        </div>
-        <div className="fairplay-info">
-          <ShieldCheck size={20} />
-          <div>
-            <strong>Built for a fair fight</strong>
-            <p>Shared clock. Hidden tests. Separate bot ratings.</p>
-          </div>
-        </div>
-      </div>
-      {!config.playEnabled && (
-        <div className="beta-notice">
-          <span className="beta-small">EARLY ACCESS</span>
-          <p>{config.reason}</p>
-          <ArrowRight size={17} />
-        </div>
-      )}
-      <section className="bottom-grid">
-        <div className="recent-panel">
-          <div className="section-row">
-            <h2>Your last moves</h2>
-            <Link to="/history">
-              Match history
-              <ArrowUpRight size={15} />
-            </Link>
-          </div>
-          <div className="empty-inline">
-            <span className="empty-icon">
-              <Swords size={21} />
-            </span>
-            <div>
-              <strong>
-                {user
-                  ? "Every match starts a story."
-                  : "Your first rivalry is waiting."}
-              </strong>
+            {error && (
+              <p className="error" role="alert">
+                {error}
+              </p>
+            )}
+          </section>
+          <section className="rules-panel">
+            <span className="overline">THE MATCH RULES</span>
+            <ol>
+              <li>
+                <span>01</span>
+                <div>
+                  <strong>Same starting line</strong>
+                  <p>Identical problem and a shared clock.</p>
+                </div>
+              </li>
+              <li>
+                <span>02</span>
+                <div>
+                  <strong>Correctness comes first</strong>
+                  <p>Pass every hidden test to win.</p>
+                </div>
+              </li>
+              <li>
+                <span>03</span>
+                <div>
+                  <strong>A separate bot ladder</strong>
+                  <p>Simulated opponents never change your human rating.</p>
+                </div>
+              </li>
+            </ol>
+            <div className="supported-languages">
+              <span className="overline">YOUR LANGUAGE</span>
               <p>
-                {user
-                  ? "Completed matches and rating changes will appear in your history."
-                  : "Sign in when the beta opens to keep track of your matches."}
+                Python <b>·</b> C++ <b>·</b> Java <b>·</b> JavaScript
               </p>
             </div>
-          </div>
-        </div>
-        <div className="how-panel">
-          <p className="eyebrow">THE WINNING MOVE</p>
-          <div className="how-steps">
-            <span>
-              <i>1</i>Choose
-            </span>
-            <ChevronRight size={14} />
-            <span>
-              <i>2</i>Solve
-            </span>
-            <ChevronRight size={14} />
-            <span>
-              <i>3</i>Climb
-            </span>
-          </div>
-          <p>Fully correct wins. If neither solves, it’s a draw.</p>
-        </div>
-      </section>
+          </section>
+        </aside>
+      </div>
       <Footer />
-      {queue && <QueueDialog arena={queue} onClose={() => setQueue(null)} />}
+      {queue && user?.id === queue.userId && (
+        <LiveQueue
+          key={queue.userId + ":" + queue.arena + ":" + queue.resume}
+          arena={queue.arena}
+          resume={queue.resume}
+          onClose={closeQueue}
+        />
+      )}
     </main>
   );
 }
-function Footer() {
+function RecentHistory() {
+  const { user } = useAuth();
+  const { rows, error, loading } = useHistory();
   return (
-    <footer>
-      <span>Built for the love of problem solving.</span>
-      <span>
-        <span className="footer-mark">◈</span> One challenge at a time.
-      </span>
-    </footer>
+    <section className="recent-history">
+      <div className="section-heading">
+        <h2>Recent matches</h2>
+        <Link className="text-link" to="/history">
+          View history
+          <ArrowUpRight size={15} />
+        </Link>
+      </div>
+      {user && rows.length ? (
+        <MatchRows rows={rows.slice(0, 3)} userId={user!.id} />
+      ) : (
+        <EmptyState
+          title={loading ? "Loading matches…" : "No matches played yet."}
+        >
+          {error ||
+            (user
+              ? "Your completed matches and rating changes will appear here."
+              : "Your match history starts with your first ranked game. Demo results stay out of the record.")}
+        </EmptyState>
+      )}
+    </section>
   );
 }
-function QueueDialog({
+function ArenaTabs({
   arena,
-  onClose,
+  onChange,
 }: {
   arena: Arena;
-  onClose: () => void;
+  onChange: (a: Arena) => void;
 }) {
-  const [state, setState] = useState<QueueView | null>(null);
-  const [error, setError] = useState("");
-  const [now, setNow] = useState(Date.now());
-  const navigate = useNavigate();
-  const requestId = useRef<string>(crypto.randomUUID());
-  const navigating = useRef(false);
-  useEffect(() => {
-    let closed = false;
-    let socket: WebSocket | undefined;
-    const update = (q: QueueView) => {
-      if (closed) return;
-      if (q.requestId) requestId.current = q.requestId;
-      setState((previous) =>
-        previous?.status === "capacity" && q.status === "idle" ? previous : q,
-      );
-      if (q.matchId) {
-        navigating.current = true;
-        navigate("/match/" + q.matchId);
-        onClose();
-      }
-    };
-    api<QueueView>("/queue", {
-      method: "POST",
-      body: JSON.stringify({ arena, requestId: requestId.current }),
-    })
-      .then(async (q) => {
-        update(q);
-        if (!q.matchId) {
-          try {
-            socket = await connectEvents("/queue/events", (v) => {
-              if (v.type === "queue") update(v.data);
-            });
-            if (closed) socket.close();
-          } catch {}
-        }
-      })
-      .catch((e) => setError(e.message));
-    const timer = setInterval(() => setNow(Date.now()), 250);
-    const poll = setInterval(
-      () =>
-        api<QueueView>("/queue")
-          .then(update)
-          .catch((e) => setError(e.message)),
-      2500,
-    );
-    return () => {
-      closed = true;
-      socket?.close();
-      clearInterval(timer);
-      clearInterval(poll);
-    };
-  }, [arena]);
-  const elapsed = Math.max(
-    0,
-    Math.floor((now - (state?.joinedAt ?? now)) / 1000),
-  );
-  async function cancel() {
-    try {
-      if (!navigating.current) {
-        const q = await api<QueueView>("/queue", {
-          method: "DELETE",
-          body: JSON.stringify({ requestId: requestId.current }),
-        });
-        if (q.matchId) {
-          navigate("/match/" + q.matchId);
-        } else if (q.status !== "idle") {
-          setError("Your search is still active. Please cancel again.");
-          return;
-        }
-      }
-      onClose();
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
   return (
-    <Dialog title="Finding an opponent" onClose={cancel}>
-      <div className="match-orb">
-        <Swords size={42} />
-        <span />
-      </div>
-      <p className="eyebrow">
-        {ARENAS[arena].name.toUpperCase()} ARENA · {ARENAS[arena].duration / 60}{" "}
-        MIN
-      </p>
-      <h2>
-        {state?.status === "capacity"
-          ? "A short breather."
-          : "Finding your rival."}
-      </h2>
-      <p className="muted">
-        {state?.message || "Looking for someone near your skill level."}
-      </p>
-      <div className="queue-counter">00:{String(elapsed).padStart(2, "0")}</div>
-      <div className="queue-progress">
-        <span style={{ width: Math.min((elapsed / 15) * 100, 100) + "%" }} />
-      </div>
-      <p className="tiny muted">
-        A simulated bot joins after 15 seconds if no suitable player is
-        available.
-      </p>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      <button className="button full" onClick={cancel}>
-        Cancel search
-      </button>
-    </Dialog>
-  );
-}
-function usePublicProblem(arena: Arena) {
-  const [problem, setProblem] = useState<PublicProblem | null>(null);
-  useEffect(() => {
-    fetch("/problems.json")
-      .then((r) => r.json() as Promise<PublicProblem[]>)
-      .then((p: PublicProblem[]) =>
-        setProblem(p.find((p) => p.arena === arena) ?? null),
-      )
-      .catch(() => {});
-  }, [arena]);
-  return problem;
-}
-function MatchPage({
-  preview = false,
-  onSignIn,
-}: {
-  preview?: boolean;
-  onSignIn: () => void;
-}) {
-  const params = useParams();
-  const arena: Arena = arenaKeys.includes(params.arena as Arena)
-    ? (params.arena as Arena)
-    : "easy";
-  const publicProblem = usePublicProblem(arena);
-  const { user } = useAuth();
-  const [match, setMatch] = useState<MatchView | null>(null);
-  const [language, setLanguage] = useState<Language>("python");
-  const [source, setSource] = useState("");
-  const [tab, setTab] = useState<"problem" | "code">("problem");
-  const [now, setNow] = useState(Date.now());
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [resign, setResign] = useState(false);
-  const [connection, setConnection] = useState("");
-  const [ratio, setRatio] = useState(43);
-  const splitRef = useRef<HTMLDivElement>(null);
-  const clockOffset = useRef(0);
-  const draftKey = `dalgo-draft:${preview ? "preview-" + arena : params.id}:${language}`;
-  const problem = preview ? publicProblem : match?.problem;
-  useEffect(() => {
-    const tick = setInterval(
-      () => setNow(Date.now() + clockOffset.current),
-      250,
-    );
-    return () => clearInterval(tick);
-  }, []);
-  useEffect(() => {
-    if (!problem) return;
-    setSource(localStorage.getItem(draftKey) ?? problem.starter[language]);
-  }, [problem?.id, language, draftKey]);
-  useEffect(() => {
-    if (preview || !params.id || !user) return;
-    let stopped = false;
-    let ws: WebSocket | undefined;
-    const refresh = () =>
-      api<MatchView>("/matches/" + params.id)
-        .then((v) => {
-          if (stopped) return;
-          clockOffset.current = v.serverNow - Date.now();
-          setMatch(v);
-          setError("");
-        })
-        .catch((e) => !stopped && setError(e.message));
-    refresh();
-    connectEvents("/matches/" + params.id + "/events", (v) => {
-      if (v.type === "match") refresh();
-    })
-      .then((s) => {
-        ws = s;
-        if (stopped) s.close();
-        s.onclose = () => setConnection("Reconnecting — your clock continues.");
-        s.onopen = () => setConnection("");
-      })
-      .catch(() =>
-        setConnection(
-          "Live updates are reconnecting. Your match is still active.",
-        ),
-      );
-    const poll = setInterval(refresh, 2500);
-    return () => {
-      stopped = true;
-      ws?.close();
-      clearInterval(poll);
-    };
-  }, [params.id, user?.id, preview]);
-  async function send(kind: "run" | "submit") {
-    if (!match) return;
-    setBusy(true);
-    setError("");
-    try {
-      const v = await api<MatchView>("/matches/" + match.id + "/" + kind, {
-        method: "POST",
-        body: JSON.stringify({
-          language,
-          source,
-          requestId: crypto.randomUUID(),
-        }),
-      });
-      setMatch(v);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-  function drag(e: React.PointerEvent) {
-    const el = e.currentTarget as HTMLElement;
-    el.setPointerCapture(e.pointerId);
-    const move = (ev: PointerEvent) => {
-      if (splitRef.current) {
-        const rect = splitRef.current.getBoundingClientRect();
-        setRatio(
-          Math.max(
-            28,
-            Math.min(65, ((ev.clientX - rect.left) / rect.width) * 100),
-          ),
-        );
-      }
-    };
-    const end = () => {
-      el.removeEventListener("pointermove", move);
-      el.removeEventListener("pointerup", end);
-    };
-    el.addEventListener("pointermove", move);
-    el.addEventListener("pointerup", end);
-  }
-  const time = preview
-    ? ARENAS[arena].duration
-    : Math.max(0, Math.ceil(((match?.endsAt ?? now) - now) / 1000));
-  const active =
-    match?.status === "active" && now >= (match?.startsAt ?? 0) && time > 0;
-  const ownPending = match?.submissions.some(
-    (s) => s.userId === user?.id && s.verdict === "pending",
-  );
-  const latest = match?.submissions.filter((s) => s.userId === user?.id).at(-1);
-  const opponent = match?.players.find((p) => p.id !== user?.id);
-  const yourPlayer = match?.players.find((p) => p.id === user?.id);
-  const matchArena = problem?.arena ?? arena;
-  return (
-    <main className="match-page">
-      <div className="match-toolbar">
-        <Link to="/" className="back-link">
-          <ArrowLeft size={16} />
-          Arenas
-        </Link>
-        <div className="match-arena">
-          <span className={"level-dot " + matchArena} />
-          {ARENAS[matchArena].name} arena
-          <span className="tiny-pill">
-            {preview
-              ? "PREVIEW"
-              : match?.mode === "bot"
-                ? "BOT MATCH"
-                : "RANKED"}
-          </span>
-        </div>
-        <div className={"match-clock " + (time < 60 ? "urgent" : "")}>
-          <Clock3 size={18} />
-          {String(Math.floor(time / 60)).padStart(2, "0")}:
-          {String(time % 60).padStart(2, "0")}
-        </div>
-      </div>
-      <div className="duel-strip">
-        <div className="duelist">
-          <span className="player-avatar">
-            <UserRound size={21} />
-          </span>
-          <div>
-            <strong>{preview ? "You" : (yourPlayer?.name ?? "You")}</strong>
-            <span>{yourPlayer?.rating ?? 1200} rating</span>
-          </div>
-          <span className="you-tag">YOU</span>
-        </div>
-        <span className="versus">
-          <Swords size={19} />
-          VS
-        </span>
-        <div className="duelist opponent">
-          <div>
-            <strong>
-              {preview ? "Your next rival" : (opponent?.name ?? "Connecting…")}
-            </strong>
-            <span>
-              {preview
-                ? "A human or simulated bot"
-                : opponent?.isBot
-                  ? "Simulated bot · " + opponent.rating
-                  : "Rating " +
-                    (opponent?.rating ?? 1200) +
-                    " · " +
-                    (match?.opponentStatus ?? "Solving")}
-            </span>
-          </div>
-          <span className="player-avatar other">
-            <Code2 size={21} />
-          </span>
-        </div>
-      </div>
-      {preview && (
-        <div className="preview-notice">
-          <Sparkles size={17} />
-          <span>
-            Explore the arena. The clock and code execution start when online
-            matches open.
-          </span>
-          <button onClick={onSignIn}>
-            Sign in
-            <ArrowUpRight size={14} />
-          </button>
-        </div>
-      )}
-      {connection && (
-        <div className="notice compact">
-          <WifiOff size={16} />
-          {connection}
-        </div>
-      )}
-      {!preview && !user && (
-        <div className="notice">
-          Sign in to reconnect to your match.
-          <button className="text-button" onClick={onSignIn}>
-            Sign in
-          </button>
-        </div>
-      )}
-      <div className="mobile-tabs" role="tablist">
-        <button
-          role="tab"
-          aria-selected={tab === "problem"}
-          onClick={() => setTab("problem")}
-        >
-          Problem
+    <div className="segmented arena-tabs" role="group" aria-label="Arena">
+      {arenaKeys.map((a) => (
+        <button key={a} aria-pressed={a === arena} onClick={() => onChange(a)}>
+          {ARENAS[a].name}
         </button>
-        <button
-          role="tab"
-          aria-selected={tab === "code"}
-          onClick={() => setTab("code")}
-        >
-          Code
-        </button>
-      </div>
-      <div
-        className={"workspace show-" + tab}
-        ref={splitRef}
-        style={{ "--split": ratio + "%" } as React.CSSProperties}
-      >
-        <section className="problem-panel">
-          <div className="panel-title">
-            <span>
-              <PanelLeft size={16} />
-              Description
-            </span>
-            <span className="tiny muted">01 problem</span>
-          </div>
-          {problem ? (
-            <div className="problem-body">
-              <div className="problem-meta">
-                <span className={"difficulty-badge " + matchArena}>
-                  {ARENAS[matchArena].name}
-                </span>
-                <span>{problem.topic}</span>
-              </div>
-              <h1>{problem.title}</h1>
-              {problem.description
-                .split("\n")
-                .filter(Boolean)
-                .map((p, i) => (
-                  <p key={i}>{p}</p>
-                ))}
-              <div className="function-signature">
-                <Code2 size={15} />
-                <code>
-                  solve({problem.parameters.map((p) => p.name).join(", ")})
-                </code>
-              </div>
-              {problem.examples.map((e, i) => (
-                <div className="example" key={i}>
-                  <h3>Example {i + 1}</h3>
-                  <div className="example-code">
-                    <p>
-                      <span>Input</span>
-                      {problem.parameters
-                        .map(
-                          (p, j) => p.name + " = " + JSON.stringify(e.args[j]),
-                        )
-                        .join(", ")}
-                    </p>
-                    <p>
-                      <span>Output</span>
-                      {JSON.stringify(e.expected)}
-                    </p>
-                  </div>
-                  <p className="example-explanation">{e.explanation}</p>
-                </div>
-              ))}
-              <h3>Constraints</h3>
-              <ul className="constraints">
-                {problem.constraints.map((c) => (
-                  <li key={c}>
-                    <code>{c}</code>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <div className="panel-loading">
-              <LoaderCircle className="spin" />
-              Loading the challenge…
-            </div>
-          )}
-        </section>
-        <div
-          className="resize-handle"
-          role="separator"
-          aria-label="Resize problem and editor panels"
-          aria-orientation="vertical"
-          aria-valuenow={Math.round(ratio)}
-          aria-valuemin={28}
-          aria-valuemax={65}
-          tabIndex={0}
-          onPointerDown={drag}
-          onKeyDown={(e) => {
-            if (e.key === "ArrowLeft") {
-              e.preventDefault();
-              setRatio((x) => Math.max(28, x - 2));
-            }
-            if (e.key === "ArrowRight") {
-              e.preventDefault();
-              setRatio((x) => Math.min(65, x + 2));
-            }
-          }}
-        >
-          <GripVertical size={16} />
-        </div>
-        <section className="editor-panel">
-          <div className="panel-title editor-heading">
-            <label>
-              <Code2 size={16} />
-              <select
-                aria-label="Programming language"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as Language)}
-              >
-                {Object.entries(LANGUAGES).map(([key, l]) => (
-                  <option value={key} key={key}>
-                    {l.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={13} />
-            </label>
-            <button
-              className="icon-button"
-              aria-label="Reset starter code"
-              title="Reset starter code"
-              onClick={() => {
-                if (problem) {
-                  setSource(problem.starter[language]);
-                  localStorage.removeItem(draftKey);
-                }
-              }}
-            >
-              <RotateCcw size={15} />
-            </button>
-          </div>
-          <div className="editor-wrap">
-            <Suspense
-              fallback={<div className="panel-loading">Opening editor…</div>}
-            >
-              <Editor
-                height="100%"
-                language={LANGUAGES[language].monaco}
-                value={source}
-                beforeMount={(m) =>
-                  m.editor.defineTheme("dalgo", {
-                    base: "vs-dark",
-                    inherit: true,
-                    rules: [
-                      { token: "comment", foreground: "687a95" },
-                      { token: "keyword", foreground: "bfa2ee" },
-                      { token: "string", foreground: "96cab6" },
-                      { token: "number", foreground: "edc88f" },
-                    ],
-                    colors: {
-                      "editor.background": "#0d121d",
-                      "editor.foreground": "#dce4f3",
-                      "editorLineNumber.foreground": "#46546b",
-                      "editorLineNumber.activeForeground": "#9babc3",
-                      "editor.lineHighlightBackground": "#121b2b",
-                      "editorCursor.foreground": "#7aa2ff",
-                      "editor.selectionBackground": "#263f6c",
-                      "editorWidget.background": "#192235",
-                    },
-                  })
-                }
-                theme="dalgo"
-                onChange={(v) => {
-                  setSource(v ?? "");
-                  localStorage.setItem(draftKey, v ?? "");
-                }}
-                options={{
-                  fontFamily: "JetBrains Mono",
-                  fontSize: 14,
-                  lineHeight: 25,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  padding: { top: 22 },
-                  automaticLayout: true,
-                  tabSize: 4,
-                  wordWrap: "on",
-                  renderLineHighlight: "line",
-                  overviewRulerLanes: 0,
-                  hideCursorInOverviewRuler: true,
-                  readOnly: !!match?.result,
-                }}
-                loading={
-                  <div className="panel-loading">
-                    <LoaderCircle className="spin" />
-                    Opening editor…
-                  </div>
-                }
-              />
-            </Suspense>
-          </div>
-          <div className="console-panel">
-            <div className="console-tabs">
-              <span>
-                <Code2 size={14} />
-                Test results
-              </span>
-              <span className="tiny muted">
-                {preview
-                  ? "Sample cases"
-                  : `${match?.attempts.runs ?? 0}/3 runs · ${match?.attempts.submits ?? 0}/5 submissions`}
-              </span>
-            </div>
-            <div className="console-body" aria-live="polite">
-              {error ? (
-                <div className="error">
-                  <AlertCircle size={16} />
-                  {error}
-                </div>
-              ) : latest ? (
-                <>
-                  <div className={"verdict " + latest.verdict}>
-                    {latest.verdict === "pending" ? (
-                      <LoaderCircle className="spin" size={18} />
-                    ) : latest.verdict === "accepted" ? (
-                      <CheckCircle2 size={18} />
-                    ) : (
-                      <AlertCircle size={18} />
-                    )}
-                    <strong>{latest.verdict.replaceAll("_", " ")}</strong>
-                  </div>
-                  <p>{latest.message}</p>
-                  {latest.sampleResults?.map((r, i) => (
-                    <span
-                      className={
-                        "test-chip " + (r.passed ? "passed" : "failed")
-                      }
-                      key={i}
-                    >
-                      Case {i + 1} · {r.passed ? "passed" : "failed"}
-                    </span>
-                  ))}
-                </>
-              ) : (
-                <>
-                  <div className="sample-chips">
-                    {problem?.examples.map((_, i) => (
-                      <span className="test-chip" key={i}>
-                        Case {i + 1}
-                      </span>
-                    ))}
-                  </div>
-                  <p>
-                    {preview
-                      ? "Your test results will appear here during a match."
-                      : "Run your code against the examples before submitting."}
-                  </p>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="editor-actions">
-            <span className="autosave">
-              <Check size={13} />
-              Saved on this device
-            </span>
-            <div>
-              <button
-                className="button run-button"
-                disabled={
-                  preview ||
-                  !active ||
-                  busy ||
-                  ownPending ||
-                  (match?.attempts.runs ?? 0) >= 3
-                }
-                onClick={() => send("run")}
-              >
-                <Play size={15} />
-                Run
-              </button>
-              <button
-                className="button primary"
-                disabled={
-                  preview ||
-                  !active ||
-                  busy ||
-                  ownPending ||
-                  (match?.attempts.submits ?? 0) >= 5
-                }
-                onClick={() => send("submit")}
-              >
-                {busy ? (
-                  <LoaderCircle className="spin" size={16} />
-                ) : (
-                  <ArrowUpRight size={17} />
-                )}
-                Submit
-              </button>
-            </div>
-          </div>
-        </section>
-      </div>
-      <div className="match-bottom">
-        <span>
-          <ShieldCheck size={15} />
-          Hidden tests decide correctness. The server keeps time.
-        </span>
-        {!preview && !match?.result && (
-          <button className="text-button" onClick={() => setResign(true)}>
-            <Flag size={14} />
-            Resign match
-          </button>
-        )}
-        <span className="tiny">
-          {preview
-            ? "No rating changes in preview"
-            : "Your opponent cannot see your code."}
-        </span>
-      </div>
-      {match?.result && <ResultCard match={match} userId={user?.id ?? ""} />}{" "}
-      {resign && (
-        <Dialog title="Resign match" onClose={() => setResign(false)}>
-          <Flag className="dialog-symbol" />
-          <h2>Leave this match?</h2>
-          <p className="muted">
-            Resigning counts as a loss and changes your rating.
-          </p>
-          <div className="dialog-actions">
-            <button className="button" onClick={() => setResign(false)}>
-              Keep playing
-            </button>
-            <button
-              className="button danger"
-              onClick={async () => {
-                try {
-                  setMatch(
-                    await api<MatchView>("/matches/" + match!.id + "/resign", {
-                      method: "POST",
-                    }),
-                  );
-                  setResign(false);
-                } catch (e) {
-                  setError((e as Error).message);
-                  setResign(false);
-                }
-              }}
-            >
-              Resign
-            </button>
-          </div>
-        </Dialog>
-      )}
-    </main>
-  );
-}
-function ResultCard({ match, userId }: { match: MatchView; userId: string }) {
-  const result = match.result!;
-  const won = result.winnerId === userId;
-  const delta = result.deltas[userId] ?? 0;
-  return (
-    <div className="result-banner" role="status">
-      <div className="result-icon">
-        {result.reason === "void" ? (
-          <AlertCircle />
-        ) : won ? (
-          <Trophy />
-        ) : (
-          <Swords />
-        )}
-      </div>
-      <div>
-        <p className="eyebrow">
-          {result.settled ? "MATCH COMPLETE" : "SAVING RESULT"}
-        </p>
-        <h2>
-          {result.reason === "void"
-            ? "Match voided"
-            : !result.winnerId
-              ? "A well-fought draw."
-              : won
-                ? "That’s your win."
-                : "A lesson for the next one."}
-        </h2>
-        <p>
-          {result.reason === "void"
-            ? "Judging could not produce a reliable result. Your rating is unchanged."
-            : result.reason === "draw"
-              ? "Neither player finished first. Ratings stay the same."
-              : won
-                ? "Your next challenge is waiting."
-                : "Take a breath. Come back stronger."}
-        </p>
-      </div>
-      <div className={"result-delta " + (delta > 0 ? "positive" : "")}>
-        {delta > 0 ? "+" : ""}
-        {delta}
-        <span>rating</span>
-      </div>
-      <Link className="button primary" to="/">
-        Back to arenas
-        <ArrowRight size={17} />
-      </Link>
+      ))}
     </div>
   );
 }
@@ -1312,30 +562,47 @@ function Leaderboard() {
   const [rows, setRows] = useState<LeaderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { config } = useAuth();
   useEffect(() => {
+    let stopped = false;
     setLoading(true);
+    setRows([]);
+    setError("");
+    if (!config.playEnabled) {
+      setLoading(false);
+      return;
+    }
     api<LeaderRow[]>(`/leaderboard?arena=${arena}&mode=${mode}`)
       .then((v) => {
-        setRows(v);
-        setError("");
+        if (!stopped) setRows(v);
       })
-      .catch(() => {
-        setRows([]);
-        setError("Rankings will appear when the beta opens.");
+      .catch((e) => {
+        if (!stopped) setError(e.message);
       })
-      .finally(() => setLoading(false));
-  }, [arena, mode]);
+      .finally(() => {
+        if (!stopped) setLoading(false);
+      });
+    return () => {
+      stopped = true;
+    };
+  }, [arena, mode, config.playEnabled]);
   return (
-    <main className="page secondary-page">
-      <p className="eyebrow">EARN YOUR PLACE</p>
-      <h1>The leaderboard.</h1>
-      <p className="intro-copy">Every rating has a story. Start yours.</p>
+    <main className="page">
+      <PageTop section="LEADERBOARD" />
+      <header className="page-heading">
+        <div>
+          <h1>
+            The standings<span className="heading-period">.</span>
+          </h1>
+          <p>Rankings by arena. Human and bot results are kept separate.</p>
+        </div>
+      </header>
       <div className="list-controls">
-        <ArenaTabs value={arena} onChange={setArena} />
-        <ModeSwitch value={mode} onChange={setMode} />
+        <ArenaTabs arena={arena} onChange={setArena} />
+        <RatingSwitch mode={mode} onChange={setMode} />
       </div>
-      <div className="data-panel">
-        <div className="leader-head">
+      <div className="table-surface">
+        <div className="leader-row table-head">
           <span>RANK</span>
           <span>PLAYER</span>
           <span>MATCHES</span>
@@ -1344,155 +611,120 @@ function Leaderboard() {
         {rows.length ? (
           rows.map((r, i) => (
             <div className="leader-row" key={r.user_id}>
-              <span className="rank">{String(i + 1).padStart(2, "0")}</span>
-              <strong>
-                <span className="mini-avatar">
-                  {r.profiles.display_name?.[0] ?? "D"}
+              <span className="rank-number">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <strong className="table-player">
+                <span className="avatar small">
+                  {(r.profiles?.display_name || r.profiles?.username || "?")[0]}
                 </span>
-                {r.profiles.display_name || r.profiles.username}
+                {r.profiles?.display_name || r.profiles?.username}
               </strong>
               <span>{r.matches}</span>
-              <strong className="rating-number">
-                {r.rating.toLocaleString()}
-              </strong>
+              <strong className="mono">{r.rating.toLocaleString()}</strong>
             </div>
           ))
         ) : (
-          <Empty
-            icon={<Trophy size={30} />}
-            title={loading ? "Finding the rankings…" : "The top spot is open."}
-            description={
-              error || "Complete a match in this arena to earn your place."
-            }
-          />
+          <EmptyState
+            title={loading ? "Loading rankings…" : "The board is empty."}
+          >
+            {error ||
+              (config.playEnabled
+                ? "Complete a match to establish a rating in this arena."
+                : "Rankings open with the live beta. Demo matches don’t enter the standings.")}
+          </EmptyState>
         )}
       </div>
       <p className="under-note">
-        <ShieldCheck size={16} />
         {mode === "human"
-          ? "Only human matches count toward this leaderboard."
-          : "Bot ratings are tracked separately from human competition."}
+          ? "Human matches only."
+          : "Simulated bot matches only."}{" "}
+        Every new rating starts at 1,200.
       </p>
       <Footer />
     </main>
   );
 }
-function ArenaTabs({
-  value,
-  onChange,
-}: {
-  value: Arena;
-  onChange: (v: Arena) => void;
-}) {
+function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
   return (
-    <div className="arena-tabs" role="group" aria-label="Arena">
-      {arenaKeys.map((a) => (
-        <button
-          key={a}
-          aria-pressed={a === value}
-          className={a === value ? "active" : ""}
-          onClick={() => onChange(a)}
-        >
-          {ARENAS[a].name}
-        </button>
-      ))}
-    </div>
-  );
-}
-function Empty({
-  icon,
-  title,
-  description,
-  children,
-}: {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="empty-state">
-      <div>{icon}</div>
-      <h2>{title}</h2>
-      <p>{description}</p>
-      {children}
+    <div className="history-rows">
+      {rows.map((r) => {
+        const win = r.result.winnerId === userId;
+        const delta = r.result.deltas[userId] ?? 0;
+        return (
+          <Link className="history-row" to={"/match/" + r.id} key={r.id}>
+            <span className={"result-label " + (win ? "positive" : "")}>
+              {r.result.reason === "void"
+                ? "Void"
+                : !r.result.winnerId
+                  ? "Draw"
+                  : win
+                    ? "Win"
+                    : "Loss"}
+            </span>
+            <div>
+              <strong>
+                {r.problem_title || ARENAS[r.arena].name + " arena"}
+              </strong>
+              <span>
+                {r.mode === "bot" ? "Simulated bot" : "Human opponent"} ·{" "}
+                {new Date(r.ended_at).toLocaleDateString()}
+              </span>
+            </div>
+            <span className={"mono " + (delta > 0 ? "positive" : "")}>
+              {delta > 0 ? "+" : ""}
+              {delta}
+            </span>
+            <ChevronRight size={15} />
+          </Link>
+        );
+      })}
     </div>
   );
 }
 function History({ onSignIn }: { onSignIn: () => void }) {
   const { user } = useAuth();
-  const [rows, setRows] = useState<HistoryRow[]>([]);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    if (user)
-      api<HistoryRow[]>("/history")
-        .then(setRows)
-        .catch((e) => setError(e.message));
-  }, [user?.id]);
+  const { rows, error, loading } = useHistory();
   return (
-    <main className="page secondary-page">
-      <p className="eyebrow">ONE MATCH AT A TIME</p>
-      <h1>Your match history.</h1>
-      <p className="intro-copy">
-        The wins, the close calls, and everything you learn along the way.
-      </p>
-      <div className="data-panel history-panel">
-        {rows.length ? (
-          rows.map((r) => {
-            const delta = r.result.deltas[user!.id] ?? 0;
-            return (
-              <Link className="history-row" key={r.id} to={"/match/" + r.id}>
-                <span
-                  className={
-                    "history-result " +
-                    (r.result.winnerId === user?.id ? "win" : "")
-                  }
-                >
-                  {r.result.reason === "void"
-                    ? "Void"
-                    : !r.result.winnerId
-                      ? "Draw"
-                      : r.result.winnerId === user?.id
-                        ? "Win"
-                        : "Loss"}
-                </span>
-                <div>
-                  <strong>
-                    {r.problem_title || ARENAS[r.arena].name + " arena"}
-                  </strong>
-                  <span>
-                    {r.mode === "bot" ? "Simulated bot" : "Human opponent"} ·{" "}
-                    {new Date(r.ended_at).toLocaleDateString()}
-                  </span>
-                </div>
-                <strong className={delta > 0 ? "positive" : ""}>
-                  {delta > 0 ? "+" : ""}
-                  {delta}
-                </strong>
-                <ChevronRight size={17} />
-              </Link>
-            );
-          })
+    <main className="page">
+      <PageTop section="MATCH HISTORY" />
+      <header className="page-heading">
+        <div>
+          <h1>
+            Your record<span className="heading-period">.</span>
+          </h1>
+          <p>Completed matches, verdicts, and rating changes.</p>
+        </div>
+      </header>
+      <section className="table-surface">
+        <div className="section-heading">
+          <h2>All matches</h2>
+          <span className="overline">{rows.length} RECORDED</span>
+        </div>
+        {user && rows.length ? (
+          <MatchRows rows={rows} userId={user!.id} />
         ) : (
-          <Empty
-            icon={<Clock3 size={30} />}
-            title="A fresh page."
-            description={
-              error ||
-              (user
-                ? "Your completed matches will appear here."
-                : "Sign in to save your matches and see your progress.")
-            }
+          <EmptyState
+            title={loading ? "Loading your record…" : "No matches on record."}
           >
-            <button
-              className="button"
-              onClick={() => (user ? window.location.assign("/") : onSignIn())}
-            >
-              {user ? "Choose an arena" : "Sign in"}
-              <ArrowUpRight size={16} />
-            </button>
-          </Empty>
+            {error ||
+              (user
+                ? "Your completed matches will be recorded here."
+                : "Sign in when the beta opens to keep your match history. Demo results are never saved here.")}
+          </EmptyState>
         )}
+      </section>
+      <div className="page-actions">
+        {!user && (
+          <button className="button" onClick={onSignIn}>
+            Sign in
+            <ArrowUpRight size={16} />
+          </button>
+        )}
+        <Link className="button primary" to="/">
+          Back to the lobby
+          <ArrowRight size={16} />
+        </Link>
       </div>
       <Footer />
     </main>
@@ -1500,66 +732,61 @@ function History({ onSignIn }: { onSignIn: () => void }) {
 }
 function Profile({ onSignIn }: { onSignIn: () => void }) {
   const { user } = useAuth();
-  const { ratings, ratingsError } = useRatings();
+  const { ratings, error } = useRatings();
   return (
-    <main className="page secondary-page">
-      <p className="eyebrow">YOUR STARTING LINE</p>
-      <h1>{user?.user_metadata?.full_name || "Your profile."}</h1>
-      <p className="intro-copy">
-        Three arenas. Two kinds of competition. Your own pace.
-      </p>
-      {ratingsError && (
-        <p className="error" role="alert">
-          {ratingsError}
-        </p>
-      )}
-      {!user ? (
-        <div className="data-panel">
-          <Empty
-            icon={<UserRound size={30} />}
-            title="Make this space yours."
-            description="Sign in to track all six ratings."
-          >
-            <button className="button" onClick={onSignIn}>
-              Sign in
-              <ArrowUpRight size={16} />
-            </button>
-          </Empty>
+    <main className="page">
+      <PageTop section="YOUR PROFILE" />
+      <header className="page-heading">
+        <div>
+          <h1>
+            {user?.user_metadata?.full_name || "Your profile"}
+            <span className="heading-period">.</span>
+          </h1>
+          <p>Three arenas. Six independent ratings.</p>
         </div>
-      ) : (
-        <div className="profile-grid">
+      </header>
+      {user ? (
+        <section className="table-surface">
+          <div className="profile-row table-head">
+            <span>ARENA</span>
+            <span>HUMAN RATING</span>
+            <span>BOT RATING</span>
+          </div>
           {arenaKeys.map((a) => (
-            <div className="profile-card" key={a}>
-              <h2>{ARENAS[a].name} arena</h2>
+            <div className="profile-row" key={a}>
+              <strong>{ARENAS[a].name}</strong>
               {(["human", "bot"] as Mode[]).map((m) => {
                 const r = ratings.find((r) => r.arena === a && r.mode === m);
                 return (
-                  <div className="profile-rating" key={m}>
-                    <span>
-                      {m === "human" ? (
-                        <Users size={17} />
-                      ) : (
-                        <Code2 size={17} />
-                      )}{" "}
-                      {m === "human" ? "Human" : "Bot"} rating
+                  <div key={m}>
+                    <strong className="mono">{r?.rating ?? "—"}</strong>
+                    <span className="muted">
+                      {r ? `${r.matches} played` : "Loading…"}
                     </span>
-                    <strong>
-                      {r?.rating ?? "—"}
-                      <small>
-                        {r ? `${r.matches} matches` : "Loading rating…"}
-                      </small>
-                    </strong>
                   </div>
                 );
               })}
             </div>
           ))}
-        </div>
+          {error && (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          )}
+        </section>
+      ) : (
+        <section className="table-surface">
+          <EmptyState title="Your seat is waiting.">
+            Sign in when ranked play opens. You’ll start at 1,200 in each arena,
+            with separate ratings for human and simulated bot matches.
+          </EmptyState>
+          <button className="button primary" onClick={onSignIn}>
+            Sign in
+            <ArrowUpRight size={16} />
+          </button>
+        </section>
       )}
       <Footer />
     </main>
   );
-}
-export default function App() {
-  return <Shell />;
 }
