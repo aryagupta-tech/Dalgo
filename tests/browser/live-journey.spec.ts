@@ -75,7 +75,11 @@ function liveMatch() {
     ],
   };
 }
-async function mockServices(page: Page, queue: () => Record<string, unknown>) {
+async function mockServices(
+  page: Page,
+  queue: () => Record<string, unknown>,
+  cancelQueue?: (body: { requestId?: string }) => Record<string, unknown>,
+) {
   const mutations: { method: string; body: { requestId?: string } }[] = [];
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -108,7 +112,12 @@ async function mockServices(page: Page, queue: () => Record<string, unknown>) {
             }
           : path === "/api/queue"
             ? method === "DELETE"
-              ? { status: "idle", serverNow: Date.now() }
+              ? {
+                  ...(cancelQueue
+                    ? cancelQueue(route.request().postDataJSON())
+                    : { status: "idle" }),
+                  serverNow: Date.now(),
+                }
               : { ...queue(), serverNow: Date.now() }
             : path === "/api/matches/" + matchId
               ? liveMatch()
@@ -170,6 +179,42 @@ test("resuming a paused search reads its canonical request and cancels without a
     .click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(mutations).toEqual([{ method: "DELETE", body: { requestId } }]);
+});
+
+test("cancellation retries with the server's canonical queue request", async ({
+  page,
+}) => {
+  await signInLocally(page);
+  const canonicalRequestId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  let cancellationAttempt = 0;
+  const mutations = await mockServices(
+    page,
+    () => ({
+      status: "waiting",
+      arena: "easy",
+      requestId,
+      joinedAt: Date.now() - 3000,
+    }),
+    () =>
+      ++cancellationAttempt === 1
+        ? {
+            status: "waiting",
+            arena: "easy",
+            requestId: canonicalRequestId,
+            joinedAt: Date.now() - 3000,
+          }
+        : { status: "idle" },
+  );
+  await page.goto("/");
+  await page.getByRole("button", { name: "Resume search" }).click();
+  await page
+    .getByRole("button", { name: "Cancel search", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(mutations).toEqual([
+    { method: "DELETE", body: { requestId } },
+    { method: "DELETE", body: { requestId: canonicalRequestId } },
+  ]);
 });
 
 test("a resumed search follows an assignment made while the lobby was open", async ({

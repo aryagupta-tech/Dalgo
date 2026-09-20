@@ -446,6 +446,7 @@ export function LiveQueue({
   const [error, setError] = useState("");
   const [now, setNow] = useState(Date.now());
   const [cancelling, setCancelling] = useState(false);
+  const cancellingRef = useRef(false);
   const requestId = useRef<string>(crypto.randomUUID());
   const joining = useRef<Promise<QueueView> | null>(null);
   const joinResolved = useRef(false);
@@ -518,29 +519,67 @@ export function LiveQueue({
     };
   }, [arena, navigate, resume]);
   async function cancel() {
-    if (cancelling) return;
+    if (cancellingRef.current) return;
+    cancellingRef.current = true;
+    setError("");
     if (joinResolved.current && queue?.status === "idle") {
-      onClose();
+      closeRef.current();
+      cancellingRef.current = false;
       return;
     }
     setCancelling(true);
     try {
+      let joined: QueueView | null = null;
       try {
-        const joined = await joining.current;
+        joined = await joining.current;
         if (joined?.requestId) requestId.current = joined.requestId;
       } catch {}
-      const q = await api<QueueView>("/queue", {
-        method: "DELETE",
-        body: JSON.stringify({ requestId: requestId.current }),
-      });
+
+      if (joined?.matchId) {
+        navigate("/match/" + joined.matchId);
+        closeRef.current();
+        return;
+      }
+      if (joined?.status === "idle" || joined?.status === "capacity") {
+        closeRef.current();
+        return;
+      }
+
+      const cancelRequest = (id: string) =>
+        api<QueueView>("/queue", {
+          method: "DELETE",
+          body: JSON.stringify({ requestId: id }),
+        });
+      let sentRequestId = requestId.current;
+      let q = await cancelRequest(sentRequestId);
+
+      // A reconnect or another tab can expose an older local request ID. The
+      // coordinator returns the active canonical ID without cancelling it, so
+      // retry once with that ID instead of leaving the player stuck in queue.
+      if (
+        q.status === "waiting" &&
+        q.requestId &&
+        q.requestId !== sentRequestId
+      ) {
+        requestId.current = q.requestId;
+        sentRequestId = q.requestId;
+        q = await cancelRequest(sentRequestId);
+      }
+
+      if (q.requestId) requestId.current = q.requestId;
       if (q.matchId) {
         navigate("/match/" + q.matchId);
-        onClose();
-      } else if (q.status === "idle") onClose();
-      else setError("The search is still active. Please try cancelling again.");
+        closeRef.current();
+      } else if (q.status === "idle" || q.status === "capacity") {
+        closeRef.current();
+      } else {
+        setQueue(q);
+        setError("The search is still active. Please try cancelling again.");
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
+      cancellingRef.current = false;
       setCancelling(false);
     }
   }
