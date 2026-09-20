@@ -24,24 +24,27 @@ vi.mock("../worker/db.ts", () => ({
   })),
   getFriendIdentity: vi.fn(async (_env: any, id: string) => ({
     id,
-    publicId:
+    username:
       id === A
-        ? "DLG-AAAA-AAAA-AAAA-AAAA"
+        ? "alice"
         : id === B
-          ? "DLG-BBBB-BBBB-BBBB-BBBB"
-          : "DLG-CCCC-CCCC-CCCC-CCCC",
+          ? "bob"
+          : "carol",
+    usernameConfigured: true,
     name: id,
   })),
-  findFriendByPublicId: vi.fn(async (_env: any, publicId: string) => {
+  findFriendByUsername: vi.fn(async (_env: any, username: string) => {
     const id =
-      publicId === "DLG-AAAA-AAAA-AAAA-AAAA"
+      username === "alice"
         ? A
-        : publicId === "DLG-BBBB-BBBB-BBBB-BBBB"
+        : username === "bob"
           ? B
-          : publicId === "DLG-CCCC-CCCC-CCCC-CCCC"
+          : username === "carol"
             ? C
             : null;
-    return id ? { id, publicId, name: id } : null;
+    return id
+      ? { id, username, usernameConfigured: true, name: id }
+      : null;
   }),
   persistFriendChallenge: vi.fn(async () => null),
   recentProblems: vi.fn(async () => ({})),
@@ -498,7 +501,7 @@ describe("direct friend challenges", () => {
         "/challenge-create",
         {
           requestId: challengeId,
-          friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+          friendUsername: "bob",
           arena: "medium",
         },
         A,
@@ -517,7 +520,7 @@ describe("direct friend challenges", () => {
         "/challenge-create",
         {
           requestId: challengeId,
-          friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+          friendUsername: "bob",
           arena: "hard",
         },
         A,
@@ -553,7 +556,7 @@ describe("direct friend challenges", () => {
             "/challenge-create",
             {
               requestId: crypto.randomUUID(),
-              friendPublicId: "DLG-AAAA-AAAA-AAAA-AAAA",
+              friendUsername: "alice",
               arena: "easy",
             },
             A,
@@ -568,7 +571,7 @@ describe("direct friend challenges", () => {
             "/challenge-create",
             {
               requestId: crypto.randomUUID(),
-              friendPublicId: "DLG-DDDD-DDDD-DDDD-DDDD",
+              friendUsername: "nobody",
               arena: "easy",
             },
             A,
@@ -582,7 +585,7 @@ describe("direct friend challenges", () => {
         "/challenge-create",
         {
           requestId: id,
-          friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+          friendUsername: "bob",
           arena: "easy",
         },
         A,
@@ -595,7 +598,7 @@ describe("direct friend challenges", () => {
             "/challenge-create",
             {
               requestId: crypto.randomUUID(),
-              friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+              friendUsername: "bob",
               arena: "hard",
             },
             C,
@@ -649,7 +652,7 @@ describe("direct friend challenges", () => {
         "/challenge-create",
         {
           requestId: challengeId,
-          friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+          friendUsername: "bob",
           arena: "hard",
         },
         A,
@@ -715,7 +718,7 @@ describe("direct friend challenges", () => {
             "/challenge-create",
             {
               requestId: challengeId,
-              friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+              friendUsername: "bob",
               arena: "easy",
             },
             A,
@@ -744,7 +747,7 @@ describe("direct friend challenges", () => {
         "/challenge-create",
         {
           requestId: challengeId,
-          friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+          friendUsername: "bob",
           arena: "easy",
         },
         A,
@@ -766,7 +769,7 @@ describe("direct friend challenges", () => {
             "/challenge-create",
             {
               requestId: crypto.randomUUID(),
-              friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+              friendUsername: "bob",
               arena: "medium",
             },
             A,

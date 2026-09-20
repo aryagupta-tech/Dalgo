@@ -23,7 +23,7 @@ import {
   type MatchRecord,
 } from "./core";
 import {
-  findFriendByPublicId,
+  findFriendByUsername,
   getFriendIdentity,
   getPlayer,
   persistFriendChallenge,
@@ -403,12 +403,12 @@ export class Coordinator extends DurableObject<Env> {
               "Respond to your current friend challenge first.",
               409,
             );
-          const challenged = await findFriendByPublicId(
+          const challenged = await findFriendByUsername(
             this.env,
-            body.friendPublicId as string,
+            body.friendUsername as string,
           );
           if (!challenged)
-            throw new AppError("No player was found with that Dalgo ID.", 404);
+            throw new AppError("No player was found with that username.", 404);
           if (challenged.id === userId)
             throw new AppError("You cannot challenge yourself.", 400);
           if (!admissionStatus(this.env, challenged.id).canJoin)
@@ -425,6 +425,8 @@ export class Coordinator extends DurableObject<Env> {
               409,
             );
           const challenger = await getFriendIdentity(this.env, userId);
+          if (!challenger.usernameConfigured)
+            throw new AppError("Choose your username before playing.", 409);
           const now = Date.now();
           const challenge: FriendChallenge = {
             id: requestId,

@@ -58,6 +58,7 @@ import { Brand, EmptyState, Footer, SignIn } from "./components/Chrome";
 import { arenaKeys, formatClock, useHistory, useRatings } from "./data";
 import { DemoPage, LiveMatchPage, LiveQueue } from "./components/MatchPage";
 import { FriendPlay } from "./components/FriendPlay";
+import { UsernameOnboarding } from "./components/UsernameOnboarding";
 const arenaDetails = {
   easy: { topics: "Arrays, strings, hash maps" },
   medium: { topics: "Trees, graphs, dynamic programming" },
@@ -72,7 +73,7 @@ const navigation = [
 ];
 export default function App() {
   useDalgoTools();
-  const { user, client } = useAuth();
+  const { user, client, profile } = useAuth();
   const [signIn, setSignIn] = useState(false);
   const location = useLocation();
   const matchRoute = /^\/(demo|match|preview)\//.test(location.pathname);
@@ -206,13 +207,17 @@ export default function App() {
                       fontSize: ".875rem",
                     }}
                   >
-                    {(user.user_metadata?.full_name || "You")[0]}
+                    {(profile?.username ||
+                      user.user_metadata?.full_name ||
+                      "You")[0]}
                   </Avatar>
                   <Box
                     component="span"
                     sx={{ display: { xs: "none", md: "inline" } }}
                   >
-                    {user.user_metadata?.full_name || "Your account"}
+                    {profile?.username
+                      ? `@${profile.username}`
+                      : user.user_metadata?.full_name || "Your account"}
                   </Box>
                 </Button>
                 <Button
@@ -295,6 +300,7 @@ export default function App() {
         </Routes>
       </Box>
       {signIn && <SignIn onClose={() => setSignIn(false)} />}
+      <UsernameOnboarding />
     </Box>
   );
 }
@@ -1305,14 +1311,18 @@ function History({ onSignIn }: { onSignIn: () => void }) {
   );
 }
 function Profile({ onSignIn }: { onSignIn: () => void }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { ratings, error } = useRatings();
   return (
     <Page>
       <PageTop section="YOUR PROFILE" />
       <PageHeading
         title={user?.user_metadata?.full_name || "Your profile"}
-        subtitle="Three arenas. Six independent ratings."
+        subtitle={
+          profile?.usernameConfigured
+            ? `@${profile.username} · Three arenas. Six independent ratings.`
+            : "Three arenas. Six independent ratings."
+        }
       />
       <Paper
         component="section"

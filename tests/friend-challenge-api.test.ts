@@ -10,11 +10,13 @@ vi.mock("../worker/db", () => ({
   getPlayer: vi.fn(),
   recentProblems: vi.fn(),
   settle: vi.fn(),
-  findFriendByPublicId: vi.fn(),
+  findFriendByUsername: vi.fn(),
+  claimUsername: vi.fn(),
   persistFriendChallenge: vi.fn(),
 }));
 
 import { jwtVerify } from "jose";
+import { claimUsername } from "../worker/db";
 import worker from "../worker/index";
 import type { Env } from "../worker/env";
 
@@ -62,11 +64,52 @@ beforeEach(() => {
     payload: { sub: A },
     protectedHeader: { alg: "ES256" },
   });
+  vi.mocked(claimUsername).mockReset();
+  vi.mocked(claimUsername).mockResolvedValue({
+    id: A,
+    username: "chosen_name",
+    usernameConfigured: true,
+    name: "Chosen name",
+  });
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 afterEach(() => vi.restoreAllMocks());
 
 describe("friend challenge API boundary", () => {
+  it("claims a normalized username only for the authenticated account", async () => {
+    const env = runtime();
+    const response = await worker.fetch(
+      request("/profile/username", {
+        method: "PUT",
+        body: JSON.stringify({
+          userId: "attacker-selected-id",
+          username: "  Chosen_Name  ",
+        }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(200);
+    expect(claimUsername).toHaveBeenCalledWith(env, A, "chosen_name");
+    expect(await response.json()).toMatchObject({
+      id: A,
+      username: "chosen_name",
+      usernameConfigured: true,
+    });
+  });
+
+  it("rejects malformed usernames before the database claim", async () => {
+    const env = runtime();
+    const response = await worker.fetch(
+      request("/profile/username", {
+        method: "PUT",
+        body: JSON.stringify({ username: "_bad name" }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(400);
+    expect(claimUsername).not.toHaveBeenCalled();
+  });
+
   it("requires authentication before challenge state is read", async () => {
     const env = runtime();
     const response = await worker.fetch(
@@ -77,14 +120,14 @@ describe("friend challenge API boundary", () => {
     expect(coordinatorFetch).not.toHaveBeenCalled();
   });
 
-  it("normalizes the public ID and forwards only the authenticated user ID", async () => {
+  it("normalizes the username and forwards only the authenticated user ID", async () => {
     const env = runtime();
     const response = await worker.fetch(
       request("/challenges", {
         method: "POST",
         body: JSON.stringify({
           userId: "attacker-selected-id",
-          friendId: "  dlg-abcd-1234-ef56-7890  ",
+          username: "  Friend_Name  ",
           arena: "easy",
           requestId: challengeId,
         }),
@@ -95,19 +138,19 @@ describe("friend challenge API boundary", () => {
     const [, init] = coordinatorFetch.mock.calls[0] as [string, RequestInit];
     expect(JSON.parse(String(init.body))).toEqual({
       userId: A,
-      friendPublicId: "DLG-ABCD-1234-EF56-7890",
+      friendUsername: "friend_name",
       arena: "easy",
       requestId: challengeId,
     });
   });
 
-  it("rejects malformed player IDs before reaching durable state", async () => {
+  it("rejects malformed usernames before reaching durable state", async () => {
     const env = runtime();
     const response = await worker.fetch(
       request("/challenges", {
         method: "POST",
         body: JSON.stringify({
-          friendId: "not-a-player-id",
+          username: "not a username!",
           arena: "easy",
           requestId: challengeId,
         }),

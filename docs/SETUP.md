@@ -18,7 +18,7 @@ The full edge-to-executor route returned `ready=true`, `executor=isolate`, and `
 
 ## Supabase
 
-The dedicated `dalgo-staging` project exists in Mumbai with ref `gtdofekbolymsrrullpb`. Four versioned migrations are applied and 30 immutable problem versions are seeded, 10 per arena. All public tables have RLS. Browser roles have an explicit deny policy for the problem bank because rows include hidden tests and reference solutions; the backend secret role supplies sanitized statements through the Worker.
+The dedicated `dalgo-staging` project exists in Mumbai with ref `gtdofekbolymsrrullpb`. Five versioned migrations are applied and 30 immutable problem versions are seeded, 10 per arena. All public tables have RLS. Browser roles have an explicit deny policy for the problem bank because rows include hidden tests and reference solutions; the backend secret role supplies sanitized statements through the Worker.
 
 Database/RLS security checks have no findings. Dalgo uses Google/GitHub only, and the unused Email provider is disabled. The Auth advisor still reports its generic leaked-password warning because the protection is unavailable on the Free plan; Dalgo exposes no password login surface. The Site URL is the production Worker, while the production, staging, and local development origins remain in the redirect allowlist. Both Google redirects and signed-in sessions passed staging acceptance.
 

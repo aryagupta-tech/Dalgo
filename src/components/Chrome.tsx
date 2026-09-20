@@ -137,7 +137,7 @@ export function oauthReturnUrl(
 ) {
   const path = location.pathname;
   const allowed =
-    /^\/(?:match\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|demo\/(?:easy|medium|hard)|history|profile|leaderboard)?$/i.test(
+    /^\/(?:match\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|demo\/(?:easy|medium|hard)|friends|history|profile|leaderboard)?$/i.test(
       path,
     );
   return new URL(allowed ? path : "/", location.origin).href;
@@ -171,7 +171,7 @@ export function SignIn({ onClose }: { onClose: () => void }) {
         Sign in to Dalgo
       </Typography>
       <Typography color="text.secondary">
-        Keep your ratings and match history with a Dalgo account.
+        Continue with Google or GitHub, then choose your unique username.
       </Typography>
       {client ? (
         <Stack spacing={1.25} sx={{ mt: 3 }}>

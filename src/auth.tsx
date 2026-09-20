@@ -11,13 +11,26 @@ import {
   type User,
 } from "@supabase/supabase-js";
 import { api, fallbackConfig, setTokenGetter } from "./api";
-import type { Admission, Config } from "../shared/types";
+import type { Admission, Config, FriendIdentity } from "../shared/types";
 const AuthContext = createContext<{
   user: User | null;
   config: Config;
   loading: boolean;
   client: SupabaseClient | null;
-}>({ user: null, config: fallbackConfig, loading: true, client: null });
+  profile: FriendIdentity | null;
+  profileLoading: boolean;
+  refreshProfile: () => void;
+  refreshAdmission: () => void;
+}>({
+  user: null,
+  config: fallbackConfig,
+  loading: true,
+  client: null,
+  profile: null,
+  profileLoading: false,
+  refreshProfile: () => {},
+  refreshAdmission: () => {},
+});
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState({
     user: null as User | null,
@@ -25,6 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: true,
     client: null as SupabaseClient | null,
   });
+  const [profile, setProfile] = useState<FriendIdentity | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileVersion, setProfileVersion] = useState(0);
+  const [eligibilityVersion, setEligibilityVersion] = useState(0);
   useEffect(() => {
     let dispose = () => {};
     let stopped = false;
@@ -70,6 +87,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } | null>(null);
   useEffect(() => {
     let stopped = false;
+    if (!state.user) {
+      setProfile(null);
+      setProfileLoading(false);
+      return;
+    }
+    setProfileLoading(true);
+    api<FriendIdentity>("/profile")
+      .then((value) => {
+        if (!stopped)
+          setProfile(
+            value && typeof value.usernameConfigured === "boolean"
+              ? value
+              : null,
+          );
+      })
+      .catch(() => {
+        if (!stopped) setProfile(null);
+      })
+      .finally(() => {
+        if (!stopped) setProfileLoading(false);
+      });
+    return () => {
+      stopped = true;
+    };
+  }, [state.user?.id, profileVersion]);
+  useEffect(() => {
+    let stopped = false;
     setEligibility(null);
     if (state.user && state.client && state.config.admissionMode) {
       const userId = state.user.id;
@@ -93,7 +137,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       stopped = true;
     };
-  }, [state.user?.id, state.client, state.config.admissionMode]);
+  }, [
+    state.user?.id,
+    state.client,
+    state.config.admissionMode,
+    eligibilityVersion,
+  ]);
   const admission =
     state.user && eligibility?.userId === state.user.id
       ? eligibility.value
@@ -113,7 +162,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     : state.config;
   return (
-    <AuthContext.Provider value={{ ...state, config }}>
+    <AuthContext.Provider
+      value={{
+        ...state,
+        config,
+        profile,
+        profileLoading,
+        refreshProfile: () => setProfileVersion((value) => value + 1),
+        refreshAdmission: () =>
+          setEligibilityVersion((value) => value + 1),
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

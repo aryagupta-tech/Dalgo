@@ -5,7 +5,7 @@ Work only in `/Users/arya/Developer/Dalgo`.
 ## Connected and verified
 
 - Cloudflare staging: https://dalgo-staging.dalgo-arya.workers.dev
-- Supabase project: **dalgo-staging**, ref `gtdofekbolymsrrullpb`, Mumbai. Four versioned migrations are applied, RLS is enabled, database/RLS checks have no findings, and 30 original problems are loaded (10 per arena). The Auth advisor retains its Free-plan password warning even though password/email sign-in is disabled.
+- Supabase project: **dalgo-staging**, ref `gtdofekbolymsrrullpb`, Mumbai. Five versioned migrations are applied, RLS is enabled, database/RLS checks have no findings, and 30 original problems are loaded (10 per arena). The Auth advisor retains its Free-plan password warning even though password/email sign-in is disabled.
 - Codebox runs on Google Cloud VM `dalgo-codebox` in project `dalgo-508410`. It is reachable only through Cloudflare Tunnel and Workers VPC, with one execution and one match at a time.
 - Local and hosted verification passed for Python, C++, Java, and JavaScript across all 30 problems. Wrong answers, compile/runtime failures, timeouts, memory/output limits, network blocking, isolation, idempotency, and service restarts were tested.
 - The interface uses React and Material UI with black and charcoal surfaces and a charcoal Monaco editor.

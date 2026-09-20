@@ -1,6 +1,6 @@
 # Friend challenges
 
-Dalgo assigns every profile a stable public ID such as `DLG-ABCD-1234-EF56-7890`. The value is random, unique, and separate from the Supabase Auth UUID. OAuth profile creation allocates it automatically, and the migration backfills existing profiles before adding the `NOT NULL` and unique constraints.
+After Google or GitHub sign-in, Dalgo requires each player to choose a unique public username. Usernames use 3–20 lowercase letters, numbers, or underscores and remain stable so friends can use them for direct challenges. Existing accounts complete the same one-time onboarding step.
 
 The **Play a friend** screen lets a signed-in player copy this ID, enter a friend’s ID, choose an arena, and send a ten-minute challenge. The invited player can accept or decline; the sender can cancel. Accepted challenges use the same rated human match pipeline as normal matchmaking: versioned problem selection, five-second preparation, server clocks, MatchRoom WebSockets, Codebox judging, Elo settlement, history, and reconnection.
 
@@ -8,7 +8,7 @@ The **Play a friend** screen lets a signed-in player copy this ID, enter a frien
 
 - Challenge endpoints always derive the acting user from the verified Supabase access token. A browser-supplied user ID is ignored.
 - Only the invited profile may accept or decline. Only the challenger may cancel.
-- Direct profile lookup and challenge writes use the Worker’s backend Supabase key. The public player ID column is not granted to browser roles.
+- Username claiming, direct profile lookup, and challenge writes use the Worker’s backend Supabase key. Browsers cannot choose another user ID, claim a second username, or write challenge rows directly.
 - `friend_challenges` has RLS enabled. Authenticated browser reads are limited to rows where the current user is the challenger or recipient; browser writes are denied.
 - Open challenges block queue entry. A player with an open challenge, queue entry, assignment, or active reservation cannot create or accept another challenge.
 - A single global Coordinator Durable Object serializes create/accept/cancel and queue transitions. Request UUIDs make challenge creation and acceptance retries idempotent.
@@ -22,7 +22,7 @@ All routes below require a Supabase bearer token.
 | -------- | ----------------------------- | -------------------------------------------------------------------- |
 | `GET`    | `/api/profile`                | Return the signed-in player’s shareable ID and display identity      |
 | `GET`    | `/api/challenges`             | Return incoming, outgoing, recent, and current-match challenge state |
-| `POST`   | `/api/challenges`             | Create a challenge with `friendId`, `arena`, and UUID `requestId`    |
+| `POST`   | `/api/challenges`             | Create a challenge with `username`, `arena`, and UUID `requestId`    |
 | `POST`   | `/api/challenges/:id/accept`  | Accept as the intended recipient and create the human match          |
 | `POST`   | `/api/challenges/:id/decline` | Decline as the intended recipient                                    |
 | `DELETE` | `/api/challenges/:id`         | Cancel as the challenger                                             |

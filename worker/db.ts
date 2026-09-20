@@ -32,6 +32,10 @@ export async function db<T>(
     },
   );
   if (!r.ok) {
+    const detail = (await r.json().catch(() => null)) as {
+      code?: string;
+      message?: string;
+    } | null;
     console.error(
       JSON.stringify({
         event: "database_error",
@@ -39,6 +43,15 @@ export async function db<T>(
         operation: path.split("?")[0],
       }),
     );
+    if (path === "rpc/claim_username") {
+      if (r.status === 409 || detail?.code === "23505")
+        throw new AppError("That username is already taken.", 409);
+      if (r.status === 400 || detail?.code === "22023")
+        throw new AppError(
+          detail?.message || "Choose a different username.",
+          400,
+        );
+    }
     throw new AppError(
       "Match history is temporarily unavailable. Your result is safe and will retry.",
       503,
@@ -56,7 +69,7 @@ export async function getFriendIdentity(
 ): Promise<FriendIdentity> {
   const rows = await db<any[]>(
     env,
-    `profiles?id=eq.${id}&select=id,public_id,display_name,username,avatar_url`,
+    `profiles?id=eq.${id}&select=id,display_name,username,username_configured_at,avatar_url`,
   );
   if (!rows[0])
     throw new AppError(
@@ -65,26 +78,48 @@ export async function getFriendIdentity(
     );
   return {
     id: rows[0].id,
-    publicId: rows[0].public_id,
+    username: rows[0].username_configured_at ? rows[0].username : "",
+    usernameConfigured: Boolean(rows[0].username_configured_at),
     name: rows[0].display_name || rows[0].username,
     ...(rows[0].avatar_url ? { avatar: rows[0].avatar_url } : {}),
   };
 }
 
-export async function findFriendByPublicId(
+export async function findFriendByUsername(
   env: Env,
-  publicId: string,
+  username: string,
 ): Promise<FriendIdentity | null> {
   const rows = await db<any[]>(
     env,
-    `profiles?public_id=eq.${encodeURIComponent(publicId)}&select=id,public_id,display_name,username,avatar_url&limit=1`,
+    `profiles?username=eq.${encodeURIComponent(username)}&username_configured_at=not.is.null&select=id,display_name,username,username_configured_at,avatar_url&limit=1`,
   );
   if (!rows[0]) return null;
   return {
     id: rows[0].id,
-    publicId: rows[0].public_id,
+    username: rows[0].username,
+    usernameConfigured: true,
     name: rows[0].display_name || rows[0].username,
     ...(rows[0].avatar_url ? { avatar: rows[0].avatar_url } : {}),
+  };
+}
+
+export async function claimUsername(
+  env: Env,
+  id: string,
+  username: string,
+): Promise<FriendIdentity> {
+  const rows = await db<any[]>(env, "rpc/claim_username", {
+    method: "POST",
+    body: JSON.stringify({ p_user_id: id, p_username: username }),
+  });
+  const row = rows[0];
+  if (!row) throw new AppError("Your username could not be saved.", 503);
+  return {
+    id: row.id,
+    username: row.username,
+    usernameConfigured: true,
+    name: row.display_name || row.username,
+    ...(row.avatar_url ? { avatar: row.avatar_url } : {}),
   };
 }
 

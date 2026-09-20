@@ -5,11 +5,14 @@ vi.mock("jose", async (importOriginal) => {
 });
 vi.mock("../worker/db", () => ({
   db: vi.fn(),
+  getFriendIdentity: vi.fn(),
+  claimUsername: vi.fn(),
   getPlayer: vi.fn(),
   recentProblems: vi.fn(),
   settle: vi.fn(),
 }));
 import { jwtVerify } from "jose";
+import { getFriendIdentity } from "../worker/db";
 import worker from "../worker/index";
 import type { Env } from "../worker/env";
 
@@ -44,6 +47,12 @@ beforeEach(() => {
   vi.mocked(jwtVerify).mockResolvedValue({
     payload: { sub: A },
     protectedHeader: { alg: "ES256" },
+  });
+  vi.mocked(getFriendIdentity).mockResolvedValue({
+    id: A,
+    username: "alice",
+    usernameConfigured: true,
+    name: "Alice",
   });
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubGlobal(
@@ -84,6 +93,22 @@ describe("admission API boundary", () => {
         )
       ).status,
     ).toBe(401);
+  });
+
+  it("blocks live admission until the account has chosen a username", async () => {
+    vi.mocked(getFriendIdentity).mockResolvedValueOnce({
+      id: A,
+      username: "",
+      usernameConfigured: false,
+      name: "Alice",
+    });
+    const response = await worker.fetch(request("/admission"), env);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      mode: "staging",
+      canJoin: false,
+      reason: "Choose your username to enter live matches.",
+    });
   });
 
   it("publishes only the browser key and admission mode in config", async () => {

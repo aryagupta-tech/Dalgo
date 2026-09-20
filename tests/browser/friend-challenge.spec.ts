@@ -6,12 +6,14 @@ const challengeId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const matchId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const myIdentity = {
   id: me,
-  publicId: "DLG-AAAA-AAAA-AAAA-AAAA",
+  username: "test_account",
+  usernameConfigured: true,
   name: "Test account",
 };
 const friendIdentity = {
   id: friend,
-  publicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+  username: "friend_account",
+  usernameConfigured: true,
   name: "Friend account",
 };
 
@@ -67,7 +69,7 @@ function config(path: string) {
   return null;
 }
 
-test("a signed-in player shares an ID and sends then cancels a friend challenge", async ({
+test("a signed-in player shares a username and sends then cancels a friend challenge", async ({
   page,
 }) => {
   await authenticate(page);
@@ -133,11 +135,11 @@ test("a signed-in player shares an ID and sends then cancels a friend challenge"
     page.getByRole("heading", { name: "Play a friend." }),
   ).toBeVisible();
   await expect(
-    page.getByText(myIdentity.publicId, { exact: true }),
+    page.getByRole("main").getByText(`@${myIdentity.username}`, { exact: true }),
   ).toBeVisible();
   await page
-    .getByLabel("Friend's Dalgo ID")
-    .fill(friendIdentity.publicId.toLowerCase());
+    .getByLabel("Friend's username")
+    .fill(friendIdentity.username);
   await page.getByRole("radio", { name: "Medium" }).check();
   await page.getByRole("button", { name: "Send challenge" }).click();
   await expect(page.getByText("Friend account", { exact: true })).toBeVisible();
@@ -212,4 +214,68 @@ test("the intended friend can accept and enters the authoritative match route", 
   await expect(page.getByText(/HARD · CHALLENGED YOU/)).toBeVisible();
   await page.getByRole("button", { name: "Accept" }).click();
   await expect(page).toHaveURL(new RegExp(`/match/${matchId}$`));
+});
+
+test("a new OAuth account must choose a username before using Dalgo", async ({
+  page,
+}) => {
+  await authenticate(page);
+  let profile = {
+    ...myIdentity,
+    username: "",
+    usernameConfigured: false,
+  };
+  let claimed = "";
+  await page.route("**/api/**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/config")
+      return route.fulfill({ json: config(url.pathname) });
+    if (url.pathname === "/api/admission")
+      return route.fulfill({
+        json: profile.usernameConfigured
+          ? { mode: "public", canJoin: true, reason: "" }
+          : {
+              mode: "public",
+              canJoin: false,
+              reason: "Choose your username to enter live matches.",
+            },
+      });
+    if (
+      url.pathname === "/api/profile" &&
+      route.request().method() === "GET"
+    )
+      return route.fulfill({ json: profile });
+    if (
+      url.pathname === "/api/profile/username" &&
+      route.request().method() === "PUT"
+    ) {
+      claimed = route.request().postDataJSON().username;
+      profile = {
+        ...profile,
+        username: claimed,
+        usernameConfigured: true,
+      };
+      return route.fulfill({ json: profile });
+    }
+    if (url.pathname === "/api/ratings")
+      return route.fulfill({ json: [] });
+    return route.fulfill({
+      status: 404,
+      json: { error: "Unhandled test route." },
+    });
+  });
+
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Choose your username" }),
+  ).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "Username", exact: true })
+    .fill("New_Player");
+  await expect(page.getByText("Your public username: @new_player")).toBeVisible();
+  await page.getByRole("button", { name: "Create username" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Choose your username" }),
+  ).toBeHidden();
+  expect(claimed).toBe("new_player");
 });

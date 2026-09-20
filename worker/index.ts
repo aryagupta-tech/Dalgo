@@ -10,7 +10,7 @@ import { admissionStatus } from "./admission";
 import { configuredAttemptLimits } from "./limits";
 import { DEFAULT_ATTEMPT_LIMITS } from "../shared/types";
 import { AppError, json, parseArena } from "./core";
-import { db, getFriendIdentity } from "./db";
+import { claimUsername, db, getFriendIdentity } from "./db";
 export { Coordinator } from "./coordinator";
 export { MatchRoom } from "./match";
 const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
@@ -139,8 +139,19 @@ async function api(request: Request, env: Env) {
       throw new AppError("Invalid connection ticket.", 401);
     id = payload.sub;
   } else id = await user(request, env);
-  if (path === "/admission" && request.method === "GET")
-    return json(admissionStatus(env, id));
+  if (path === "/admission" && request.method === "GET") {
+    const admission = admissionStatus(env, id);
+    if (admission.canJoin) {
+      const profile = await getFriendIdentity(env, id);
+      if (!profile.usernameConfigured)
+        return json({
+          ...admission,
+          canJoin: false,
+          reason: "Choose your username to enter live matches.",
+        });
+    }
+    return json(admission);
+  }
   if (path === "/socket-ticket" && request.method === "POST") {
     const b = (await request.json()) as { path: string };
     if (
@@ -162,30 +173,37 @@ async function api(request: Request, env: Env) {
   }
   if (path === "/profile" && request.method === "GET")
     return json(await getFriendIdentity(env, id));
+  if (path === "/profile/username" && request.method === "PUT") {
+    const body = (await request.json()) as { username?: unknown };
+    if (typeof body.username !== "string")
+      throw new AppError("Enter a username.");
+    const username = body.username.trim().toLowerCase();
+    if (!/^[a-z0-9][a-z0-9_]{2,19}$/.test(username))
+      throw new AppError(
+        "Use 3–20 lowercase letters, numbers, or underscores, starting with a letter or number.",
+      );
+    return json(await claimUsername(env, id, username));
+  }
   if (path === "/challenges/events")
     return internal(coordinator(env), "/events?userId=" + id);
   if (path === "/challenges" && request.method === "GET")
     return internal(coordinator(env), "/challenge-status?userId=" + id);
   if (path === "/challenges" && request.method === "POST") {
     const body = (await request.json()) as {
-      friendId?: unknown;
+      username?: unknown;
       arena?: unknown;
       requestId?: unknown;
     };
     if (typeof body.requestId !== "string" || !uuid.test(body.requestId))
       throw new AppError("A valid request identifier is required.");
-    if (typeof body.friendId !== "string")
-      throw new AppError("Enter a valid Dalgo player ID.");
-    const friendPublicId = body.friendId.trim().toUpperCase();
-    if (
-      !/^DLG-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/.test(
-        friendPublicId,
-      )
-    )
-      throw new AppError("Enter a Dalgo ID like DLG-ABCD-1234-EF56-7890.");
+    if (typeof body.username !== "string")
+      throw new AppError("Enter your friend’s username.");
+    const friendUsername = body.username.trim().toLowerCase();
+    if (!/^[a-z0-9][a-z0-9_]{2,19}$/.test(friendUsername))
+      throw new AppError("Enter a valid username.");
     return internal(coordinator(env), "/challenge-create", id, {
       userId: id,
-      friendPublicId,
+      friendUsername,
       arena: body.arena,
       requestId: body.requestId,
     });
@@ -245,12 +263,16 @@ async function api(request: Request, env: Env) {
     const body = (await request.json()) as any;
     if (!body.requestId || !uuid.test(body.requestId))
       throw new AppError("A valid request identifier is required.");
-    if (request.method === "POST")
+    if (request.method === "POST") {
+      const profile = await getFriendIdentity(env, id);
+      if (!profile.usernameConfigured)
+        throw new AppError("Choose your username before joining a match.", 409);
       return internal(coordinator(env), "/join", id, {
         userId: id,
         arena: body.arena,
         requestId: body.requestId,
       });
+    }
     if (request.method === "DELETE")
       return internal(coordinator(env), "/cancel", id, {
         userId: id,

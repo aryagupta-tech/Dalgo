@@ -89,6 +89,7 @@ function ChallengeRow({
             color="text.secondary"
             sx={{ fontFamily: '"JetBrains Mono", monospace' }}
           >
+            {other.username ? `@${other.username} · ` : ""}
             {ARENAS[challenge.arena].name.toUpperCase()} ·{" "}
             {incoming ? "CHALLENGED YOU" : "INVITE SENT"}
           </Typography>
@@ -136,7 +137,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
   const [profile, setProfile] = useState<FriendIdentity | null>(null);
   const [view, setView] = useState<FriendChallengeView>(emptyView);
   const [arena, setArena] = useState<Arena>("easy");
-  const [friendId, setFriendId] = useState("");
+  const [friendUsername, setFriendUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -197,12 +198,12 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
       const challenge = await api<FriendChallenge>("/challenges", {
         method: "POST",
         body: JSON.stringify({
-          friendId,
+          username: friendUsername,
           arena,
           requestId: crypto.randomUUID(),
         }),
       });
-      setFriendId("");
+      setFriendUsername("");
       setView((current) => ({
         ...current,
         serverNow: Date.now(),
@@ -249,14 +250,16 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
     }
   }
 
-  async function copyId() {
+  async function copyUsername() {
     if (!profile) return;
     try {
-      await navigator.clipboard.writeText(profile.publicId);
+      await navigator.clipboard.writeText(profile.username);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
-      setError("Copying is unavailable. Select the ID and copy it manually.");
+      setError(
+        "Copying is unavailable. Select the username and copy it manually.",
+      );
     }
   }
 
@@ -302,7 +305,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
             Play a friend.
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 1.25 }}>
-            Share your Dalgo ID, choose an arena, and send a private challenge.
+            Enter a friend’s username, choose an arena, and send a private challenge.
           </Typography>
         </Box>
         <Chip label="RATED HUMAN MATCH" variant="outlined" />
@@ -313,9 +316,9 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           variant="outlined"
           sx={{ p: { xs: 2.5, sm: 4 }, bgcolor: "#101010" }}
         >
-          <Typography variant="h5">Sign in to get your Dalgo ID.</Typography>
+          <Typography variant="h5">Sign in and choose your username.</Typography>
           <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
-            Your ID is created once and stays with your account.
+            Your username is created once and stays with your account.
           </Typography>
           <Button
             variant="contained"
@@ -368,7 +371,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
               sx={{ p: { xs: 2.25, sm: 3 }, bgcolor: "#101010" }}
             >
               <Typography variant="overline" color="text.secondary">
-                YOUR DALGO ID
+                YOUR USERNAME
               </Typography>
               {loading && !profile ? (
                 <CircularProgress size={24} sx={{ display: "block", mt: 2 }} />
@@ -382,17 +385,17 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                       overflowWrap: "anywhere",
                     }}
                   >
-                    {profile?.publicId ?? "Unavailable"}
+                    {profile?.username ? `@${profile.username}` : "Unavailable"}
                   </Typography>
                   <Button
                     variant="outlined"
                     color="inherit"
                     startIcon={<Copy size={15} />}
-                    onClick={copyId}
-                    disabled={!profile}
+                    onClick={copyUsername}
+                    disabled={!profile?.usernameConfigured}
                     sx={{ mt: 2 }}
                   >
-                    {copied ? "Copied" : "Copy ID"}
+                    {copied ? "Copied" : "Copy username"}
                   </Button>
                 </>
               )}
@@ -401,8 +404,8 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                 color="text.secondary"
                 sx={{ mt: 2, lineHeight: 1.65 }}
               >
-                Friends use this ID to challenge you. It cannot be changed and
-                does not reveal your sign-in details.
+                Friends use this username to challenge you. It is chosen when
+                your account is created and does not reveal sign-in details.
               </Typography>
             </Paper>
 
@@ -415,13 +418,13 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
               </Typography>
               <TextField
                 fullWidth
-                label="Friend's Dalgo ID"
-                placeholder="DLG-ABCD-1234-EF56-7890"
-                value={friendId}
+                label="Friend's username"
+                placeholder="algorithm_arya"
+                value={friendUsername}
                 onChange={(event) =>
-                  setFriendId(event.target.value.toUpperCase())
+                  setFriendUsername(event.target.value.toLowerCase())
                 }
-                slotProps={{ htmlInput: { maxLength: 24 } }}
+                slotProps={{ htmlInput: { maxLength: 20 } }}
                 sx={{ mt: 2.5 }}
               />
               <RadioGroup
@@ -444,7 +447,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                 startIcon={<Swords size={17} />}
                 disabled={
                   !config.playEnabled ||
-                  !friendId.trim() ||
+                  !friendUsername.trim() ||
                   Boolean(busy) ||
                   pending.length > 0
                 }
@@ -509,7 +512,8 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                 }}
               >
                 <Typography color="text.secondary">
-                  No open challenges. Share your ID or invite a friend above.
+                  No open challenges. Share your username or invite a friend
+                  above.
                 </Typography>
               </Box>
             )}

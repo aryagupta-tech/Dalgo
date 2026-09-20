@@ -160,7 +160,8 @@ export type FriendChallengeStatus =
   "open" | "accepted" | "declined" | "cancelled" | "expired";
 export interface FriendIdentity {
   id: string;
-  publicId: string;
+  username: string;
+  usernameConfigured: boolean;
   name: string;
   avatar?: string;
 }

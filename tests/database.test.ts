@@ -228,8 +228,9 @@ describe("Supabase migration and trusted settlement contract", () => {
       username: string;
       avatar_url: string | null;
       public_id: string;
+      username_configured_at: string | null;
     }>(
-      "select id, username, avatar_url, public_id from public.profiles where id=any($1::uuid[])",
+      "select id, username, avatar_url, public_id, username_configured_at from public.profiles where id=any($1::uuid[])",
       [[A, B]],
     );
     expect(profiles.rows).toHaveLength(2);
@@ -238,6 +239,7 @@ describe("Supabase migration and trusted settlement contract", () => {
       expect(p.username).toMatch(/^[a-z0-9_]{3,32}$/);
       expect(p.avatar_url).toBeNull();
       expect(p.public_id).toMatch(/^DLG-[A-F0-9]{4}(?:-[A-F0-9]{4}){3}$/);
+      expect(p.username_configured_at).toBeNull();
     }
     expect(new Set(profiles.rows.map((p) => p.public_id)).size).toBe(2);
     const ratings = await pg.query<{
@@ -258,6 +260,48 @@ describe("Supabase migration and trusted settlement contract", () => {
     ).toBe(true);
   });
 
+  it("lets the backend claim one normalized username and rejects duplicates or reserved names", async () => {
+    await pg.exec("set local role service_role");
+    const claimed = await pg.query<{
+      id: string;
+      username: string;
+      username_configured_at: string;
+    }>("select id, username, username_configured_at from public.claim_username($1,$2)", [
+      A,
+      "  Alice_One  ",
+    ]);
+    await pg.exec("reset role");
+    expect(claimed.rows).toHaveLength(1);
+    expect(claimed.rows[0]).toMatchObject({ id: A, username: "alice_one" });
+    expect(claimed.rows[0].username_configured_at).toBeTruthy();
+
+    await pg.exec("set local role service_role");
+    await expectSqlError(
+      "select * from public.claim_username($1,$2)",
+      [B, "ALICE_ONE"],
+      "23505",
+    );
+    await pg.exec("set local role service_role");
+    await expectSqlError(
+      "select * from public.claim_username($1,$2)",
+      [A, "another_name"],
+      "22023",
+    );
+    await pg.exec("set local role service_role");
+    await expectSqlError(
+      "select * from public.claim_username($1,$2)",
+      [B, "admin"],
+      "22023",
+    );
+    await asBrowser("authenticated", B, async () => {
+      await expectSqlError(
+        "select * from public.claim_username($1,$2)",
+        [B, "browser_claim"],
+        "42501",
+      );
+    });
+  });
+
   it("backfills profiles and all six ratings for existing auth accounts", async () => {
     expect(
       (await pg.query("select id from public.profiles where id=$1", [EXISTING]))
@@ -273,7 +317,7 @@ describe("Supabase migration and trusted settlement contract", () => {
     ).toHaveLength(6);
   });
 
-  it("creates stable player IDs and restricts friend challenges to their participants", async () => {
+  it("restricts friend challenges and compatibility IDs to authorized readers", async () => {
     const existing = await pg.query<{ public_id: string }>(
       "select public_id from public.profiles where id=$1",
       [EXISTING],
