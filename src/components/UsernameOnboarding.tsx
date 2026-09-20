@@ -35,10 +35,7 @@ export function UsernameOnboarding() {
     setCompleted(false);
   }, [user?.id]);
 
-  const normalized = useMemo(
-    () => username.trim().toLowerCase(),
-    [username],
-  );
+  const normalized = useMemo(() => username.trim().toLowerCase(), [username]);
   const valid = usernamePattern.test(normalized);
 
   if (
@@ -99,7 +96,7 @@ export function UsernameOnboarding() {
             letterSpacing: ".09em",
           }}
         >
-          DALGO / CREATE ACCOUNT
+          DALGO / USERNAME
         </Typography>
         <Typography
           id="username-onboarding-title"
@@ -110,8 +107,8 @@ export function UsernameOnboarding() {
           Choose your username
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 1.25, lineHeight: 1.65 }}>
-          Friends will use this username to challenge you. Choose carefully;
-          it cannot be changed later.
+          Friends use this username to find and challenge you. It cannot be
+          changed later.
         </Typography>
         <Box component="form" onSubmit={submit} sx={{ mt: 3 }}>
           <TextField
@@ -149,14 +146,18 @@ export function UsernameOnboarding() {
               {error}
             </Alert>
           )}
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.25} sx={{ mt: 3 }}>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.25}
+            sx={{ mt: 3 }}
+          >
             <Button
               type="submit"
               variant="contained"
               disabled={!valid || busy}
               sx={{ flex: 1 }}
             >
-              {busy ? "Saving…" : "Create username"}
+              {busy ? "Saving…" : "Save username"}
             </Button>
             <Button
               type="button"

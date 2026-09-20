@@ -14,7 +14,6 @@ import {
   Avatar,
   Box,
   Button,
-  Chip,
   CircularProgress,
   FormControlLabel,
   Paper,
@@ -444,7 +443,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           letterSpacing: ".08em",
         }}
       >
-        CLUBHOUSE / FRIENDS
+        DALGO / FRIENDS
       </Typography>
       <Stack
         component="header"
@@ -465,13 +464,12 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
               letterSpacing: "-.05em",
             }}
           >
-            Friends and challenges.
+            Play with friends
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 1.25 }}>
-            Keep a friends list, or challenge any player directly by username.
+            Challenge any player by username, or save them to your friends list.
           </Typography>
         </Box>
-        <Chip label="RATED HUMAN MATCH" variant="outlined" />
       </Stack>
 
       {!user ? (
@@ -479,11 +477,9 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           variant="outlined"
           sx={{ p: { xs: 2.5, sm: 4 }, bgcolor: "#101010" }}
         >
-          <Typography variant="h5">
-            Sign in and choose your username.
-          </Typography>
+          <Typography variant="h5">Sign in to play with friends</Typography>
           <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
-            Your username lets other players find and challenge you.
+            Choose a username so other players can find you.
           </Typography>
           <Button
             variant="contained"
@@ -502,8 +498,8 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           )}
           {requestedUsername && (
             <Alert severity="info" icon={<RefreshCw size={18} />}>
-              Rematch @{requestedUsername} in the {ARENAS[arena].name} arena.
-              Review the details and send the challenge below.
+              Rematch @{requestedUsername} · {ARENAS[arena].name}. Send a
+              challenge below.
             </Alert>
           )}
           {view.currentMatchId && (
@@ -576,8 +572,8 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                 color="text.secondary"
                 sx={{ mt: 2, lineHeight: 1.65 }}
               >
-                Share this username so another player can add or challenge you.
-                Your sign-in details stay private.
+                Share your username to receive friend requests and match
+                challenges.
               </Typography>
             </Paper>
 
@@ -664,7 +660,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                   color="text.secondary"
                   sx={{ mt: 0.5 }}
                 >
-                  Accepted requests stay in your friends list.
+                  Send a request by username.
                 </Typography>
               </Box>
               <Stack
@@ -751,7 +747,8 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                 color="text.secondary"
                 sx={{ fontFamily: '"JetBrains Mono", monospace' }}
               >
-                {friends.friends.length} SAVED
+                {friends.friends.length}{" "}
+                {friends.friends.length === 1 ? "friend" : "friends"}
               </Typography>
             </Stack>
             {friends.friends.length ? (
@@ -811,7 +808,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                 >
                   <Users size={18} />
                   <Typography color="text.secondary">
-                    Your accepted friends will appear here.
+                    No friends yet.
                   </Typography>
                 </Stack>
               </Box>
@@ -832,14 +829,14 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
               }}
             >
               <Typography component="h2" variant="h6">
-                Open match challenges
+                Match challenges
               </Typography>
               <Typography
                 variant="caption"
                 color="text.secondary"
                 sx={{ fontFamily: '"JetBrains Mono", monospace' }}
               >
-                {pending.length} OPEN
+                {pending.length} pending
               </Typography>
             </Stack>
             {pending.length ? (
@@ -862,7 +859,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                 }}
               >
                 <Typography color="text.secondary">
-                  No open match challenges.
+                  No pending match challenges.
                 </Typography>
               </Box>
             )}

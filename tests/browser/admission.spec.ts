@@ -120,21 +120,21 @@ for (const [id, allowed] of [
         message = "";
         await page.getByRole("button", { name: "Find a match" }).click();
         await expect(
-          page.getByRole("heading", { name: "Finding an opponent." }),
+          page.getByRole("heading", { name: "Finding an opponent" }),
         ).toBeVisible();
         status = "idle";
         message = reason;
         await expect(
-          page.getByRole("heading", { name: "Search paused." }),
+          page.getByRole("heading", { name: "Search paused" }),
         ).toBeVisible();
         message = "";
         const pollsBeforeReopen = polls;
         await expect.poll(() => polls).toBeGreaterThan(pollsBeforeReopen);
         await expect(
-          page.getByRole("heading", { name: "Search paused." }),
+          page.getByRole("heading", { name: "Search paused" }),
         ).toBeVisible();
         await expect(
-          page.getByText("No new opponent will be assigned", { exact: true }),
+          page.getByRole("button", { name: "Back to lobby", exact: true }),
         ).toBeVisible();
         await page
           .getByRole("button", { name: "Back to lobby", exact: true })

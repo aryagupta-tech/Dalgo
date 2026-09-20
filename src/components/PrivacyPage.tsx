@@ -62,8 +62,8 @@ export function PrivacyPage() {
           Privacy and data requests
         </Typography>
         <Typography color="text.secondary" sx={{ lineHeight: 1.7 }}>
-          This notice explains the data used to operate Dalgo's capped online
-          beta and how to request access or deletion.
+          This notice explains how Dalgo uses and stores data, and how to
+          request access or deletion.
         </Typography>
         <Typography
           variant="caption"
@@ -166,8 +166,8 @@ export function PrivacyPage() {
               A completed deletion removes authentication access, profile data,
               ratings, friend relationships, challenges, submissions, and linked
               records required to remove the account. Shared match history may
-              be deleted or anonymized so another player's account remains
-              internally consistent.
+              be deleted or anonymized so other players' records remain
+              accurate.
             </Typography>
           </PrivacySection>
 

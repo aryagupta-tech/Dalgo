@@ -25,6 +25,7 @@ async function mockApp(page: Page, playEnabled: boolean) {
 
 for (const viewport of [
   { name: "mobile", width: 375, height: 812 },
+  { name: "tablet", width: 768, height: 1024 },
   { name: "desktop", width: 1440, height: 960 },
 ]) {
   test(`launch lobby is focused and free of internal copy on ${viewport.name}`, async ({
@@ -35,7 +36,7 @@ for (const viewport of [
     await page.goto("/");
 
     await expect(
-      page.getByRole("heading", { name: "Choose an arena" }),
+      page.getByRole("heading", { name: "Choose your arena", level: 1 }),
     ).toBeVisible();
     await expect(
       page.getByRole("radiogroup", { name: "Arena difficulty" }),
@@ -57,6 +58,9 @@ for (const viewport of [
       "Tester matches",
       "v0.2",
       "service verification",
+      "capped online beta",
+      "Live staging",
+      "RATED HUMAN MATCH",
     ]) {
       expect(text).not.toContain(unwanted);
     }
@@ -123,6 +127,7 @@ test("privacy and contact details are public and usable", async ({ page }) => {
     page.getByRole("heading", { name: "Access and deletion requests" }),
   ).toBeVisible();
   await expect(page.getByText(/operator review required/i)).toHaveCount(0);
+  await expect(page.getByText(/capped online beta/i)).toHaveCount(0);
 
   await page.goto("/");
   await page

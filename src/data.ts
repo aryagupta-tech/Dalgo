@@ -7,11 +7,13 @@ export function useRatings() {
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     let stopped = false;
     setLoadedFor(user?.id ?? null);
     setRatings([]);
     setError("");
+    setLoading(!!user);
     if (user)
       api<Rating[]>("/ratings")
         .then((v) => {
@@ -19,6 +21,9 @@ export function useRatings() {
         })
         .catch((e) => {
           if (!stopped) setError(e.message);
+        })
+        .finally(() => {
+          if (!stopped) setLoading(false);
         });
     return () => {
       stopped = true;
@@ -27,6 +32,7 @@ export function useRatings() {
   return {
     ratings: user?.id === loadedFor ? ratings : [],
     error: user?.id === loadedFor ? error : "",
+    loading: !!user && (user.id !== loadedFor || loading),
   };
 }
 export function useHistory() {

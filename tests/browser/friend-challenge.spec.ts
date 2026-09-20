@@ -134,8 +134,9 @@ test("a signed-in player shares a username and sends then cancels a friend chall
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/friends");
   await expect(
-    page.getByRole("heading", { name: "Friends and challenges." }),
+    page.getByRole("heading", { name: "Play with friends", exact: true }),
   ).toBeVisible();
+  await expect(page.getByText(/CLUBHOUSE|RATED HUMAN MATCH/)).toHaveCount(0);
   await expect(
     page
       .getByRole("main")
@@ -153,7 +154,7 @@ test("a signed-in player shares a username and sends then cancels a friend chall
     .toBe(true);
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(
-    page.getByText("No open match challenges.", { exact: false }),
+    page.getByText("No pending match challenges.", { exact: false }),
   ).toBeVisible();
   expect(authorized).toEqual(
     expect.arrayContaining(["/api/profile", "/api/challenges"]),
@@ -273,7 +274,7 @@ test("a new OAuth account must choose a username before using Dalgo", async ({
   await expect(
     page.getByText("Your public username: @new_player"),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Create username" }).click();
+  await page.getByRole("button", { name: "Save username" }).click();
   await expect(
     page.getByRole("heading", { name: "Choose your username" }),
   ).toBeHidden();
@@ -367,7 +368,7 @@ test("a player accepts a friend request and challenges the saved friend", async 
     page.getByRole("button", { name: "Accept friend" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Accept friend" }).click();
-  await expect(page.getByText("1 SAVED")).toBeVisible();
+  await expect(page.getByText("1 friend", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Challenge · Easy" }).click();
   await expect.poll(() => challengedUsername).toBe(friendIdentity.username);
   await expect(page.getByText(/EASY · INVITE SENT/)).toBeVisible();
@@ -421,7 +422,7 @@ test("match history prefills the prior human opponent and arena for a rematch", 
     /\/friends\?challenge=friend_account&arena=medium$/,
   );
   await expect(
-    page.getByText(/Rematch @friend_account in the Medium arena/),
+    page.getByText(/Rematch @friend_account · Medium/),
   ).toBeVisible();
   await expect(page.getByLabel("Friend's username")).toHaveValue(
     friendIdentity.username,
