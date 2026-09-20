@@ -443,7 +443,10 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           letterSpacing: ".08em",
         }}
       >
-        DALGO / FRIENDS
+        <Box component="span" sx={{ textTransform: "none" }}>
+          dalgo
+        </Box>{" "}
+        / FRIENDS
       </Typography>
       <Stack
         component="header"

@@ -1,4 +1,4 @@
-# Dalgo
+# dalgo
 
 A dark DSA duel arena built with React, TypeScript, Material UI, Vite, Monaco, Supabase, and Cloudflare Durable Objects. Three arenas, shared clocks, separate human/bot Elo ratings, and function-style Python, C++, Java, and JavaScript submissions.
 

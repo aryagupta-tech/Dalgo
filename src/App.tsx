@@ -336,7 +336,9 @@ function PageTop({ section }: { section: string }) {
           color: "text.secondary",
         }}
       >
-        DALGO{" "}
+        <Box component="span" sx={{ textTransform: "none" }}>
+          dalgo
+        </Box>{" "}
         <Box
           component="span"
           sx={{ px: { xs: 0.75, sm: 1.6 }, color: "#949494" }}

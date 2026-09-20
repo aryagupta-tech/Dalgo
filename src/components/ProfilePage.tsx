@@ -161,7 +161,7 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
     profile?.name ||
     (typeof user?.user_metadata?.full_name === "string"
       ? user.user_metadata.full_name
-      : "Dalgo player");
+      : "dalgo player");
   const ratingsUnavailable = !!ratingsError && ratings.length === 0;
   const winRate = ratingsUnavailable
     ? "—"
@@ -205,7 +205,9 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
         color="text.secondary"
         sx={{ fontFamily: mono, letterSpacing: ".075em" }}
       >
-        DALGO{" "}
+        <Box component="span" sx={{ textTransform: "none" }}>
+          dalgo
+        </Box>{" "}
         <Box component="span" sx={{ px: { xs: 0.75, sm: 1.6 } }}>
           /
         </Box>{" "}

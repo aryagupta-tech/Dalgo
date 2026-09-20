@@ -1,0 +1,16 @@
+{
+  "name": "dalgo",
+  "short_name": "dalgo",
+  "description": "Head-to-head DSA competition with live ranked matches.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "icons": [
+    {
+      "src": "/favicon.svg?v=2",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

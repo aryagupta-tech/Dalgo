@@ -12,7 +12,7 @@ export function useDalgoTools() {
       registry.registerTool(
         {
           name: "read_arena_catalog",
-          title: "Read Dalgo arenas",
+          title: "Read dalgo arenas",
           description:
             "Read the three arenas, supported languages, and whether online matches are enabled.",
           inputSchema: {

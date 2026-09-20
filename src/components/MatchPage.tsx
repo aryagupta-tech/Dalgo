@@ -244,7 +244,10 @@ function ScreenMessage({
         sx={{ maxWidth: 580, mx: "auto", my: { xs: 6, sm: 12.5 }, p: 3.5 }}
       >
         <Typography variant="overline" color="text.secondary">
-          DALGO / MATCH
+          <Box component="span" sx={{ textTransform: "none" }}>
+            dalgo
+          </Box>{" "}
+          / MATCH
         </Typography>
         <Typography variant="h1" sx={{ fontSize: 32, my: 2 }}>
           {title}

@@ -256,7 +256,7 @@ test("signed-out profile gives a direct sign-in path", async ({ page }) => {
     .getByRole("button", { name: "Sign in", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "Sign in to Dalgo" }),
+    page.getByRole("heading", { name: "Sign in to dalgo" }),
   ).toBeVisible();
 });
 
