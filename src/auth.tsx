@@ -11,6 +11,12 @@ import {
   type User,
 } from "@supabase/supabase-js";
 import { api, fallbackConfig, setTokenGetter } from "./api";
+import {
+  cacheAuthConfig,
+  createSessionCoordinator,
+  readCachedAuthConfig,
+  retry,
+} from "./auth-session";
 import type { Admission, Config, FriendIdentity } from "../shared/types";
 const AuthContext = createContext<{
   user: User | null;
@@ -51,32 +57,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       let config;
       try {
-        config = await api<Config>("/config");
+        config = await retry(() => api<Config>("/config"));
+        cacheAuthConfig(window.localStorage, config);
       } catch {
-        config = fallbackConfig;
+        config = {
+          ...fallbackConfig,
+          ...readCachedAuthConfig(window.localStorage),
+        };
       }
+      if (stopped) return;
       const client =
         config.supabaseUrl && config.supabaseKey
-          ? createClient(config.supabaseUrl, config.supabaseKey)
+          ? createClient(config.supabaseUrl, config.supabaseKey, {
+              auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                storage: window.localStorage,
+              },
+            })
           : null;
-      if (stopped) return;
       if (client) {
-        setTokenGetter(async () => {
-          const { data } = await client.auth.getSession();
-          return data.session?.access_token ?? null;
+        const sessions = createSessionCoordinator(client);
+        setTokenGetter(sessions.accessToken);
+        const { data: sub } = client.auth.onAuthStateChange((_e, session) => {
+          sessions.update(session);
+          setState((s) => ({ ...s, user: session?.user ?? null }));
         });
-        const { data } = await client.auth.getSession();
-        if (stopped) return;
-        setState({
-          config,
-          client,
-          user: data.session?.user ?? null,
-          loading: false,
-        });
-        const { data: sub } = client.auth.onAuthStateChange((_e, session) =>
-          setState((s) => ({ ...s, user: session?.user ?? null })),
-        );
-        dispose = () => sub.subscription.unsubscribe();
+        const recover = async () => {
+          try {
+            const session = await sessions.restore();
+            if (!stopped)
+              setState({
+                config,
+                client,
+                user: session?.user ?? null,
+                loading: false,
+              });
+          } catch {
+            if (!stopped)
+              setState((current) => ({
+                ...current,
+                config,
+                client,
+                loading: false,
+              }));
+          }
+        };
+        const resume = () => {
+          if (document.visibilityState === "visible") void recover();
+        };
+        window.addEventListener("focus", resume);
+        document.addEventListener("visibilitychange", resume);
+        dispose = () => {
+          sub.subscription.unsubscribe();
+          window.removeEventListener("focus", resume);
+          document.removeEventListener("visibilitychange", resume);
+          void client.auth.dispose();
+        };
+        await recover();
       } else setState({ config, client: null, user: null, loading: false });
     })();
     return () => {
