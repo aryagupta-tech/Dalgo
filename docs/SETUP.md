@@ -6,7 +6,7 @@ The owner-facing steps are in [REQUIREMENTS.md](REQUIREMENTS.md). Use `npm run c
 
 ## Safe deployment defaults
 
-`npm run deploy:staging` builds the React/Material UI frontend and deploys `dalgo-staging`. Its Coordinator and MatchRoom Durable Object namespaces are isolated from production. Staging uses `ADMISSION_MODE=staging` with live matchmaking limited by the server-only tester allowlist. `npm run deploy:production` targets `dalgo` with admission disabled.
+`npm run deploy:staging` builds the React/Material UI frontend and deploys `dalgo-staging`. Its Coordinator and MatchRoom Durable Object namespaces are isolated from production. Staging uses `ADMISSION_MODE=staging` with live matchmaking limited by the server-only tester allowlist. `npm run deploy:production` targets the capped public `dalgo` Worker.
 
 ## Cloudflare
 
@@ -35,10 +35,10 @@ Use `.dev.vars.example` for local development. `.dev.vars` and `.dev.vars.stagin
 
 No secret belongs in a `VITE_` variable. The frontend receives only the public Supabase URL and publishable key from `/api/config`.
 
-## Admission and first real match
+## Admission and live matches
 
 `GET /api/admission` authenticates the current user and returns `{mode, canJoin, reason}`. Actual eligibility is enforced in the Coordinator; browser state cannot grant access. Unknown modes and malformed allowlists deny admission.
 
 The initial Codebox capacity is one active match and one execution at a time. Each player retains three preview runs and five scored submissions. A busy executor pauses new admission without consuming a daily-credit budget. Active matches continue when fresh admission is paused.
 
-Staging is enabled for two OAuth tester UUIDs and the automated live checklist passed. Production remains disabled until the owner completes the visual/privacy review and publishes the operator/privacy contact details.
+Staging is enabled for two OAuth tester UUIDs and the automated live checklist passed. Production uses public admission with one active match and one execution at a time. Disable both admission variables immediately if executor health or settlement smoke checks fail.

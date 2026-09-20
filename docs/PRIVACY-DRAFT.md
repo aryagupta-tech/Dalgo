@@ -1,6 +1,6 @@
 # Dalgo beta privacy notice — operator review required
 
-This draft must receive the operator's name and public support email before public registration opens. It describes the implemented architecture, not a claim of legal compliance.
+This draft still needs the operator's name and public support email before it can be published as Dalgo's privacy notice. It describes the implemented architecture, not a claim of legal compliance.
 
 Dalgo uses Google or GitHub sign-in through Supabase. It stores an account identifier, profile name/avatar, six arena ratings, match results, and submission records. Profile names and ratings appear on the leaderboard. Players cannot read an opponent's submitted code or the hidden problem answers.
 
@@ -10,4 +10,4 @@ Dalgo retains private submitted source for 30 days, then removes it from its dat
 
 Demo code is not executed or submitted to the judge, and demo ratings are not saved. Demo state and drafts use browser session storage. Live editor drafts use local browser storage. A player can clear these through the browser's site-data controls; restarting a demo creates a new session.
 
-The operator must publish a support contact and a process for account/data requests before public registration. A deletion request needs a reviewed retention/anonymization workflow for linked rating and match records; simply deleting an authentication row is not a complete account-deletion implementation.
+The operator should publish a support contact and a process for account/data requests as soon as those details are supplied. A deletion request needs a reviewed retention/anonymization workflow for linked rating and match records; simply deleting an authentication row is not a complete account-deletion implementation.

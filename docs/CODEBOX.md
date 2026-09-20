@@ -6,7 +6,7 @@ Dalgo uses its pinned Codebox service for code execution. The former JDoodle ada
 
 The repository contains a private Codebox API, Redis/BullMQ queue, ARM64/AMD64 execution image, Cloudflare adapter, recovery tests, and deployment scripts. The inspected upstream revision is recorded in `services/codebox/UPSTREAM.md`.
 
-Local and hosted execution and restart verification passed; see `CODEBOX-VERIFICATION.md`. Cloudflare staging is deployed with live play disabled. The Codebox VM is running and verified. The Google Cloud project is `dalgo-508410`, authenticated locally as `aryaguptaa.vns@gmail.com`.
+Local and hosted execution and restart verification passed; see `CODEBOX-VERIFICATION.md`. Cloudflare staging is tester-restricted and production uses capped public admission. The Codebox VM is running and verified. The Google Cloud project is `dalgo-508410`, authenticated locally as `aryaguptaa.vns@gmail.com`.
 
 ## Google Cloud server
 
@@ -52,9 +52,9 @@ The staging binding is versioned in `wrangler.jsonc`:
 node scripts/configure-codebox-binding.mjs staging SERVICE_ID
 ```
 
-The private Worker secret `CODEBOX_AUTH_TOKEN` is installed separately. Never store this token in a `VITE_` variable or print it. Deploy with `npm run deploy:staging` while `LIVE_MATCHES_ENABLED=false`.
+The private Worker secret `CODEBOX_AUTH_TOKEN` is installed separately. Never store this token in a `VITE_` variable or print it. Keep staging tester-restricted and production capped at one match and one execution.
 
-Hosted verification and the private edge-to-Codebox health check are complete. Staging records the verification time and retains `MAX_ACTIVE_MATCHES=1` and `JUDGE_CONCURRENCY=1`. Configure two tester user IDs before enabling staging, then verify real bot and human matches, reconnects, timeouts, judging races, and settlement recovery before considering public admission.
+Hosted verification and the private edge-to-Codebox health check are complete. Both environments record the verification time and retain `MAX_ACTIVE_MATCHES=1` and `JUDGE_CONCURRENCY=1`. The two tester IDs remain server-only in staging; the recorded human and bot checks cover reconnects, execution, capacity, and settlement before public admission.
 
 ## Operations and recovery
 

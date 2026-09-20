@@ -98,8 +98,8 @@
         ],
       },
       "vars": {
-        "ADMISSION_MODE": "disabled",
-        "LIVE_MATCHES_ENABLED": "false",
+        "ADMISSION_MODE": "public",
+        "LIVE_MATCHES_ENABLED": "true",
         "JUDGE_VERIFIED_AT": "2026-09-20T07:49:07.429Z",
         "JUDGE_DAILY_QUOTA": "0",
         "JUDGE_CREDIT_COST": "0",

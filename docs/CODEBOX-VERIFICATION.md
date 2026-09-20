@@ -28,4 +28,4 @@ The machine-readable report is in the ignored `artifacts/codebox-verification.js
 
 ## Completed on live staging
 
-Two real Google users were added to the server-only allowlist. A live human match verified cancellation, human priority, identical problems/clocks, WebSocket reconnect, hosted sample/scored execution, opponent submission privacy, idempotent replay, +16/−16 Elo settlement, and saved history. A separate live bot match verified the 15-second fallback, explicit bot label, capacity rejection while busy, resignation, bot-only rating update, and persistence. Production remains disabled pending owner visual/privacy review.
+Two real Google users were added to the server-only allowlist. A live human match verified cancellation, human priority, identical problems/clocks, WebSocket reconnect, hosted sample/scored execution, opponent submission privacy, idempotent replay, +16/−16 Elo settlement, and saved history. A separate live bot match verified the 15-second fallback, explicit bot label, capacity rejection while busy, resignation, bot-only rating update, and persistence. Production uses capped public admission after the hosted and two-account checks passed.

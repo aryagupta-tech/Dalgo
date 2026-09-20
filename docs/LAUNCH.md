@@ -1,6 +1,6 @@
 # Capped beta launch record
 
-**Current decision: tester-only staging enabled; public play disabled.** Staging at https://dalgo-staging.dalgo-arya.workers.dev reports `playEnabled=true` for two server-side allowlisted accounts. Production at https://dalgo.dalgo-arya.workers.dev reports `playEnabled=false` with `ADMISSION_MODE=disabled`. OAuth and signed-in human/bot staging acceptance passed; owner visual/privacy review remains before public admission.
+**Current decision: capped public play enabled.** Staging at https://dalgo-staging.dalgo-arya.workers.dev remains limited to two server-side allowlisted accounts. Production at https://dalgo.dalgo-arya.workers.dev uses `ADMISSION_MODE=public` with `playEnabled=true`. The one-match and one-execution capacity caps remain enforced.
 
 ## Verified evidence
 
@@ -33,14 +33,14 @@ Two Google users are stored in the server-only `TESTER_USER_IDS` list and stagin
 
 The automated live checks passed. Keep staging tester-only during the owner’s visual review; any new failure closes live staging before production changes.
 
-## Opening the public beta
+## Public beta operation
 
-Before public admission:
+Public admission was enabled after the automated, hosted, and two-account acceptance checks above passed. During the beta:
 
-1. Publish the operator name, support email, privacy notice, and data-request instructions.
+1. Publish the operator name, support email, privacy notice, and data-request instructions as soon as the owner supplies the contact details.
 2. Confirm remaining Google Cloud trial credit and the VM deletion deadline. Do not extend or create paid resources without a separate decision.
-3. Review execution latency, infrastructure errors, settlement retries, database growth, queue time, bot win rate, and capacity saturation from staging.
-4. Deploy production with its own secrets and private Codebox binding.
-5. Set `ADMISSION_MODE=public` and `LIVE_MATCHES_ENABLED=true` only after production smoke checks pass.
+3. Review execution latency, infrastructure errors, settlement retries, database growth, queue time, bot win rate, and capacity saturation.
+4. Keep production secrets and the private Codebox binding isolated from staging.
+5. If a production smoke check or executor health check fails, set `ADMISSION_MODE=disabled` and `LIVE_MATCHES_ENABLED=false` before investigating.
 
 The Google Cloud VM has a fixed deletion action for 14 December 2026. Cloudflare, Supabase, or Google billing upgrades are never automatic.
