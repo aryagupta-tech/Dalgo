@@ -38,6 +38,7 @@ function validProjectUrl(value) {
 // Output contains fixed labels and verdicts only, never input values or provider responses.
 // This checks local configuration; it does not authenticate keys or establish launch evidence.
 export function evaluateSetup(env, now = Date.now()) {
+  const codebox = env.JUDGE_PROVIDER !== "jdoodle";
   const checks = [];
   const add = (id, ok, requirement) =>
     checks.push({ id, status: ok ? "configured" : "needs_setup", requirement });
@@ -66,18 +67,45 @@ export function evaluateSetup(env, now = Date.now()) {
     Buffer.byteLength(clean(env.WEBSOCKET_SIGNING_SECRET)) >= 32,
     "Independent WebSocket signing secret of at least 32 bytes",
   );
-  add(
-    "jdoodle_credentials",
-    configured(env.JDOODLE_CLIENT_ID) && configured(env.JDOODLE_CLIENT_SECRET),
-    "JDoodle Compiler API client ID and secret",
-  );
-  add(
-    "judge_allowance",
-    positive(env.JUDGE_DAILY_QUOTA) &&
-      positive(env.JUDGE_CREDIT_COST) &&
-      positive(env.JUDGE_CONCURRENCY),
-    "Verified daily credits, execution cost, and concurrency",
-  );
+  if (codebox) {
+    add(
+      "judge_provider",
+      !env.JUDGE_PROVIDER || env.JUDGE_PROVIDER === "codebox",
+      "Codebox execution provider",
+    );
+    add(
+      "codebox_credentials",
+      configured(env.CODEBOX_AUTH_TOKEN) &&
+        clean(env.CODEBOX_AUTH_TOKEN).length >= 32,
+      "Private Codebox API token (32+ characters)",
+    );
+    add(
+      "codebox_connection",
+      /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?\/?$/.test(
+        clean(env.CODEBOX_LOCAL_URL),
+      ) || configured(env.CODEBOX_SERVICE_ID),
+      "Local Codebox endpoint or configured Cloudflare VPC service ID",
+    );
+    add(
+      "server_capacity",
+      env.JUDGE_CONCURRENCY === "1" && env.MAX_ACTIVE_MATCHES === "1",
+      "One execution and one active match for the initial server",
+    );
+  } else {
+    add(
+      "jdoodle_credentials",
+      configured(env.JDOODLE_CLIENT_ID) &&
+        configured(env.JDOODLE_CLIENT_SECRET),
+      "JDoodle Compiler API client ID and secret",
+    );
+    add(
+      "judge_allowance",
+      positive(env.JUDGE_DAILY_QUOTA) &&
+        positive(env.JUDGE_CREDIT_COST) &&
+        positive(env.JUDGE_CONCURRENCY),
+      "Verified daily credits, execution cost, and concurrency",
+    );
+  }
   const parseAttemptLimit = (value, fallback) => {
     if (value === undefined) return fallback;
     if (!/^[1-9]\d*$/.test(clean(value))) return null;
@@ -102,28 +130,31 @@ export function evaluateSetup(env, now = Date.now()) {
     positive(env.JUDGE_CREDIT_COST) &&
     creditsPerHuman !== null &&
     Number.isSafeInteger(creditsPerHuman);
-  const capacity = budgetValid
-    ? {
-        admissionCredits: Math.floor(Number(env.JUDGE_DAILY_QUOTA) * 0.8),
-        creditsPerHuman,
-        botMatchReservation: creditsPerHuman,
-        humanMatchReservation: 2 * creditsPerHuman,
-      }
-    : null;
-  add(
-    "human_match_capacity",
-    !!capacity && capacity.admissionCredits >= capacity.humanMatchReservation,
-    "Free daily capacity can reserve at least one two-human match under the agreed attempt limits",
-  );
-  const reset = clean(env.JUDGE_RESET_HOUR_UTC);
-  add(
-    "judge_reset",
-    reset !== "" &&
-      Number.isInteger(Number(reset)) &&
-      Number(reset) >= 0 &&
-      Number(reset) < 24,
-    "Verified provider reset hour in UTC (0–23)",
-  );
+  const capacity =
+    !codebox && budgetValid
+      ? {
+          admissionCredits: Math.floor(Number(env.JUDGE_DAILY_QUOTA) * 0.8),
+          creditsPerHuman,
+          botMatchReservation: creditsPerHuman,
+          humanMatchReservation: 2 * creditsPerHuman,
+        }
+      : null;
+  if (!codebox) {
+    add(
+      "human_match_capacity",
+      !!capacity && capacity.admissionCredits >= capacity.humanMatchReservation,
+      "Free daily capacity can reserve at least one two-human match under the agreed attempt limits",
+    );
+    const reset = clean(env.JUDGE_RESET_HOUR_UTC);
+    add(
+      "judge_reset",
+      reset !== "" &&
+        Number.isInteger(Number(reset)) &&
+        Number(reset) >= 0 &&
+        Number(reset) < 24,
+      "Verified provider reset hour in UTC (0–23)",
+    );
+  }
   const date = Date.parse(env.JUDGE_VERIFIED_AT ?? "");
   add(
     "judge_evidence",
@@ -147,6 +178,7 @@ export function evaluateSetup(env, now = Date.now()) {
   );
   const privateValues = [
     secretKey,
+    clean(env.CODEBOX_AUTH_TOKEN),
     clean(env.JDOODLE_CLIENT_ID),
     clean(env.JDOODLE_CLIENT_SECRET),
     clean(env.WEBSOCKET_SIGNING_SECRET),
@@ -159,7 +191,7 @@ export function evaluateSetup(env, now = Date.now()) {
       (value.startsWith("sb_secret_") ||
         legacyRole(value) === "service_role" ||
         privateValues.some((secret) => value.includes(secret)) ||
-        /SECRET|SERVICE_ROLE|JDOODLE|SIGNING/.test(name))
+        /SECRET|SERVICE_ROLE|JDOODLE|CODEBOX|SIGNING/.test(name))
     );
   });
   add(
@@ -180,13 +212,18 @@ export function evaluateSetup(env, now = Date.now()) {
     livePlayRequested: live === "true",
     publicLaunchVerified: false,
     capacity,
+    executionCapacity: codebox
+      ? { concurrentExecutions: 1, activeMatches: 1 }
+      : null,
     attemptLimits,
     checks,
     externalRequirements: [
       "Cloudflare deployment authorization and Workers setup",
       "Dedicated Supabase project, applied migration, seeded problems, and verified access policies",
       "Google and GitHub OAuth apps connected with verified redirects",
-      "Account-specific JDoodle runtimes, quota, concurrency, and sandbox evidence",
+      codebox
+        ? "Hosted Codebox runtime and sandbox verification, Google Cloud trial server, private tunnel"
+        : "Account-specific JDoodle runtimes, quota, concurrency, and sandbox evidence",
       "One real bot match and two-account hosted staging acceptance",
       "Operator name, support contact, published privacy information, and data-request process",
     ],

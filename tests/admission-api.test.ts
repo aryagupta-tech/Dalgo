@@ -23,6 +23,7 @@ const env = {
   SUPABASE_PUBLISHABLE_KEY: "sb_publishable_public",
   SUPABASE_SECRET_KEY: "sb_secret_backend_private",
   WEBSOCKET_SIGNING_SECRET: "independent-offline-socket-signing-secret",
+  JUDGE_PROVIDER: "jdoodle",
   JDOODLE_CLIENT_ID: "judge-id-private",
   JDOODLE_CLIENT_SECRET: "judge-secret-private",
   JUDGE_DAILY_QUOTA: "200",

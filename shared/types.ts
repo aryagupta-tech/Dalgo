@@ -140,6 +140,10 @@ export interface Config {
   playEnabled: boolean;
   reason: string;
   dailyCapacity: number | null;
+  executionCapacity?: {
+    concurrentExecutions: number;
+    activeMatches: number;
+  } | null;
   apiBase?: string;
 }
 export interface QueueView {

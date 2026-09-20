@@ -12,6 +12,7 @@ const configured = {
   SUPABASE_URL: "https://offline.invalid",
   SUPABASE_ANON_KEY: "test",
   SUPABASE_SERVICE_ROLE_KEY: "test",
+  JUDGE_PROVIDER: "jdoodle",
   JDOODLE_CLIENT_ID: "test",
   JDOODLE_CLIENT_SECRET: "test",
   JUDGE_DAILY_QUOTA: "200",

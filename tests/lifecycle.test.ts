@@ -29,6 +29,18 @@ vi.mock("../worker/judge.ts", () => ({
   creditSpent: vi.fn(async () => 0),
 }));
 
+vi.mock("../worker/codebox.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../worker/codebox.ts")>()),
+  createExecution: vi.fn(),
+  pollExecution: vi.fn(),
+  codeboxHealthy: vi.fn(async () => true),
+}));
+import {
+  createExecution,
+  pollExecution,
+  codeboxHealthy,
+} from "../worker/codebox.ts";
+
 import { MatchRoom } from "../worker/match.ts";
 import { Coordinator } from "../worker/coordinator.ts";
 import { execute, creditSpent } from "../worker/judge.ts";
@@ -120,6 +132,7 @@ function env(overrides: Record<string, any> = {}) {
     SUPABASE_URL: "https://offline.invalid",
     SUPABASE_ANON_KEY: "not-a-key",
     SUPABASE_SERVICE_ROLE_KEY: "not-a-secret",
+    JUDGE_PROVIDER: "jdoodle",
     JDOODLE_CLIENT_ID: "offline",
     JDOODLE_CLIENT_SECRET: "offline",
     LIVE_MATCHES_ENABLED: "true",
@@ -1017,5 +1030,210 @@ describe("immutable match execution allowances", () => {
     });
     await idle(ctx);
     expect((await submit(room, A, "legacy-fourth", "run")).status).toBe(429);
+  });
+});
+
+function codeboxEnv(overrides: Record<string, any> = {}) {
+  return env({
+    JUDGE_PROVIDER: "codebox",
+    CODEBOX_AUTH_TOKEN: "c".repeat(64),
+    CODEBOX: { fetch: vi.fn() },
+    MAX_ACTIVE_MATCHES: "1",
+    JUDGE_CONCURRENCY: "1",
+    JUDGE_DAILY_QUOTA: "0",
+    JUDGE_CREDIT_COST: "0",
+    ...overrides,
+  });
+}
+describe("durable Codebox execution", () => {
+  beforeEach(() => {
+    vi.mocked(createExecution).mockReset().mockResolvedValue("f".repeat(64));
+    vi.mocked(pollExecution).mockReset().mockResolvedValue(null);
+    vi.mocked(codeboxHealthy).mockReset().mockResolvedValue(true);
+  });
+  it("resumes a persisted token after eviction without creating a second job", async () => {
+    const runtime = codeboxEnv();
+    const { room, ctx } = await newRoom(record(), runtime);
+    await submit(room, A, "first");
+    await idle(ctx);
+    expect(createExecution).toHaveBeenCalledOnce();
+    expect((await ctx.storage.get("match")).submissions[0].executionToken).toBe(
+      "f".repeat(64),
+    );
+    const restartedCtx = new MemoryContext(ctx.storage);
+    const restarted = new MatchRoom(restartedCtx as any, runtime);
+    await restartedCtx.ready;
+    now += 2000;
+    vi.mocked(pollExecution).mockResolvedValue(accepted as any);
+    await restarted.alarm();
+    await idle(restartedCtx);
+    expect(createExecution).toHaveBeenCalledOnce();
+    expect((await ctx.storage.get("match")).result.winnerId).toBe(A);
+    const view = (await (
+      await restarted.fetch(request("/view"))
+    ).json()) as any;
+    expect(view.submissions[0]).not.toHaveProperty("executionToken");
+    expect(view.submissions[0]).not.toHaveProperty("source");
+  });
+  it("retries a lost POST response with the same key and original receipt time", async () => {
+    vi.mocked(createExecution).mockRejectedValueOnce(
+      new Error("Lost response"),
+    );
+    const { room, ctx, runtimeEnv } = await newRoom(record(), codeboxEnv());
+    await submit(room, A, "lost-response");
+    await idle(ctx);
+    const first = vi.mocked(createExecution).mock.calls[0];
+    const rebootCtx = new MemoryContext(ctx.storage);
+    const reboot = new MatchRoom(rebootCtx as any, runtimeEnv);
+    await rebootCtx.ready;
+    now += 2000;
+    await reboot.alarm();
+    await idle(rebootCtx);
+    expect(createExecution).toHaveBeenCalledTimes(2);
+    const second = vi.mocked(createExecution).mock.calls[1];
+    expect(second[3]).toBe(first[3]);
+    expect(second[2].receivedAt).toBe(first[2].receivedAt);
+    expect((await ctx.storage.get("match")).submissions).toHaveLength(1);
+  });
+  it("voids an uncertain execution at its original deadline without rerunning", async () => {
+    vi.mocked(pollExecution).mockRejectedValue(new Error("Unavailable"));
+    const { room, ctx } = await newRoom(record(), codeboxEnv());
+    await submit(room, A, "deadline");
+    await idle(ctx);
+    now += 2000;
+    await room.alarm();
+    await idle(ctx);
+    now = T0 + MAX_JUDGE_MS;
+    await room.alarm();
+    await idle(ctx);
+    const saved = await ctx.storage.get("match");
+    expect(saved.submissions[0].verdict).toBe("judge_error");
+    expect(saved.result.reason).toBe("void");
+    expect(createExecution).toHaveBeenCalledOnce();
+  });
+  it("does not let a later correct result or a bot overtake an earlier pending submission", async () => {
+    vi.mocked(createExecution).mockImplementation(
+      async (_env, _problem, s) => s.id,
+    );
+    const { room, ctx } = await newRoom(record(), codeboxEnv());
+    await submit(room, A, "early");
+    await idle(ctx);
+    now += 1;
+    await submit(room, B, "late");
+    await idle(ctx);
+    const saved = await ctx.storage.get("match");
+    vi.mocked(pollExecution).mockImplementation(async (_env, token) =>
+      token === saved.submissions[1].id ? (accepted as any) : null,
+    );
+    now += 2000;
+    await room.alarm();
+    await idle(ctx);
+    expect((await ctx.storage.get("match")).result).toBeNull();
+    vi.mocked(pollExecution).mockResolvedValue(accepted as any);
+    now += 2000;
+    await room.alarm();
+    await idle(ctx);
+    expect((await ctx.storage.get("match")).result.winnerId).toBe(A);
+  });
+});
+describe("Codebox server admission", () => {
+  beforeEach(() => {
+    vi.mocked(codeboxHealthy).mockReset().mockResolvedValue(true);
+  });
+  it("admits two humans into one match with zero daily credits and holds capacity through settlement", async () => {
+    const ctx = new MemoryContext();
+    const runtime = codeboxEnv();
+    const coordinator = new Coordinator(ctx as any, runtime);
+    await ctx.ready;
+    await coordinator.fetch(
+      request("/join", { userId: A, requestId: "a", arena: "easy" }),
+    );
+    const match = (await (
+      await coordinator.fetch(
+        request("/join", { userId: B, requestId: "b", arena: "easy" }),
+      )
+    ).json()) as any;
+    expect(match.status).toBe("matched");
+    expect(
+      await (
+        await coordinator.fetch(
+          request("/join", { userId: C, requestId: "c", arena: "easy" }),
+        )
+      ).json(),
+    ).toMatchObject({ status: "capacity" });
+    const lease = {
+      matchId: match.matchId,
+      userId: A,
+      jobId: "stable",
+      retry: false,
+    };
+    for (let i = 0; i < 2; i++)
+      expect(
+        await (await coordinator.fetch(request("/lease", lease))).json(),
+      ).toEqual({ ok: true });
+    expect(
+      (await ctx.storage.get("state")).reservations[match.matchId].budgets[A]
+        .base,
+    ).toBe(7);
+    expect(
+      await (
+        await coordinator.fetch(
+          request("/lease", { ...lease, jobId: "another", userId: B }),
+        )
+      ).json(),
+    ).toMatchObject({ ok: false, reason: "busy" });
+    const restartCtx = new MemoryContext(ctx.storage);
+    const restart = new Coordinator(restartCtx as any, runtime);
+    await restartCtx.ready;
+    expect(
+      await (
+        await restart.fetch(
+          request("/join", { userId: C, requestId: "c", arena: "easy" }),
+        )
+      ).json(),
+    ).toMatchObject({ status: "capacity" });
+    await restart.fetch(request("/settled", { matchId: match.matchId }));
+    // An uncertain execution retains its lease even after a resignation settles.
+    expect(
+      await (
+        await restart.fetch(
+          request("/join", { userId: C, requestId: "c", arena: "easy" }),
+        )
+      ).json(),
+    ).toMatchObject({ status: "capacity" });
+    await restart.fetch(request("/release-lease", { jobId: "stable" }));
+    expect(
+      await (
+        await restart.fetch(
+          request("/join", { userId: C, requestId: "c", arena: "easy" }),
+        )
+      ).json(),
+    ).toMatchObject({ status: "waiting" });
+    expect(creditSpent).not.toHaveBeenCalled();
+  });
+  it("stops bot assignment if the sandbox fails after the user joins", async () => {
+    const ctx = new MemoryContext();
+    const coordinator = new Coordinator(ctx as any, codeboxEnv());
+    await ctx.ready;
+    await coordinator.fetch(
+      request("/join", { userId: A, requestId: "a", arena: "easy" }),
+    );
+    vi.mocked(codeboxHealthy).mockRejectedValue(new Error("Sandbox offline"));
+    now += 15000;
+    await coordinator.alarm();
+    expect((await ctx.storage.get("state")).entries[A].status).toBe("waiting");
+    expect(
+      await (await coordinator.fetch(request("/status?userId=" + A))).json(),
+    ).toMatchObject({
+      status: "waiting",
+      message: expect.stringContaining("server is unavailable"),
+    });
+    expect(
+      (
+        await coordinator.fetch(
+          request("/join", { userId: B, requestId: "b", arena: "easy" }),
+        )
+      ).status,
+    ).toBe(503);
   });
 });

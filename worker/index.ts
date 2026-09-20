@@ -101,9 +101,14 @@ async function api(request: Request, env: Env) {
       reason: launchReady(env)
         ? ""
         : "The beta is being prepared. Explore an arena while online play gets ready.",
-      dailyCapacity: launchReady(env)
-        ? Math.floor(Number(env.JUDGE_DAILY_QUOTA) * 0.8)
-        : null,
+      executionCapacity:
+        env.JUDGE_PROVIDER !== "jdoodle"
+          ? { concurrentExecutions: 1, activeMatches: 1 }
+          : null,
+      dailyCapacity:
+        env.JUDGE_PROVIDER === "jdoodle" && launchReady(env)
+          ? Math.floor(Number(env.JUDGE_DAILY_QUOTA) * 0.8)
+          : null,
     });
   if (path === "/leaderboard" && request.method === "GET") {
     const arena = parseArena(url.searchParams.get("arena"));

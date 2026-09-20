@@ -6,9 +6,9 @@ A dark DSA duel arena built with React, TypeScript, Material UI, Vite, Monaco, S
 
 The redesigned lobby and full `/demo/:arena` journey are implemented. The demo includes a 15-second search, labelled simulated opponent, five-second preparation, timed workspace, four language starters, preview actions, and illustrative results. Drafts/countdowns survive reload within the browser session. `/preview/:arena` redirects to the demo. Demo actions never execute code or save ratings.
 
-The backend includes Supabase OAuth verification, durable human matchmaking and bot fallback, quota reservations, a server-only **JDoodle** adapter, receipt-ordered adjudication, and transactional settlement. New admissions support disabled, tester-only staging, and public modes, with a durable request budget. Active matches can finish after admissions close.
+The backend includes Supabase OAuth verification, durable human matchmaking and bot fallback, execution reservations, a private **Codebox** adapter with durable submission polling, receipt-ordered adjudication, and transactional settlement. New admissions support disabled, tester-only staging, and public modes, with a durable request budget. Active matches can finish after admissions close.
 
-Cloudflare staging is deployed at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev) with live play disabled. Supabase is provisioned with all 30 problems, and the saved service credentials are connected. Complete OAuth browser testing, judge verification and multiplayer acceptance remain pending. Public play stays disabled. See [docs/SETUP.md](docs/SETUP.md) for account setup and [docs/LAUNCH.md](docs/LAUNCH.md) for evidence gates.
+Cloudflare staging is deployed at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev) with live play disabled. Supabase is provisioned with all 30 problems, and the saved service credentials are connected. Local Codebox runtime verification is complete; Google Cloud provisioning and hosted Codebox verification are complete; the private Cloudflare binding, OAuth browser testing, and multiplayer acceptance remain pending. Public play stays disabled. See [docs/SETUP.md](docs/SETUP.md) for account setup and [docs/LAUNCH.md](docs/LAUNCH.md) for evidence gates.
 
 The private Sites preview hosts only the frontend. Cloudflare staging/production configurations deploy the complete frontend and API with isolated SQLite Durable Objects. All implementation work belongs in `/Users/arya/Developer/Dalgo`.
 
@@ -18,7 +18,7 @@ Material UI supplies the navigation controls, buttons, dialogs, selection contro
 
 ## Account setup
 
-See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for the exact owner actions, credential locations and free-judge capacity constraint. `npm run setup:local` creates a private staging settings file without overwriting existing values; `npm run check:setup` reports missing configuration without printing secrets.
+See [docs/CODEBOX.md](docs/CODEBOX.md) for Google Cloud project details, trial safeguards, server limits, and deployment instructions. `npm run setup:local` creates a private staging settings file without overwriting existing values; `npm run check:setup` reports missing configuration without printing secrets.
 
 ## Local development
 
@@ -51,7 +51,7 @@ The offline tests exercise rating conservation, queue windows, bots, receipt ord
 
 1. Create a Supabase project on the free plan. Apply `supabase/migrations/202609110001_dalgo.sql` using the Supabase SQL editor or a version-controlled Supabase CLI migration workflow.
 2. Enable Google and GitHub in Authentication → Providers. Create provider OAuth applications using the callback URL shown by Supabase. Set the Supabase site URL and allowed redirect URLs to your frontend origin; include `http://127.0.0.1:5173` for local development. The frontend redirects OAuth back to its own origin.
-3. Copy `.env.example` to an ignored `.env` for setup scripts. Copy the Worker variables to ignored `.dev.vars` for local Workers development. The URL and publishable key can reach the frontend. **The service role and JDoodle credentials must never have a `VITE_` prefix.**
+3. Copy `.env.example` to an ignored `.env` for setup scripts. Copy the Worker variables to ignored `.dev.vars` for local Workers development. The URL and publishable key can reach the frontend. **The service role and Codebox credentials must never have a `VITE_` prefix.**
 4. Seed all immutable problem versions after applying the migration:
 
 ```sh
@@ -61,19 +61,27 @@ npm run seed:problems -- --apply
 
 The dry run makes no network calls. The apply command requires `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (or the legacy service-role key); it refuses to change existing problem versions. OAuth creates a profile and six ratings automatically. Browser roles cannot execute settlement, write ratings, or read private tests.
 
-## Judge and launch configuration
+## Codebox execution service
 
-See [docs/LAUNCH.md](docs/LAUNCH.md) before providing a verified date or enabling online play. Do not infer account capacity from a marketing allowance. The verification script is opt-in and does not enable play:
+Codebox is the default judge. Run the sandbox locally with Docker:
 
 ```sh
-npm run verify:judge -- --help
+npm run setup:codebox
+npm run codebox:up
+npm run verify:codebox -- --smoke
+npm run verify:codebox
+npm run verify:codebox:recovery
 ```
 
-Use a dedicated judge application/account so reconciliation includes all consumption. Execution credits are reserved per human: three sample runs, five submissions, and two operational retries. Ambiguous dispatches count as spent. Bots consume no judge credits.
+The setup command creates private ignored credentials, preserves Supabase settings, and leaves live play disabled. Codebox runs Python, C++17, Java, and JavaScript inside the pinned isolate sandbox. Dalgo compares outputs on the backend; expected answers are never sent to the execution service. The original JDoodle adapter is retained only for explicit legacy deployments and regression coverage.
+
+There is no Codebox daily credit allowance. The initial free server admits one active match and one execution at a time, with three sample runs and five submissions per player. Interrupted requests reuse a durable job ID. An uncertain outcome that could change the winner voids the match.
+
+See [docs/CODEBOX.md](docs/CODEBOX.md) for Google Cloud provisioning, private Cloudflare Tunnel/VPC setup, and hosted acceptance. Local execution success does not establish hosted launch readiness. Do not enable public play until the hosted and two-account checks pass.
 
 ## Cloudflare deployment
 
-The checked-in configuration uses a free Workers subdomain, SQLite-backed Durable Objects, Worker assets, and a daily source-purge trigger. Authenticate Wrangler with your own Cloudflare account. Keep all numeric launch settings at their disabled defaults until verified.
+The checked-in configuration uses a free Workers subdomain, SQLite-backed Durable Objects, Worker assets, and a daily source-purge trigger. Authenticate Wrangler with your own Cloudflare account. Keep live play disabled until the hosted judge is verified.
 
 Use [docs/SETUP.md](docs/SETUP.md) for modern Supabase keys, a separate WebSocket signing secret, and tester access. Secrets are scoped to the selected environment. `ALLOWED_ORIGINS` controls CORS, not tester eligibility.
 
@@ -86,17 +94,17 @@ Production has a separate `npm run deploy:production` command and starts with ad
 
 ## Source map
 
-| Path                                   | Purpose                                                                       |
-| -------------------------------------- | ----------------------------------------------------------------------------- |
-| `src/`                                 | Responsive arena, match editor, results, history, leaderboard, authentication |
-| `shared/`                              | Public contracts, arena and language definitions                              |
-| `worker/coordinator.ts`                | One-account ownership, matchmaking, quota and concurrency reservations        |
-| `worker/match.ts`                      | Authoritative clocks, private submissions, adjudication, settlement recovery  |
-| `worker/judge.ts`, `worker/harness.ts` | Replaceable JDoodle adapter and language wrappers                             |
-| `worker/problems.json`                 | Thirty original versioned problems, references, hidden tests; backend only    |
-| `public/problems.json`                 | Public statements, examples, and starters only                                |
-| `supabase/migrations/`                 | Schema, RLS, atomic Elo settlement, retention                                 |
-| `tests/`                               | Offline application and PostgreSQL regression tests                           |
+| Path                                     | Purpose                                                                       |
+| ---------------------------------------- | ----------------------------------------------------------------------------- |
+| `src/`                                   | Responsive arena, match editor, results, history, leaderboard, authentication |
+| `shared/`                                | Public contracts, arena and language definitions                              |
+| `worker/coordinator.ts`                  | One-account ownership, matchmaking, match capacity and execution leases       |
+| `worker/match.ts`                        | Authoritative clocks, private submissions, adjudication, settlement recovery  |
+| `worker/codebox.ts`, `worker/harness.ts` | Private asynchronous Codebox adapter and language wrappers                    |
+| `worker/problems.json`                   | Thirty original versioned problems, references, hidden tests; backend only    |
+| `public/problems.json`                   | Public statements, examples, and starters only                                |
+| `supabase/migrations/`                   | Schema, RLS, atomic Elo settlement, retention                                 |
+| `tests/`                                 | Offline application and PostgreSQL regression tests                           |
 
 When changing a problem, add a new version and preserve old versions for active matches. Update the public projection and seed the new version before deploying it. Do not remove versions referenced by match history. The Worker bank is the authoritative source for active problem selection; the database retains the same versions for settlement and auditing.
 

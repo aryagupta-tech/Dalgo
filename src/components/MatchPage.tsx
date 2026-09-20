@@ -558,7 +558,7 @@ function QueueStage({
       </Typography>
       <Typography variant="h1" sx={{ fontSize: { xs: 30, sm: 40 }, my: 1.75 }}>
         {phase === "capacity"
-          ? "Today’s capacity is full."
+          ? "The execution server is busy."
           : paused
             ? "Search paused."
             : ready

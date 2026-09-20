@@ -223,6 +223,7 @@ function runCli(args: string[]) {
         timeout: 15000,
         env: {
           ...process.env,
+          JUDGE_PROVIDER: "jdoodle",
           JDOODLE_CLIENT_ID: "",
           JDOODLE_CLIENT_SECRET: "",
           JUDGE_DAILY_QUOTA: "20",

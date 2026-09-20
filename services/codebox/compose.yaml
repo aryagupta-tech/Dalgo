@@ -1,0 +1,74 @@
+name: dalgo-codebox
+x-logs: &logs
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+services:
+  redis:
+    image: redis:7.4-alpine
+    command:
+      [
+        redis-server,
+        --save,
+        "",
+        --appendonly,
+        "yes",
+        --appendfsync,
+        always,
+        --maxmemory,
+        256mb,
+        --maxmemory-policy,
+        noeviction,
+      ]
+    volumes: [redis-data:/data]
+    networks: [backend]
+    restart: unless-stopped
+    logging: *logs
+    mem_limit: 384m
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  api:
+    build: { context: ., target: api }
+    environment:
+      REDIS_URL: redis://redis:6379
+      AUTH_TOKEN: ${CODEBOX_AUTH_TOKEN:?Set CODEBOX_AUTH_TOKEN in the private environment file}
+    ports: ["127.0.0.1:3000:3000"]
+    networks: [backend, edge]
+    depends_on:
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 384m
+    pids_limit: 64
+    logging: *logs
+  worker:
+    build: { context: ., target: worker }
+    environment:
+      REDIS_URL: redis://redis:6379
+      EXECUTOR_TYPE: isolate
+      COMPILE_CPU_TIME_LIMIT: "15"
+      COMPILE_WALL_TIME_LIMIT: "30"
+    # isolate needs namespace/mount/cgroup privileges. Use a dedicated judge VM.
+    privileged: true
+    cgroup: private
+    networks: [backend]
+    depends_on:
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+    mem_limit: 3g
+    cpus: 1.5
+    pids_limit: 128
+    tmpfs:
+      - /var/local/lib/isolate:rw,size=256m,mode=755
+      - /tmp:rw,size=64m,mode=1777
+      - /run/isolate:rw,size=1m,mode=755
+    logging: *logs
+networks:
+  backend: { internal: true }
+  edge: {}
+volumes:
+  redis-data:

@@ -1,3 +1,5 @@
+> **Codebox migration:** The current judge and hosting instructions are in [CODEBOX.md](CODEBOX.md). The JDoodle quota/setup details below are historical and do not apply to the Codebox deployment.
+
 # Capped beta launch record
 
 **Current decision: online play disabled.** Cloudflare staging is deployed at https://dalgo-staging.dalgo-arya.workers.dev with live play disabled. Supabase schema/seeding and enabled OAuth providers are verified. Complete browser OAuth, real JDoodle execution/sandbox evidence, and two-account staging acceptance remain pending. Offline verification is recorded separately from external evidence. Never set `JUDGE_VERIFIED_AT` merely because offline tests pass.

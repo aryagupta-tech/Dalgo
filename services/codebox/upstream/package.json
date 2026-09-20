@@ -1,0 +1,41 @@
+{
+  "name": "code-box",
+  "version": "1.0.0",
+  "description": "Judge0-compatible code execution engine",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "worker": "node src/queue/worker.js",
+    "test": "node --test tests/**/*.test.js",
+    "lint": "eslint src/"
+  },
+  "keywords": [
+    "code-execution",
+    "judge0",
+    "sandbox",
+    "docker"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "bullmq": "^5.0.0",
+    "ioredis": "^5.3.2",
+    "dockerode": "^4.0.0",
+    "uuid": "^9.0.0",
+    "joi": "^17.11.0",
+    "helmet": "^7.1.0",
+    "cors": "^2.8.5",
+    "pino": "^8.16.0",
+    "pino-pretty": "^10.2.3",
+    "prom-client": "^15.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.54.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

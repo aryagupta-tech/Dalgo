@@ -24,6 +24,7 @@ describe("attempt policy configuration", () => {
 
   it("computes a two-human reservation that fits the 20-credit plan when explicitly configured", () => {
     const settings = {
+      JUDGE_PROVIDER: "jdoodle",
       MATCH_RUN_LIMIT: "2",
       MATCH_SUBMISSION_LIMIT: "4",
       JUDGE_DAILY_QUOTA: "20",
@@ -66,6 +67,7 @@ describe("attempt policy configuration", () => {
         "9007199254740992",
       ]) {
         const settings = {
+          JUDGE_PROVIDER: "jdoodle",
           MATCH_RUN_LIMIT: undefined,
           MATCH_SUBMISSION_LIMIT: undefined,
           [key]: value,

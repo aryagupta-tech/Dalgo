@@ -11,6 +11,12 @@ export interface Env {
   SUPABASE_ANON_KEY?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   WEBSOCKET_SIGNING_SECRET: string;
+  /** Legacy JDoodle requires explicit selection; new deployments use Codebox. */
+  JUDGE_PROVIDER?: "codebox" | "jdoodle";
+  CODEBOX?: { fetch(request: Request): Promise<Response> };
+  CODEBOX_AUTH_TOKEN?: string;
+  CODEBOX_LOCAL_URL?: string;
+  MAX_ACTIVE_MATCHES?: string;
   JDOODLE_CLIENT_ID: string;
   JDOODLE_CLIENT_SECRET: string;
   LIVE_MATCHES_ENABLED: string;
@@ -72,28 +78,39 @@ export function launchReady(env: Env) {
     env.LIVE_MATCHES_ENABLED === "true" &&
     mode !== "disabled" &&
     (mode !== "staging" || testerUserIds(env).size > 0) &&
-    [
-      env.SUPABASE_URL,
-      supabasePublicKey(env),
-      supabaseSecretKey(env),
-      env.JDOODLE_CLIENT_ID,
-      env.JDOODLE_CLIENT_SECRET,
-    ].every(nonempty) &&
+    [env.SUPABASE_URL, supabasePublicKey(env), supabaseSecretKey(env)].every(
+      nonempty,
+    ) &&
     typeof env.WEBSOCKET_SIGNING_SECRET === "string" &&
     new TextEncoder().encode(env.WEBSOCKET_SIGNING_SECRET.trim()).byteLength >=
       32 &&
-    positiveInteger(env.JUDGE_DAILY_QUOTA) &&
-    positiveInteger(env.JUDGE_CREDIT_COST) &&
     limits !== null &&
-    Number.isSafeInteger(
-      executionReservation(limits, Number(env.JUDGE_CREDIT_COST)).total,
-    ) &&
-    positiveInteger(env.JUDGE_CONCURRENCY) &&
     Number.isFinite(Date.parse(env.JUDGE_VERIFIED_AT)) &&
-    typeof reset === "string" &&
-    reset.trim() !== "" &&
-    Number.isInteger(Number(reset)) &&
-    Number(reset) >= 0 &&
-    Number(reset) < 24
+    Date.parse(env.JUDGE_VERIFIED_AT) <= Date.now() &&
+    (env.JUDGE_PROVIDER !== "jdoodle"
+      ? (!env.JUDGE_PROVIDER || env.JUDGE_PROVIDER === "codebox") &&
+        nonempty(env.CODEBOX_AUTH_TOKEN) &&
+        env.CODEBOX_AUTH_TOKEN.trim().length >= 32 &&
+        (Boolean(env.CODEBOX) ||
+          (mode === "staging" &&
+            /^http:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?\/?$/.test(
+              env.CODEBOX_LOCAL_URL ?? "",
+            ))) &&
+        env.JUDGE_CONCURRENCY === "1" &&
+        env.MAX_ACTIVE_MATCHES === "1"
+      : [env.JDOODLE_CLIENT_ID, env.JDOODLE_CLIENT_SECRET].every(nonempty) &&
+        positiveInteger(env.JUDGE_DAILY_QUOTA) &&
+        positiveInteger(env.JUDGE_CREDIT_COST) &&
+        limits !== null &&
+        Number.isSafeInteger(
+          executionReservation(limits, Number(env.JUDGE_CREDIT_COST)).total,
+        ) &&
+        positiveInteger(env.JUDGE_CONCURRENCY) &&
+        Number.isFinite(Date.parse(env.JUDGE_VERIFIED_AT)) &&
+        typeof reset === "string" &&
+        reset.trim() !== "" &&
+        Number.isInteger(Number(reset)) &&
+        Number(reset) >= 0 &&
+        Number(reset) < 24)
   );
 }

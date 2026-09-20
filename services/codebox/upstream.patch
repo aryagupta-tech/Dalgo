@@ -1,0 +1,131 @@
+--- a/src/executor/IsolateExecutor.js
++++ b/src/executor/IsolateExecutor.js
+@@ -1,5 +1,6 @@
+ import { execFile } from 'child_process';
+ import fs from 'fs/promises';
++import { constants } from 'node:fs';
+ import path from 'path';
+ import { promisify } from 'util';
+ import logger from '../utils/logger.js';
+@@ -8,6 +9,7 @@
+
+ const execFileAsync = promisify(execFile);
+
++class InvalidOutputError extends Error {}
+ const MULTI_FILE_LANGUAGE_ID = 89;
+
+ // Atomic box-ID counter (0-999). Safe in single-threaded Node.js event loop.
+@@ -28,6 +30,7 @@
+     let boxDir = null;
+
+     try {
++      if (submission.additional_files || submission.compiler_options || submission.command_line_arguments || ![71, 54, 62, 63].includes(language.id)) throw new Error('Unsupported execution options');
+       // ── Init sandbox ─────────────────────────────────────────────────
+       const { stdout: initOut } = await execFileAsync('isolate', [
+         '--init', `--box-id=${boxId}`, '--cg',
+@@ -77,6 +80,7 @@
+           processes: submission.max_processes_and_or_threads,
+         });
+
++        if (compileResult.isoStatus === 'XX') throw new Error('Compiler sandbox failed');
+         if (compileResult.exitCode !== 0 || compileResult.isoStatus) {
+           return {
+             status: getStatusById(6),
+@@ -116,8 +120,8 @@
+         error: error.message,
+       });
+       return {
+-        status: getStatusById(13),
+-        message: error.message,
++        status: getStatusById(error instanceof InvalidOutputError ? 12 : 13),
++        message: error instanceof InvalidOutputError ? "Invalid output file" : error.message,
+         time: null,
+         wall_time: null,
+         memory: null,
+@@ -131,7 +135,7 @@
+       // Always clean up the box
+       try {
+         await execFileAsync('isolate', ['--cleanup', `--box-id=${boxId}`, '--cg']);
+-      } catch { /* ignore */ }
++      } catch { throw new Error('Sandbox cleanup failed'); }
+     }
+   }
+
+@@ -220,6 +224,7 @@
+     const { cmd, stdinFile, timeLimit, wallTimeLimit, memoryLimit, processes, fsize = 10240 } = opts;
+
+     const metaPath = `/tmp/isolate-meta-${boxId}.txt`;
++    await fs.rm(metaPath, { force: true });
+
+     // Sandbox-relative paths (used by isolate flags)
+     const sandboxStdout = '/box/_stdout.txt';
+@@ -241,7 +246,7 @@
+       `--stdout=${sandboxStdout}`,          // sandbox path
+       `--stderr=${sandboxStderr}`,          // sandbox path
+       '--dir=/etc:noexec',                 // read-only /etc (Java, Python need it)
+-      '--dir=/tmp=',                       // writable /tmp
++      '--dir=/tmp:tmp',                       // writable /tmp
+       '--env=PATH=/usr/local/bin:/usr/bin:/bin',
+       '--env=HOME=/box',
+       '--env=LANG=C.UTF-8',
+@@ -264,8 +269,8 @@
+     // Read outputs from HOST paths
+     let stdout = '';
+     let stderr = '';
+-    try { stdout = await fs.readFile(hostStdoutPath, 'utf-8'); } catch { /* empty */ }
+-    try { stderr = await fs.readFile(hostStderrPath, 'utf-8'); } catch { /* empty */ }
++    stdout = await this.readOutput(hostStdoutPath);
++    stderr = await this.readOutput(hostStderrPath);
+
+     // Parse meta file (isolate's precise measurements)
+     const meta = await this.parseMeta(metaPath);
+@@ -278,14 +283,30 @@
+    * Format: key:value per line.
+    * Keys: time, time-wall, max-rss, cg-mem, status, exitcode, exitsig, message, killed
+    */
++  async readOutput(filename) {
++    let file;
++    try {
++      file = await fs.open(filename, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
++      const stat = await file.stat();
++      if (!stat.isFile()) throw new InvalidOutputError('Invalid output file');
++      const buffer = Buffer.alloc(Math.min(stat.size, 65537));
++      const { bytesRead } = await file.read(buffer, 0, buffer.length, 0);
++      return buffer.subarray(0, bytesRead).toString('utf8');
++    } catch (error) {
++      if (error.code === 'ENOENT') return '';
++      if (error.code === 'ELOOP') throw new InvalidOutputError('Invalid output file');
++      throw error;
++    } finally { await file?.close(); }
++  }
++
+   async parseMeta(metaPath) {
+     const defaults = {
+       time: null,
+       wallTime: null,
+       memory: null,
+-      exitCode: 0,
++      exitCode: null,
+       exitSignal: null,
+-      isoStatus: null,
++      isoStatus: 'XX',
+       message: null,
+     };
+
+@@ -299,6 +320,8 @@
+         }
+       }
+
++      if (!meta.status && (!Number.isFinite(Number(meta.exitcode)) || meta.exitcode === undefined || !Number.isFinite(Number(meta.time)))) return defaults;
++      if (meta.status && !['RE', 'SG', 'TO', 'XX'].includes(meta.status)) return defaults;
+       return {
+         time: meta.time ? parseFloat(meta.time) : null,
+         wallTime: meta['time-wall'] ? parseFloat(meta['time-wall']) : null,
+@@ -370,6 +393,7 @@
+       status = getStatusById(11);           // NZEC
+     }
+
++    if (Buffer.byteLength(result.stdout || '') >= 65536 || Buffer.byteLength(result.stderr || '') >= 65536) status = getStatusById(8);
+     // Truncate outputs
+     const maxLen = 65536;
+     let stdout = result.stdout || null;

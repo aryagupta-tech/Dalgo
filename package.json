@@ -10,7 +10,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "deploy:cloudflare": "npm run deploy:staging",
-    "verify:judge": "node --env-file-if-exists=.env scripts/verify-judge.mjs",
+    "verify:judge": "npm run verify:codebox",
     "seed:problems": "node --env-file-if-exists=.env scripts/seed-problems.mjs",
     "dev:staging": "wrangler dev --env staging --port 8787",
     "deploy:staging": "npm run build && wrangler deploy --env staging",
@@ -20,8 +20,14 @@
     "test:browser": "playwright test",
     "setup:local": "node scripts/setup-local.mjs",
     "check:setup": "node --env-file-if-exists=.dev.vars.staging scripts/check-setup.mjs",
-    "verify:judge:staging": "node --env-file-if-exists=.dev.vars.staging scripts/verify-judge.mjs",
-    "seed:problems:staging": "node --env-file-if-exists=.dev.vars.staging scripts/seed-problems.mjs"
+    "verify:judge:staging": "npm run verify:codebox",
+    "seed:problems:staging": "node --env-file-if-exists=.dev.vars.staging scripts/seed-problems.mjs",
+    "setup:codebox": "node scripts/setup-codebox.mjs",
+    "deploy:codebox:gcp": "node scripts/deploy-codebox-gcp.mjs",
+    "codebox:up": "docker compose -f services/codebox/compose.yaml up -d --build",
+    "codebox:down": "docker compose -f services/codebox/compose.yaml down",
+    "verify:codebox": "node --env-file-if-exists=.dev.vars.staging scripts/verify-codebox.mjs",
+    "verify:codebox:recovery": "node --env-file-if-exists=.dev.vars.staging scripts/verify-codebox-recovery.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -48,6 +54,7 @@
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.3",
     "esbuild": "^0.28.2",
+    "jsonc-parser": "^3.3.1",
     "prettier": "^3.9.6",
     "typescript": "^5.9.2",
     "vite": "^7.1.5",

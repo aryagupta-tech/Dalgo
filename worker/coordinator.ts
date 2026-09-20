@@ -24,6 +24,7 @@ import {
 } from "./core";
 import { getPlayer, recentProblems } from "./db";
 import { creditSpent } from "./judge";
+import { codeboxHealthy, usesCodebox } from "./codebox";
 import {
   ARENAS,
   DEFAULT_ATTEMPT_LIMITS,
@@ -61,6 +62,7 @@ interface CoordinatorState {
   charged: Record<string, number>;
   lastReconciled: number;
   healthy: boolean;
+  provider?: string;
   assignments: Record<
     string,
     { record: MatchRecord; reservationKeys: string[] }
@@ -88,6 +90,11 @@ export class Coordinator extends DurableObject<Env> {
         assignments: {},
       };
       this.data.admissions ??= {};
+      if (this.data.provider !== (env.JUDGE_PROVIDER ?? "codebox")) {
+        this.data.provider = env.JUDGE_PROVIDER ?? "codebox";
+        this.data.healthy = false;
+        this.data.lastReconciled = 0;
+      }
       // Legacy queue entries predate configurable limits and keep the original
       // policy. Persist their migration before a later deployment changes it.
       let migrated = false;
@@ -134,7 +141,18 @@ export class Coordinator extends DurableObject<Env> {
     return Math.floor(Number(this.env.JUDGE_DAILY_QUOTA) * 0.8);
   }
   private cost() {
+    if (usesCodebox(this.env)) return 1;
     return Number(this.env.JUDGE_CREDIT_COST) || 1;
+  }
+  private activeMatches() {
+    return Object.keys(this.data.reservations).filter(
+      (id) => !this.data.entries[id],
+    ).length;
+  }
+  private serverFull() {
+    return (
+      this.activeMatches() >= 1 || Object.keys(this.data.leases).length > 0
+    );
   }
   private remaining() {
     return (
@@ -153,6 +171,15 @@ export class Coordinator extends DurableObject<Env> {
           serverNow: Date.now(),
           arena: e.arena,
           attemptLimits: e.attemptLimits ?? DEFAULT_ATTEMPT_LIMITS,
+          ...(e.status === "waiting" &&
+          usesCodebox(this.env) &&
+          (!this.data.healthy || this.serverFull())
+            ? {
+                message: this.data.healthy
+                  ? "Waiting for execution capacity. Your search is saved; the current match must finish first."
+                  : "The execution server is unavailable. Your search is saved while it recovers.",
+              }
+            : {}),
           ...(e.matchId ? { matchId: e.matchId } : {}),
         }
       : {
@@ -172,18 +199,27 @@ export class Coordinator extends DurableObject<Env> {
   }
   private async reconcile() {
     try {
-      this.data.spent = Math.max(this.data.spent, await creditSpent(this.env));
+      if (usesCodebox(this.env)) await codeboxHealthy(this.env);
+      else
+        this.data.spent = Math.max(
+          this.data.spent,
+          await creditSpent(this.env),
+        );
       this.data.lastReconciled = Date.now();
       this.data.healthy = true;
       console.log(
         JSON.stringify({
-          event: "quota_reconciled",
+          event: usesCodebox(this.env)
+            ? "execution_health"
+            : "quota_reconciled",
           spent: this.data.spent,
           reserved: Object.values(this.data.reservations).reduce(
             (sum, r) => sum + r.remaining,
             0,
           ),
-          remaining: Math.max(0, this.remaining()),
+          remaining: usesCodebox(this.env)
+            ? null
+            : Math.max(0, this.remaining()),
         }),
       );
     } catch {
@@ -242,12 +278,20 @@ export class Coordinator extends DurableObject<Env> {
             );
           const attemptLimits = configuredAttemptLimits(this.env)!;
           const reserved = executionReservation(attemptLimits, this.cost());
-          if (this.remaining() < reserved.total)
+          if (
+            usesCodebox(this.env)
+              ? this.serverFull() ||
+                Object.values(this.data.entries).filter(
+                  (e) => e.status === "waiting",
+                ).length >= 2
+              : this.remaining() < reserved.total
+          )
             return json({
               status: "capacity",
               serverNow: Date.now(),
-              message:
-                "Today’s free match capacity is full. Active matches can finish; please return after the daily reset.",
+              message: usesCodebox(this.env)
+                ? "The execution server is busy. Please try again when the current match finishes."
+                : "Today’s free match capacity is full. Active matches can finish; please return after the daily reset.",
             });
           const player = await getPlayer(this.env, userId, arena, "human");
           this.data.entries[userId] = {
@@ -289,7 +333,12 @@ export class Coordinator extends DurableObject<Env> {
           if (!r)
             throw new AppError("This match has no execution reservation.", 409);
           if (this.data.leases[jobId])
-            return json({ ok: false, reason: "already_running" });
+            return json(
+              usesCodebox(this.env) &&
+                this.data.leases[jobId].reservation === matchId
+                ? { ok: true }
+                : { ok: false, reason: "already_running" },
+            );
           if (this.data.charged[jobId])
             return json({ ok: false, reason: "already_spent" });
           if (
@@ -304,7 +353,7 @@ export class Coordinator extends DurableObject<Env> {
             return json({ ok: false, reason: "quota" });
           budget[bucket] -= cost;
           r.remaining -= cost;
-          this.data.spent += cost;
+          if (!usesCodebox(this.env)) this.data.spent += cost;
           this.data.charged[jobId] = Date.now();
           this.data.leases[jobId] = {
             until: Date.now() + 170000,
@@ -334,7 +383,9 @@ export class Coordinator extends DurableObject<Env> {
         if (url.pathname === "/health")
           return json({
             healthy: this.data.healthy,
-            remaining: Math.max(0, this.remaining()),
+            remaining: usesCodebox(this.env)
+              ? null
+              : Math.max(0, this.remaining()),
             activeMatches: Object.keys(this.data.reservations).filter(
               (id) => !this.data.entries[id],
             ).length,
@@ -482,11 +533,16 @@ export class Coordinator extends DurableObject<Env> {
     // Recheck before pairing as well as on alarms: a new join must not match
     // with a tester whose eligibility changed while they were waiting.
     await this.releaseIneligibleWaiting();
+    if (usesCodebox(this.env)) {
+      if (Date.now() - this.data.lastReconciled > 5000) await this.reconcile();
+      if (!this.data.healthy || this.serverFull()) return;
+    }
     const now = Date.now();
     const waiting = Object.values(this.data.entries)
       .filter((e) => e.status === "waiting")
       .sort((a, b) => a.joinedAt - b.joinedAt);
     for (const a of waiting) {
+      if (usesCodebox(this.env) && this.serverFull()) break;
       if (a.status !== "waiting") continue;
       const b = waiting
         .filter(

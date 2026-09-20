@@ -1,3 +1,5 @@
+> **Codebox migration:** The current judge and hosting instructions are in [CODEBOX.md](CODEBOX.md). The JDoodle quota/setup details below are historical and do not apply to the Codebox deployment.
+
 # Dalgo: current status and remaining requirements
 
 Work only in `/Users/arya/Developer/Dalgo`.

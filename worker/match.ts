@@ -14,6 +14,12 @@ import {
 import { db, settle } from "./db";
 import { execute } from "./judge";
 import {
+  CODEBOX_POLL_MS,
+  createExecution,
+  pollExecution,
+  usesCodebox,
+} from "./codebox";
+import {
   LANGUAGES,
   DEFAULT_ATTEMPT_LIMITS,
   type MatchView,
@@ -25,6 +31,9 @@ interface InternalSubmission extends Submission {
   requestId: string;
   dispatchedAt?: number;
   jobId?: string;
+  executionProvider?: "codebox";
+  executionToken?: string;
+  nextPollAt?: number;
 }
 export class MatchRoom extends DurableObject<Env> {
   private serial = new Serial();
@@ -160,7 +169,11 @@ export class MatchRoom extends DurableObject<Env> {
     for (const s of m.submissions as InternalSubmission[]) {
       if (s.verdict === "pending") {
         times.push(s.receivedAt + MAX_JUDGE_MS);
-        if (!s.dispatchedAt) times.push(Date.now() + 1000);
+        if (usesCodebox(this.env))
+          times.push(
+            Math.max(Date.now() + 100, s.nextPollAt ?? Date.now() + 1000),
+          );
+        else if (!s.dispatchedAt) times.push(Date.now() + 1000);
       }
     }
     const future = times.filter((t) => t > Date.now());
@@ -296,7 +309,11 @@ export class MatchRoom extends DurableObject<Env> {
       return (this.record!.submissions as InternalSubmission[])
         .filter(
           (s) =>
-            s.verdict === "pending" && !s.dispatchedAt && !this.record!.result,
+            s.verdict === "pending" &&
+            !this.record!.result &&
+            (usesCodebox(this.env)
+              ? (s.nextPollAt ?? 0) <= Date.now()
+              : !s.dispatchedAt),
         )
         .map((s) => s.id);
     });
@@ -304,7 +321,10 @@ export class MatchRoom extends DurableObject<Env> {
       if (this.running.has(id)) continue;
       this.running.add(id);
       this.ctx.waitUntil(
-        this.runJob(id).finally(() => this.running.delete(id)),
+        (usesCodebox(this.env)
+          ? this.stepCodebox(id)
+          : this.runJob(id)
+        ).finally(() => this.running.delete(id)),
       );
     }
     if (
@@ -318,6 +338,122 @@ export class MatchRoom extends DurableObject<Env> {
       } finally {
         this.settling = false;
       }
+    }
+  }
+  /** One bounded network step per wakeup. Durable state, not waitUntil, owns the job. */
+  private async stepCodebox(id: string) {
+    const m = this.record!;
+    try {
+      const submission = await this.serial.run(async () => {
+        const s = (m.submissions as InternalSubmission[]).find(
+          (s) => s.id === id,
+        )!;
+        if (
+          s.verdict !== "pending" ||
+          m.result ||
+          (s.nextPollAt ?? 0) > Date.now()
+        )
+          return null;
+        if (s.dispatchedAt && s.executionProvider !== "codebox") {
+          s.verdict = "judge_error";
+          s.message =
+            "A previous execution could not be recovered after the judge changed.";
+          await this.advance();
+          return null;
+        }
+        // Save the deterministic key and next wakeup before contacting either service.
+        s.jobId ??= id + "-codebox";
+        s.executionProvider = "codebox";
+        s.nextPollAt = Date.now() + CODEBOX_POLL_MS;
+        await this.save();
+        await this.schedule();
+        if (!s.dispatchedAt) {
+          const lease = await this.coordinator("/lease", {
+            jobId: s.jobId,
+            matchId: m.id,
+            userId: s.userId,
+            retry: false,
+          });
+          if (!lease.ok) {
+            if (lease.reason !== "busy") {
+              s.verdict = "judge_error";
+              s.message = "The execution reservation could not be recovered.";
+              await this.advance();
+            }
+            return null;
+          }
+          s.dispatchedAt = Date.now();
+          s.attempt = 1;
+          await this.save();
+        }
+        return { ...s };
+      });
+      if (!submission) return;
+      if (!submission.executionToken) {
+        const token = await createExecution(
+          this.env,
+          this.problem(),
+          submission,
+          submission.jobId!,
+        );
+        await this.serial.run(async () => {
+          const s = (m.submissions as InternalSubmission[]).find(
+            (s) => s.id === id,
+          )!;
+          s.executionToken = token;
+          await this.save();
+        });
+      } else {
+        const result = await pollExecution(
+          this.env,
+          submission.executionToken,
+          this.problem(),
+          submission.kind,
+        );
+        if (result) {
+          await this.serial.run(async () => {
+            await this.advance();
+            const s = m.submissions.find((s) => s.id === id)!;
+            if (s.verdict === "pending" && !m.result) {
+              Object.assign(s, result, { completedAt: Date.now() });
+              await this.advance();
+              this.broadcast();
+              console.log(
+                JSON.stringify({
+                  event: "judge_result",
+                  provider: "codebox",
+                  matchId: m.id,
+                  language: s.language,
+                  verdict: s.verdict,
+                  latencyMs: Date.now() - s.receivedAt,
+                }),
+              );
+            }
+          });
+          await this.coordinator("/release-lease", { jobId: submission.jobId });
+        }
+      }
+    } catch {
+      // Unknown network outcomes retain the same key/token until the original
+      // deadline. They never create another execution or consume another attempt.
+      console.warn(
+        JSON.stringify({
+          event: "codebox_retry_pending",
+          matchId: m.id,
+          submissionId: id,
+        }),
+      );
+    } finally {
+      await this.serial.run(async () => {
+        const s = (m.submissions as InternalSubmission[]).find(
+          (s) => s.id === id,
+        );
+        if (s?.verdict === "pending")
+          s.nextPollAt = Date.now() + CODEBOX_POLL_MS;
+        await this.advance();
+        this.broadcast();
+      });
+      if (m.result) this.ctx.waitUntil(this.pump());
     }
   }
   private async runJob(id: string) {

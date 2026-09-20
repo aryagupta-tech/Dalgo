@@ -6,6 +6,7 @@ const valid = {
   SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test-public",
   SUPABASE_SECRET_KEY: "sb_secret_test-private",
   WEBSOCKET_SIGNING_SECRET: "test-independent-signing-secret-32-bytes",
+  JUDGE_PROVIDER: "jdoodle",
   JDOODLE_CLIENT_ID: "test-client-id",
   JDOODLE_CLIENT_SECRET: "test-client-secret",
   JUDGE_DAILY_QUOTA: "100",
@@ -32,7 +33,7 @@ describe("local setup preflight", () => {
   });
   it("reports missing configuration without crashing", () => {
     expect(evaluateSetup({}, now).configurationComplete).toBe(false);
-    expect(check({}, "judge_reset")).toBe("needs_setup");
+    expect(check({}, "codebox_credentials")).toBe("needs_setup");
   });
   it("flags free quotas that cannot support the reserved cost of two humans", () => {
     const report = evaluateSetup({ ...valid, JUDGE_DAILY_QUOTA: "20" }, now);

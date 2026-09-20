@@ -20,6 +20,7 @@ const configured = {
   SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
   SUPABASE_SECRET_KEY: "sb_secret_test",
   WEBSOCKET_SIGNING_SECRET: "offline-test-websocket-signing-secret",
+  JUDGE_PROVIDER: "jdoodle",
   JDOODLE_CLIENT_ID: "test",
   JDOODLE_CLIENT_SECRET: "test",
   JUDGE_DAILY_QUOTA: "200",
