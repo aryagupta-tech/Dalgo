@@ -10,7 +10,14 @@ import { admissionStatus } from "./admission";
 import { configuredAttemptLimits } from "./limits";
 import { DEFAULT_ATTEMPT_LIMITS } from "../shared/types";
 import { AppError, json, parseArena } from "./core";
-import { claimUsername, db, getFriendIdentity } from "./db";
+import {
+  claimUsername,
+  createFriendRequest,
+  db,
+  getFriendIdentity,
+  getFriendsView,
+  respondFriendRequest,
+} from "./db";
 export { Coordinator } from "./coordinator";
 export { MatchRoom } from "./match";
 const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
@@ -184,6 +191,50 @@ async function api(request: Request, env: Env) {
       );
     return json(await claimUsername(env, id, username));
   }
+  if (path === "/friends" && request.method === "GET")
+    return json(await getFriendsView(env, id));
+  if (path === "/friends/requests" && request.method === "POST") {
+    const body = (await request.json()) as {
+      username?: unknown;
+      requestId?: unknown;
+    };
+    if (typeof body.requestId !== "string" || !uuid.test(body.requestId))
+      throw new AppError("A valid request identifier is required.");
+    if (typeof body.username !== "string")
+      throw new AppError("Enter your friend’s username.");
+    const username = body.username.trim().toLowerCase();
+    if (!/^[a-z0-9][a-z0-9_]{2,19}$/.test(username))
+      throw new AppError("Enter a valid username.");
+    return json(
+      await createFriendRequest(env, id, username, body.requestId),
+      201,
+    );
+  }
+  const friendRequestAction = path.match(
+    /^\/friends\/requests\/([a-f0-9-]{36})\/(accept|decline)$/,
+  );
+  if (friendRequestAction) {
+    if (request.method !== "POST")
+      throw new AppError("Method not allowed.", 405);
+    return json(
+      await respondFriendRequest(
+        env,
+        id,
+        friendRequestAction[1],
+        friendRequestAction[2] as "accept" | "decline",
+      ),
+    );
+  }
+  const friendRequestCancel = path.match(
+    /^\/friends\/requests\/([a-f0-9-]{36})$/,
+  );
+  if (friendRequestCancel) {
+    if (request.method !== "DELETE")
+      throw new AppError("Method not allowed.", 405);
+    return json(
+      await respondFriendRequest(env, id, friendRequestCancel[1], "cancel"),
+    );
+  }
   if (path === "/challenges/events")
     return internal(coordinator(env), "/events?userId=" + id);
   if (path === "/challenges" && request.method === "GET")
@@ -242,17 +293,65 @@ async function api(request: Request, env: Env) {
       env,
       `matches?select=id,arena,mode,started_at,ended_at,result,participants!inner(user_id),rating_ledger(user_id,delta)&participants.user_id=eq.${id}&order=ended_at.desc&limit=50`,
     );
-    return json(
-      rows.map((r) => ({
-        ...r,
-        result: {
-          winnerId: r.result.winner_id ?? null,
-          reason: r.result.reason,
-          deltas: Object.fromEntries(
-            r.rating_ledger.map((l: any) => [l.user_id, l.delta]),
+    const matchIds = rows.map((row) => row.id);
+    const participants = matchIds.length
+      ? await db<{ match_id: string; user_id: string | null }[]>(
+          env,
+          `participants?match_id=in.(${matchIds.join(",")})&select=match_id,user_id`,
+        )
+      : [];
+    const opponentIds = [
+      ...new Set(
+        participants
+          .map((row) => row.user_id)
+          .filter((userId): userId is string =>
+            Boolean(userId && userId !== id),
           ),
-        },
-      })),
+      ),
+    ];
+    const profiles = opponentIds.length
+      ? await db<any[]>(
+          env,
+          `profiles?id=in.(${opponentIds.join(",")})&select=id,username,username_configured_at,display_name,avatar_url`,
+        )
+      : [];
+    const profileById = new Map(
+      profiles.map((profile) => [profile.id, profile]),
+    );
+    const opponentByMatch = new Map(
+      participants
+        .filter((row) => row.user_id && row.user_id !== id)
+        .map((row) => [row.match_id, profileById.get(row.user_id!)]),
+    );
+    return json(
+      rows.map((r) => {
+        const opponent = opponentByMatch.get(r.id);
+        return {
+          ...r,
+          ...(opponent
+            ? {
+                opponent: {
+                  id: opponent.id,
+                  username: opponent.username_configured_at
+                    ? opponent.username
+                    : "",
+                  usernameConfigured: Boolean(opponent.username_configured_at),
+                  name: opponent.display_name || opponent.username,
+                  ...(opponent.avatar_url
+                    ? { avatar: opponent.avatar_url }
+                    : {}),
+                },
+              }
+            : {}),
+          result: {
+            winnerId: r.result.winner_id ?? null,
+            reason: r.result.reason,
+            deltas: Object.fromEntries(
+              r.rating_ledger.map((l: any) => [l.user_id, l.delta]),
+            ),
+          },
+        };
+      }),
     );
   }
   if (path === "/queue/events")

@@ -266,10 +266,10 @@ describe("Supabase migration and trusted settlement contract", () => {
       id: string;
       username: string;
       username_configured_at: string;
-    }>("select id, username, username_configured_at from public.claim_username($1,$2)", [
-      A,
-      "  Alice_One  ",
-    ]);
+    }>(
+      "select id, username, username_configured_at from public.claim_username($1,$2)",
+      [A, "  Alice_One  "],
+    );
     await pg.exec("reset role");
     expect(claimed.rows).toHaveLength(1);
     expect(claimed.rows[0]).toMatchObject({ id: A, username: "alice_one" });
@@ -354,6 +354,84 @@ describe("Supabase migration and trusted settlement contract", () => {
       expect(
         (await pg.query("select id from public.friend_challenges")).rows,
       ).toEqual([]);
+    });
+  });
+
+  it("creates permanent friendships atomically and keeps the graph backend-only", async () => {
+    const requestId = crypto.randomUUID();
+    await pg.exec("set local role service_role");
+    const created = await pg.query<{
+      id: string;
+      sender_id: string;
+      receiver_id: string;
+      status: string;
+    }>("select * from public.create_friend_request($1,$2,$3)", [
+      A,
+      B,
+      requestId,
+    ]);
+    expect(created.rows).toEqual([
+      expect.objectContaining({
+        id: requestId,
+        sender_id: A,
+        receiver_id: B,
+        status: "pending",
+      }),
+    ]);
+
+    const retried = await pg.query<{ id: string }>(
+      "select id from public.create_friend_request($1,$2,$3)",
+      [A, B, requestId],
+    );
+    expect(retried.rows).toEqual([{ id: requestId }]);
+
+    await expectSqlError(
+      "select * from public.create_friend_request($1,$2,$3)",
+      [B, A, crypto.randomUUID()],
+      "23505",
+    );
+    await pg.exec("set local role service_role");
+    await expectSqlError(
+      "select * from public.create_friend_request($1,$2,$3)",
+      [A, A, crypto.randomUUID()],
+      "22023",
+    );
+    await pg.exec("set local role service_role");
+    await expectSqlError(
+      "select * from public.respond_friend_request($1,$2,'accept')",
+      [A, requestId],
+      "42501",
+    );
+
+    await pg.exec("set local role service_role");
+    const accepted = await pg.query<{ status: string }>(
+      "select status from public.respond_friend_request($1,$2,'accept')",
+      [B, requestId],
+    );
+    await pg.exec("reset role");
+    expect(accepted.rows).toEqual([{ status: "accepted" }]);
+    expect(
+      (
+        await pg.query(
+          "select user_low,user_high,requested_by from public.friendships",
+        )
+      ).rows,
+    ).toEqual([
+      {
+        user_low: A,
+        user_high: B,
+        requested_by: A,
+      },
+    ]);
+
+    await asBrowser("authenticated", A, async () => {
+      await expectSqlError("select * from public.friend_requests", [], "42501");
+      await expectSqlError("select * from public.friendships", [], "42501");
+      await expectSqlError(
+        "select * from public.respond_friend_request($1,$2,'decline')",
+        [A, requestId],
+        "42501",
+      );
     });
   });
 

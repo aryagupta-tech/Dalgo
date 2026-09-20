@@ -109,8 +109,9 @@ export function PrivacyPage() {
             <Typography>
               Google or GitHub sign-in provides an account identifier and may
               provide a display name, email address, and avatar. Dalgo also
-              stores your chosen username, six arena ratings, match
-              participation, verdicts, rating changes, and submission records.
+              stores your chosen username, six arena ratings, friend requests,
+              accepted friendships, match challenges, match participation,
+              verdicts, rating changes, and submission records.
             </Typography>
             <Typography>
               Usernames, display names, avatars, ratings, and match statistics
@@ -163,10 +164,10 @@ export function PrivacyPage() {
             </Typography>
             <Typography>
               A completed deletion removes authentication access, profile data,
-              ratings, challenges, submissions, and linked records required to
-              remove the account. Shared match history may be deleted or
-              anonymized so another player's account remains internally
-              consistent.
+              ratings, friend relationships, challenges, submissions, and linked
+              records required to remove the account. Shared match history may
+              be deleted or anonymized so another player's account remains
+              internally consistent.
             </Typography>
           </PrivacySection>
 

@@ -64,11 +64,29 @@ describe("launch gates and public content", () => {
     );
   });
   it("ships ten versioned problems per arena and only public fields to browsers", () => {
-    expect(bank).toHaveLength(30);
-    expect(new Set(bank.map((p) => `${p.id}:${p.version}`)).size).toBe(30);
+    expect(bank).toHaveLength(60);
+    expect(new Set(bank.map((p) => `${p.id}:${p.version}`)).size).toBe(60);
+    expect(new Set(bank.map((p) => p.id)).size).toBe(30);
+    const latest = bank.filter((p) => p.version === 2);
+    for (const id of new Set(bank.map((p) => p.id)))
+      expect(
+        bank
+          .filter((p) => p.id === id)
+          .map((p) => p.version)
+          .sort(),
+      ).toEqual([1, 2]);
     for (const arena of ["easy", "medium", "hard"])
-      expect(bank.filter((p) => p.arena === arena)).toHaveLength(10);
-    expect(publicBank).toEqual(bank.map((p) => publicProblem(p as Problem)));
+      expect(latest.filter((p) => p.arena === arena)).toHaveLength(10);
+    expect(publicBank).toEqual(latest.map((p) => publicProblem(p as Problem)));
+    for (const p of latest) {
+      expect(p.description.length).toBeGreaterThanOrEqual(350);
+      expect(p.description.split("\n").filter(Boolean)).toHaveLength(2);
+      expect(p.examples).toHaveLength(3);
+      for (const example of p.examples) {
+        expect(example.args).toHaveLength(p.parameters.length);
+        expect(example.explanation.trim().length).toBeGreaterThanOrEqual(25);
+      }
+    }
     for (const p of bank) {
       expect(p.tests.length).toBeGreaterThanOrEqual(8);
       for (const language of ["python", "cpp", "java", "javascript"] as const) {

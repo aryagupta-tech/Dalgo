@@ -81,10 +81,10 @@ describe("rating and matchmaking", () => {
   });
   it("prefers unseen problems, then least recent", () => {
     const pool = bank as Problem[];
-    const easy = pool.filter((p) => p.arena === "easy");
-    expect(chooseProblem(pool, "easy", { [easy[0].id]: 100 }, () => 0).id).toBe(
-      easy[1].id,
-    );
+    const easy = pool.filter((p) => p.arena === "easy" && p.version === 2);
+    const chosen = chooseProblem(pool, "easy", { [easy[0].id]: 100 }, () => 0);
+    expect(chosen.id).toBe(easy[1].id);
+    expect(chosen.version).toBe(2);
     expect(
       chooseProblem(
         pool,

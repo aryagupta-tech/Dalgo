@@ -7,6 +7,7 @@ import {
   Clock3,
   LogOut,
   Play,
+  RefreshCw,
   Swords,
   Trophy,
   UserRound,
@@ -1142,7 +1143,15 @@ function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
         const win = r.result.winnerId === userId;
         const delta = r.result.deltas[userId] ?? 0;
         return (
-          <ListItem key={r.id} disablePadding>
+          <ListItem
+            key={r.id}
+            disablePadding
+            sx={{
+              borderBottom: 1,
+              borderColor: "divider",
+              gap: { xs: 1, sm: 2 },
+            }}
+          >
             <ListItemButton
               component={Link}
               to={"/match/" + r.id}
@@ -1156,8 +1165,7 @@ function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
                 gap: { xs: 1, sm: 1.9 },
                 px: 0,
                 py: 2.5,
-                borderBottom: 1,
-                borderColor: "divider",
+                minWidth: 0,
                 "&:hover": { backgroundColor: "#191919" },
               }}
             >
@@ -1190,8 +1198,12 @@ function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
                   color="text.secondary"
                   sx={{ display: "block", mt: 0.75 }}
                 >
-                  {r.mode === "bot" ? "Simulated bot" : "Human opponent"} ·{" "}
-                  {new Date(r.ended_at).toLocaleDateString()}
+                  {r.mode === "bot"
+                    ? "Simulated bot"
+                    : r.opponent?.username
+                      ? `@${r.opponent.username}`
+                      : "Human opponent"}{" "}
+                  · {new Date(r.ended_at).toLocaleDateString()}
                 </Typography>
               </Box>
               <Typography
@@ -1207,6 +1219,31 @@ function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
               </Typography>
               <ChevronRight size={15} aria-hidden="true" />
             </ListItemButton>
+            {r.mode === "human" && r.opponent?.usernameConfigured && (
+              <Button
+                component={Link}
+                to={{
+                  pathname: "/friends",
+                  search: new URLSearchParams({
+                    challenge: r.opponent.username,
+                    arena: r.arena,
+                  }).toString(),
+                }}
+                variant="text"
+                color="inherit"
+                size="small"
+                startIcon={<RefreshCw size={14} />}
+                aria-label={`Rematch @${r.opponent.username} in ${ARENAS[r.arena].name}`}
+                sx={{ mr: { xs: 0.5, sm: 1 }, flexShrink: 0 }}
+              >
+                <Box
+                  component="span"
+                  sx={{ display: { xs: "none", sm: "inline" } }}
+                >
+                  Rematch
+                </Box>
+              </Button>
+            )}
           </ListItem>
         );
       })}

@@ -12,11 +12,20 @@ vi.mock("../worker/db", () => ({
   settle: vi.fn(),
   findFriendByUsername: vi.fn(),
   claimUsername: vi.fn(),
+  createFriendRequest: vi.fn(),
+  getFriendsView: vi.fn(),
+  respondFriendRequest: vi.fn(),
   persistFriendChallenge: vi.fn(),
 }));
 
 import { jwtVerify } from "jose";
-import { claimUsername } from "../worker/db";
+import {
+  claimUsername,
+  createFriendRequest,
+  db,
+  getFriendsView,
+  respondFriendRequest,
+} from "../worker/db";
 import worker from "../worker/index";
 import type { Env } from "../worker/env";
 
@@ -65,11 +74,45 @@ beforeEach(() => {
     protectedHeader: { alg: "ES256" },
   });
   vi.mocked(claimUsername).mockReset();
+  vi.mocked(createFriendRequest).mockReset();
+  vi.mocked(getFriendsView).mockReset();
+  vi.mocked(respondFriendRequest).mockReset();
+  vi.mocked(db).mockReset();
   vi.mocked(claimUsername).mockResolvedValue({
     id: A,
     username: "chosen_name",
     usernameConfigured: true,
     name: "Chosen name",
+  });
+  vi.mocked(getFriendsView).mockResolvedValue({
+    friends: [],
+    incoming: [],
+    outgoing: [],
+  });
+  vi.mocked(createFriendRequest).mockResolvedValue({
+    id: challengeId,
+    status: "pending",
+    sender: { id: A, username: "me", usernameConfigured: true, name: "Me" },
+    receiver: {
+      id: "22222222-2222-4222-8222-222222222222",
+      username: "friend_name",
+      usernameConfigured: true,
+      name: "Friend",
+    },
+    createdAt: Date.now(),
+  });
+  vi.mocked(respondFriendRequest).mockResolvedValue({
+    id: challengeId,
+    status: "accepted",
+    sender: { id: A, username: "me", usernameConfigured: true, name: "Me" },
+    receiver: {
+      id: "22222222-2222-4222-8222-222222222222",
+      username: "friend_name",
+      usernameConfigured: true,
+      name: "Friend",
+    },
+    createdAt: Date.now(),
+    respondedAt: Date.now(),
   });
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
@@ -181,5 +224,107 @@ describe("friend challenge API boundary", () => {
         action,
       });
     }
+  });
+  it("keeps the friend graph behind authenticated server routes", async () => {
+    const env = runtime();
+    const unauthenticated = await worker.fetch(
+      new Request("https://dalgo.invalid/api/friends"),
+      env,
+    );
+    expect(unauthenticated.status).toBe(401);
+    expect(getFriendsView).not.toHaveBeenCalled();
+
+    const response = await worker.fetch(request("/friends"), env);
+    expect(response.status).toBe(200);
+    expect(getFriendsView).toHaveBeenCalledWith(env, A);
+  });
+
+  it("creates friend requests for the authenticated user and normalized target", async () => {
+    const env = runtime();
+    const response = await worker.fetch(
+      request("/friends/requests", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: "attacker-selected-id",
+          username: "  Friend_Name  ",
+          requestId: challengeId,
+        }),
+      }),
+      env,
+    );
+    expect(response.status).toBe(201);
+    expect(createFriendRequest).toHaveBeenCalledWith(
+      env,
+      A,
+      "friend_name",
+      challengeId,
+    );
+  });
+
+  it("binds friend-request responses to the authenticated user", async () => {
+    const env = runtime();
+    for (const [suffix, method, action] of [
+      ["/accept", "POST", "accept"],
+      ["/decline", "POST", "decline"],
+      ["", "DELETE", "cancel"],
+    ] as const) {
+      vi.mocked(respondFriendRequest).mockClear();
+      const response = await worker.fetch(
+        request(`/friends/requests/${challengeId}${suffix}`, { method }),
+        env,
+      );
+      expect(response.status).toBe(200);
+      expect(respondFriendRequest).toHaveBeenCalledWith(
+        env,
+        A,
+        challengeId,
+        action,
+      );
+    }
+  });
+
+  it("returns only the prior human opponent needed for a rematch", async () => {
+    const env = runtime();
+    const matchId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const opponentId = "22222222-2222-4222-8222-222222222222";
+    vi.mocked(db)
+      .mockResolvedValueOnce([
+        {
+          id: matchId,
+          arena: "medium",
+          mode: "human",
+          started_at: "2026-09-20T00:00:00Z",
+          ended_at: "2026-09-20T00:10:00Z",
+          result: { winner_id: A, reason: "solved" },
+          rating_ledger: [
+            { user_id: A, delta: 16 },
+            { user_id: opponentId, delta: -16 },
+          ],
+        },
+      ])
+      .mockResolvedValueOnce([
+        { match_id: matchId, user_id: A },
+        { match_id: matchId, user_id: opponentId },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: opponentId,
+          username: "friend_name",
+          username_configured_at: "2026-09-20T00:00:00Z",
+          display_name: "Friend",
+          avatar_url: null,
+        },
+      ]);
+    const response = await worker.fetch(request("/history"), env);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual([
+      expect.objectContaining({
+        id: matchId,
+        opponent: expect.objectContaining({
+          id: opponentId,
+          username: "friend_name",
+        }),
+      }),
+    ]);
   });
 });
