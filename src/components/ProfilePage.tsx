@@ -104,12 +104,10 @@ function ProfileAction({
   to,
   icon,
   title,
-  detail,
 }: {
   to: string;
   icon: ReactNode;
   title: string;
-  detail: string;
 }) {
   return (
     <Button
@@ -117,7 +115,7 @@ function ProfileAction({
       to={to}
       color="inherit"
       sx={{
-        minHeight: 68,
+        minHeight: 54,
         px: 1.75,
         py: 1.25,
         justifyContent: "flex-start",
@@ -131,14 +129,6 @@ function ProfileAction({
       <Box component="span" sx={{ minWidth: 0, flex: 1 }}>
         <Typography component="span" variant="body2" sx={{ display: "block" }}>
           {title}
-        </Typography>
-        <Typography
-          component="span"
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: "block", mt: 0.2 }}
-        >
-          {detail}
         </Typography>
       </Box>
       <ArrowRight size={15} aria-hidden="true" />
@@ -234,9 +224,6 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
         >
           Your profile
         </Typography>
-        <Typography color="text.secondary" sx={{ mt: 1.25 }}>
-          Your account, match record, and arena ratings.
-        </Typography>
       </Box>
 
       {authLoading ? (
@@ -258,9 +245,7 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
           variant="outlined"
           sx={{ p: { xs: 2.25, sm: 3 }, backgroundColor: "#0d0d0d" }}
         >
-          <EmptyState title="Sign in to view your profile.">
-            Your username, match record, and ratings appear here.
-          </EmptyState>
+          <EmptyState title="Sign in to view your profile." />
           <Button variant="contained" onClick={onSignIn}>
             Sign in
           </Button>
@@ -439,13 +424,6 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
               >
                 Arena ratings
               </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ textAlign: "right" }}
-              >
-                Human and bot ratings are separate
-              </Typography>
             </Stack>
             <TableContainer sx={{ mt: 1.25 }}>
               <Table
@@ -533,19 +511,16 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
                 to="/history"
                 icon={<Clock3 size={19} aria-hidden="true" />}
                 title="Match history"
-                detail="Review results and rematch opponents"
               />
               <ProfileAction
                 to="/friends"
                 icon={<UsersRound size={19} aria-hidden="true" />}
                 title="Friends"
-                detail="Manage friends and direct challenges"
               />
               <ProfileAction
                 to="/privacy"
                 icon={<ShieldCheck size={19} aria-hidden="true" />}
                 title="Privacy & support"
-                detail="Get support or request account deletion"
               />
             </Box>
             <Stack
@@ -567,9 +542,6 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
               >
                 {signOutBusy ? "Signing out…" : "Sign out"}
               </Button>
-              <Typography variant="caption" color="text.secondary">
-                Account and data requests are handled through Privacy & support.
-              </Typography>
             </Stack>
             {signOutError && (
               <Alert severity="error" sx={{ mt: 2 }}>

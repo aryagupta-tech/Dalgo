@@ -92,6 +92,12 @@ test("unavailable live play shows a public status without leaking staging detail
   await expect(
     page.getByText("Sign-in is temporarily unavailable."),
   ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Continue with Google or GitHub. New players choose a username next.",
+      { exact: true },
+    ),
+  ).toHaveCount(0);
   await expect(page.getByText(/service verification/i)).toHaveCount(0);
 });
 

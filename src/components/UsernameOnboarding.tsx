@@ -107,8 +107,7 @@ export function UsernameOnboarding() {
           Choose your username
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 1.25, lineHeight: 1.65 }}>
-          Friends use this username to find and challenge you. It cannot be
-          changed later.
+          This cannot be changed later.
         </Typography>
         <Box component="form" onSubmit={submit} sx={{ mt: 3 }}>
           <TextField
@@ -132,15 +131,6 @@ export function UsernameOnboarding() {
               },
             }}
           />
-          {normalized && (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 1.25, fontFamily: '"JetBrains Mono", monospace' }}
-            >
-              Your public username: @{normalized}
-            </Typography>
-          )}
           {error && (
             <Alert severity="error" icon={false} sx={{ mt: 2 }}>
               {error}

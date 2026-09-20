@@ -133,7 +133,7 @@ function LiveSession({
           ) : undefined
         }
       >
-        {session.error || "Restoring the server clock and your attempts."}
+        {session.error || undefined}
       </ScreenMessage>
     );
   return (
@@ -217,7 +217,7 @@ function ScreenMessage({
   action,
 }: {
   title: string;
-  children: ReactNode;
+  children?: ReactNode;
   action?: ReactNode;
 }) {
   return (
@@ -249,9 +249,11 @@ function ScreenMessage({
         <Typography variant="h1" sx={{ fontSize: 32, my: 2 }}>
           {title}
         </Typography>
-        <Typography color="text.secondary" sx={{ mt: 1.5, mb: 3 }}>
-          {children}
-        </Typography>
+        {children && (
+          <Typography color="text.secondary" sx={{ mt: 1.5, mb: 3 }}>
+            {children}
+          </Typography>
+        )}
         {action}
       </Box>
     </Box>
@@ -304,7 +306,7 @@ function QueueStage({
             ? error || "This search is no longer active."
             : phase === "capacity"
               ? "The match server is full. Try again shortly."
-              : "Searching near your rating. A player takes priority; a bot joins after 15 seconds if none is available.")}
+              : "Searching near your rating. Bot fallback starts after 15 seconds.")}
       </Typography>
       <Stack
         direction="row"
@@ -1647,8 +1649,7 @@ function MatchWorkspace({
                 </>
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  Run checks the examples. Submit checks all tests and can win
-                  the match.
+                  No results yet.
                 </Typography>
               )}
             </Box>
@@ -1800,6 +1801,15 @@ function ResultSheet({
   const delta = result.deltas[userId] ?? 0;
   const before =
     match.players.find((player) => player.id === userId)?.rating ?? 1200;
+  const detail = isVoid
+    ? "Result couldn’t be verified. Ratings unchanged."
+    : result.reason === "resigned"
+      ? won
+        ? "Opponent resigned."
+        : "You resigned."
+      : draw
+        ? "No rating change."
+        : "";
   return (
     <Box component="section">
       <Typography variant="overline" sx={{ fontSize: 11 }}>
@@ -1814,19 +1824,7 @@ function ResultSheet({
               ? "You win"
               : "Opponent wins"}
       </Typography>
-      <Typography color="text.secondary">
-        {isVoid
-          ? "Dalgo couldn’t verify the result. Ratings remain unchanged."
-          : result.reason === "resigned"
-            ? won
-              ? "Your opponent resigned. You win this match."
-              : "You resigned from the match. Resignation counts as a loss."
-            : draw
-              ? "Neither player finished first. There is no rating change."
-              : won
-                ? "Your accepted solution arrived first."
-                : "Your opponent’s accepted solution arrived first."}
-      </Typography>
+      {detail && <Typography color="text.secondary">{detail}</Typography>}
       <Stack
         className="result-score"
         direction="row"
@@ -1919,16 +1917,6 @@ function ResultSheet({
           </Typography>
         )}
       </Box>
-      {!result.settled && (
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          component="p"
-          sx={{ mt: 1.5 }}
-        >
-          Saving your result. You can start another match when this completes.
-        </Typography>
-      )}
       <Stack
         direction="row"
         sx={{ mt: 3, justifyContent: "space-between", gap: 1.5 }}
