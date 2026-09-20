@@ -105,3 +105,27 @@ test("public account pages use direct launch copy", async ({ page }) => {
     );
   }
 });
+
+test("privacy and contact details are public and usable", async ({ page }) => {
+  await mockApp(page, true);
+  await page.goto("/privacy");
+
+  await expect(
+    page.getByRole("heading", { name: "Privacy and data requests", level: 1 }),
+  ).toBeVisible();
+  await expect(page.getByText("Arya Gupta", { exact: false })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Email Dalgo support" }),
+  ).toHaveAttribute("href", /mailto:aryaguptaa\.vns@gmail\.com/);
+  await expect(
+    page.getByRole("heading", { name: "Access and deletion requests" }),
+  ).toBeVisible();
+  await expect(page.getByText(/operator review required/i)).toHaveCount(0);
+
+  await page.goto("/");
+  await page
+    .locator("footer")
+    .getByRole("link", { name: "Privacy & contact" })
+    .click();
+  await expect(page).toHaveURL(/\/privacy$/);
+});

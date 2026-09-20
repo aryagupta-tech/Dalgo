@@ -137,7 +137,7 @@ export function oauthReturnUrl(
 ) {
   const path = location.pathname;
   const allowed =
-    /^\/(?:match\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|demo\/(?:easy|medium|hard)|friends|history|profile|leaderboard)?$/i.test(
+    /^\/(?:match\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|demo\/(?:easy|medium|hard)|friends|history|profile|leaderboard|privacy)?$/i.test(
       path,
     );
   return new URL(allowed ? path : "/", location.origin).href;
@@ -245,7 +245,16 @@ export function SignIn({ onClose }: { onClose: () => void }) {
         color="text.secondary"
         sx={{ display: "block", mt: 3 }}
       >
-        Each arena starts at 1,200. Human and bot ratings are separate.
+        Each arena starts at 1,200. Human and bot ratings are separate.{" "}
+        <Box
+          component={Link}
+          to="/privacy"
+          onClick={onClose}
+          sx={{ color: "text.primary", textUnderlineOffset: "3px" }}
+        >
+          Privacy and data requests
+        </Box>
+        .
       </Typography>
     </Modal>
   );
@@ -355,7 +364,29 @@ export function Footer() {
       }}
     >
       <Box component="span">DALGO · DSA 1V1</Box>
-      <Box component="span">Python · C++ · Java · JavaScript</Box>
+      <Stack
+        component="span"
+        direction="row"
+        useFlexGap
+        spacing={1.5}
+        sx={{ flexWrap: "wrap" }}
+      >
+        <Box component="span">Python · C++ · Java · JavaScript</Box>
+        <Box
+          component={Link}
+          to="/privacy"
+          sx={{ color: "inherit", textUnderlineOffset: "3px" }}
+        >
+          Privacy & contact
+        </Box>
+        <Box
+          component="a"
+          href="mailto:aryaguptaa.vns@gmail.com"
+          sx={{ color: "inherit", textUnderlineOffset: "3px" }}
+        >
+          Support
+        </Box>
+      </Stack>
     </Stack>
   );
 }

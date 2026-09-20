@@ -10,6 +10,8 @@ The backend includes Supabase OAuth verification, durable human matchmaking and 
 
 Cloudflare staging is deployed at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev) with tester-only live play enabled for two server-side allowlisted accounts. The capped public Worker is deployed at [https://dalgo.dalgo-arya.workers.dev](https://dalgo.dalgo-arya.workers.dev) with its private service bindings and secrets. Supabase is provisioned with all 30 problems and explicit row-level access policies. OAuth sign-in and signed-in human/bot staging acceptance passed through the private Codebox path. Supabase Auth exposes Google/GitHub only, uses the production Worker as its Site URL, and allowlists production, staging, and local redirects. Public play admits signed-in users while retaining one active match and one execution at a time. See [docs/SETUP.md](docs/SETUP.md) for account setup and [docs/LAUNCH.md](docs/LAUNCH.md) for launch evidence.
 
+Dalgo's operator, support contact, retention terms, and account/data-request process are published in [docs/PRIVACY.md](docs/PRIVACY.md) and on the application's `/privacy` route.
+
 The private Sites preview hosts only the frontend. Cloudflare staging/production configurations deploy the complete frontend and API with isolated SQLite Durable Objects. All implementation work belongs in `/Users/arya/Developer/Dalgo`.
 
 ## Frontend components

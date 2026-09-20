@@ -59,6 +59,7 @@ import { arenaKeys, formatClock, useHistory, useRatings } from "./data";
 import { DemoPage, LiveMatchPage, LiveQueue } from "./components/MatchPage";
 import { FriendPlay } from "./components/FriendPlay";
 import { UsernameOnboarding } from "./components/UsernameOnboarding";
+import { PrivacyPage } from "./components/PrivacyPage";
 const arenaDetails = {
   easy: { topics: "Arrays, strings, hash maps" },
   medium: { topics: "Trees, graphs, dynamic programming" },
@@ -207,9 +208,11 @@ export default function App() {
                       fontSize: ".875rem",
                     }}
                   >
-                    {(profile?.username ||
-                      user.user_metadata?.full_name ||
-                      "You")[0]}
+                    {
+                      (profile?.username ||
+                        user.user_metadata?.full_name ||
+                        "You")[0]
+                    }
                   </Avatar>
                   <Box
                     component="span"
@@ -279,6 +282,7 @@ export default function App() {
             path="/profile"
             element={<Profile onSignIn={() => setSignIn(true)} />}
           />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route
             path="*"
             element={

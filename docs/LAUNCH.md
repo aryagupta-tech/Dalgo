@@ -5,7 +5,7 @@
 ## Verified evidence
 
 - The React/TypeScript production build passes and the interface is implemented with React, Material UI, and Monaco.
-- All 167 backend regressions pass, covering SQL settlement, submission receipt ordering, bot races, reconnect behavior, capacity ownership, launch gates, and Codebox recovery.
+- All 181 backend regressions pass, covering SQL settlement, submission receipt ordering, username onboarding, friend challenges, bot races, reconnect behavior, capacity ownership, launch gates, and Codebox recovery.
 - The complete 148-execution suite passed on the hosted ARM64 Google Cloud VM: reference solutions for 30 problems in Python, C++, Java, and JavaScript, plus wrong-answer, compile/runtime, timeout, memory, output, network, isolation, and output-file probes.
 - Hosted recovery passed for parallel idempotent requests, conflicting payloads, API/Redis restarts, worker failure without duplicate execution, authentication, expiry, and forbidden options.
 - Codebox reports isolate 2.7, Python 3.12.3, GCC 13.3.0 with C++17, OpenJDK 17.0.20, and Node 24.21.0.
@@ -19,7 +19,7 @@ The detailed executor record is in [CODEBOX-VERIFICATION.md](CODEBOX-VERIFICATIO
 
 ## Two-account staging acceptance — passed 20 September 2026
 
-Two Google users are stored in the server-only `TESTER_USER_IDS` list and staging is enabled only for those accounts. The live acceptance created one human match and one labelled bot match and verified the complete Worker → Codebox → settlement path.
+Two Google identities were stored in the server-only `TESTER_USER_IDS` list for this acceptance run. The live acceptance created one human match and one labelled bot match and verified the complete Worker → Codebox → settlement path. One tester account was later hard-deleted at the owner's request; a fresh second account is required before repeating two-player staging checks.
 
 - Verify Google and GitHub sign-in, six ratings, sign-out, expired tokens, and redirect URLs.
 - Queue both testers in the same arena. Confirm identical problem versions and clocks, widening rating windows, human priority, 15-second bot fallback, and permanently fixed opponents.
@@ -38,7 +38,7 @@ The automated live checks passed. Keep staging tester-only during the owner’s 
 
 Public admission was enabled after the automated, hosted, and two-account acceptance checks above passed. During the beta:
 
-1. Publish the operator name, support email, privacy notice, and data-request instructions as soon as the owner supplies the contact details.
+1. Keep the published [privacy and data-request notice](PRIVACY.md) current. Dalgo is operated by Arya Gupta and uses `aryaguptaa.vns@gmail.com` for public support and data requests.
 2. Confirm remaining Google Cloud trial credit and the VM deletion deadline. Do not extend or create paid resources without a separate decision.
 3. Review execution latency, infrastructure errors, settlement retries, database growth, queue time, bot win rate, and capacity saturation.
 4. Keep production secrets and the private Codebox binding isolated from staging.
