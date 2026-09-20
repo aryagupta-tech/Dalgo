@@ -6,7 +6,7 @@ A dark DSA duel arena built with React, TypeScript, Material UI, Vite, Monaco, S
 
 The redesigned lobby and full `/demo/:arena` journey are implemented. The demo includes a 15-second search, labelled simulated opponent, five-second preparation, timed workspace, four language starters, preview actions, and illustrative results. Drafts/countdowns survive reload within the browser session. `/preview/:arena` redirects to the demo. Demo actions never execute code or save ratings.
 
-The backend includes Supabase OAuth verification, durable human matchmaking and bot fallback, execution reservations, a private **Codebox** adapter with durable submission polling, receipt-ordered adjudication, and transactional settlement. New admissions support disabled, tester-only staging, and public modes, with a durable request budget. Active matches can finish after admissions close.
+The backend includes Supabase OAuth verification, durable human matchmaking and bot fallback, direct friend challenges with stable shareable Dalgo player IDs, execution reservations, a private **Codebox** adapter with durable submission polling, receipt-ordered adjudication, and transactional settlement. New admissions support disabled, tester-only staging, and public modes, with a durable request budget. Active matches can finish after admissions close.
 
 Cloudflare staging is deployed at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev) with tester-only live play enabled for two server-side allowlisted accounts. A separate disabled production Worker is deployed at [https://dalgo.dalgo-arya.workers.dev](https://dalgo.dalgo-arya.workers.dev) with its private service bindings and secrets prepared. Supabase is provisioned with all 30 problems and explicit row-level access policies. OAuth sign-in and signed-in human/bot staging acceptance passed through the private Codebox path. Supabase Auth exposes Google/GitHub only, uses the production Worker as its Site URL, and allowlists production, staging, and local redirects. Public play stays disabled pending the owner’s visual and privacy review. See [docs/SETUP.md](docs/SETUP.md) for account setup and [docs/LAUNCH.md](docs/LAUNCH.md) for evidence gates.
 
@@ -18,7 +18,7 @@ Material UI supplies the navigation controls, buttons, dialogs, selection contro
 
 ## Account setup
 
-See [docs/CODEBOX.md](docs/CODEBOX.md) for Google Cloud project details, trial safeguards, server limits, and deployment instructions. `npm run setup:local` creates a private staging settings file without overwriting existing values; `npm run check:setup` reports missing configuration without printing secrets.
+See [docs/CODEBOX.md](docs/CODEBOX.md) for Google Cloud project details, trial safeguards, server limits, and deployment instructions. The player-ID, authorization, API, and recovery design for private matches is documented in [docs/FRIEND-CHALLENGES.md](docs/FRIEND-CHALLENGES.md). `npm run setup:local` creates a private staging settings file without overwriting existing values; `npm run check:setup` reports missing configuration without printing secrets.
 
 ## Local development
 
@@ -49,7 +49,7 @@ The offline tests exercise rating conservation, queue windows, bots, receipt ord
 
 ## Connect Supabase
 
-1. Create a Supabase project on the free plan. Apply `supabase/migrations/202609110001_dalgo.sql` using the Supabase SQL editor or a version-controlled Supabase CLI migration workflow.
+1. Create a Supabase project on the free plan. Apply every file in `supabase/migrations/` in filename order using a version-controlled Supabase CLI migration workflow.
 2. Enable Google and GitHub in Authentication → Providers. Create provider OAuth applications using the callback URL shown by Supabase. Set the Supabase site URL and allowed redirect URLs to your frontend origin; include `http://127.0.0.1:5173` for local development. The frontend redirects OAuth back to its own origin.
 3. Copy `.env.example` to an ignored `.env` for setup scripts. Copy the Worker variables to ignored `.dev.vars` for local Workers development. The URL and publishable key can reach the frontend. **The service role and Codebox credentials must never have a `VITE_` prefix.**
 4. Seed all immutable problem versions after applying the migration:
@@ -98,7 +98,7 @@ Production has a separate `npm run deploy:production` command and starts with ad
 | ---------------------------------------- | ----------------------------------------------------------------------------- |
 | `src/`                                   | Responsive arena, match editor, results, history, leaderboard, authentication |
 | `shared/`                                | Public contracts, arena and language definitions                              |
-| `worker/coordinator.ts`                  | One-account ownership, matchmaking, match capacity and execution leases       |
+| `worker/coordinator.ts`                  | Queue/friend coordination, one-account ownership, capacity, execution leases  |
 | `worker/match.ts`                        | Authoritative clocks, private submissions, adjudication, settlement recovery  |
 | `worker/codebox.ts`, `worker/harness.ts` | Private asynchronous Codebox adapter and language wrappers                    |
 | `worker/problems.json`                   | Thirty original versioned problems, references, hidden tests; backend only    |

@@ -156,6 +156,32 @@ export interface QueueView {
   arena?: Arena;
   message?: string;
 }
+export type FriendChallengeStatus =
+  "open" | "accepted" | "declined" | "cancelled" | "expired";
+export interface FriendIdentity {
+  id: string;
+  publicId: string;
+  name: string;
+  avatar?: string;
+}
+export interface FriendChallenge {
+  id: string;
+  arena: Arena;
+  status: FriendChallengeStatus;
+  challenger: FriendIdentity;
+  challenged: FriendIdentity;
+  createdAt: number;
+  expiresAt: number;
+  respondedAt?: number;
+  matchId?: string;
+}
+export interface FriendChallengeView {
+  serverNow: number;
+  incoming: FriendChallenge[];
+  outgoing: FriendChallenge[];
+  recent: FriendChallenge[];
+  currentMatchId?: string;
+}
 export interface HistoryRow {
   id: string;
   arena: Arena;

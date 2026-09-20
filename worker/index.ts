@@ -10,7 +10,7 @@ import { admissionStatus } from "./admission";
 import { configuredAttemptLimits } from "./limits";
 import { DEFAULT_ATTEMPT_LIMITS } from "../shared/types";
 import { AppError, json, parseArena } from "./core";
-import { db } from "./db";
+import { db, getFriendIdentity } from "./db";
 export { Coordinator } from "./coordinator";
 export { MatchRoom } from "./match";
 const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>();
@@ -143,7 +143,11 @@ async function api(request: Request, env: Env) {
     return json(admissionStatus(env, id));
   if (path === "/socket-ticket" && request.method === "POST") {
     const b = (await request.json()) as { path: string };
-    if (!/^\/queue\/events$|^\/matches\/[a-f0-9-]{36}\/events$/.test(b.path))
+    if (
+      !/^\/(queue|challenges)\/events$|^\/matches\/[a-f0-9-]{36}\/events$/.test(
+        b.path,
+      )
+    )
       throw new AppError("Invalid connection path.");
     const ticket = await new SignJWT({ path: b.path })
       .setProtectedHeader({ alg: "HS256" })
@@ -155,6 +159,58 @@ async function api(request: Request, env: Env) {
       .setExpirationTime("30s")
       .sign(websocketKey(env));
     return json({ ticket });
+  }
+  if (path === "/profile" && request.method === "GET")
+    return json(await getFriendIdentity(env, id));
+  if (path === "/challenges/events")
+    return internal(coordinator(env), "/events?userId=" + id);
+  if (path === "/challenges" && request.method === "GET")
+    return internal(coordinator(env), "/challenge-status?userId=" + id);
+  if (path === "/challenges" && request.method === "POST") {
+    const body = (await request.json()) as {
+      friendId?: unknown;
+      arena?: unknown;
+      requestId?: unknown;
+    };
+    if (typeof body.requestId !== "string" || !uuid.test(body.requestId))
+      throw new AppError("A valid request identifier is required.");
+    if (typeof body.friendId !== "string")
+      throw new AppError("Enter a valid Dalgo player ID.");
+    const friendPublicId = body.friendId.trim().toUpperCase();
+    if (
+      !/^DLG-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/.test(
+        friendPublicId,
+      )
+    )
+      throw new AppError("Enter a Dalgo ID like DLG-ABCD-1234-EF56-7890.");
+    return internal(coordinator(env), "/challenge-create", id, {
+      userId: id,
+      friendPublicId,
+      arena: body.arena,
+      requestId: body.requestId,
+    });
+  }
+  const challengeAction = path.match(
+    /^\/challenges\/([a-f0-9-]{36})\/(accept|decline)$/,
+  );
+  if (challengeAction) {
+    if (request.method !== "POST")
+      throw new AppError("Method not allowed.", 405);
+    return internal(coordinator(env), "/challenge-respond", id, {
+      userId: id,
+      challengeId: challengeAction[1],
+      action: challengeAction[2],
+    });
+  }
+  const challengeCancel = path.match(/^\/challenges\/([a-f0-9-]{36})$/);
+  if (challengeCancel) {
+    if (request.method !== "DELETE")
+      throw new AppError("Method not allowed.", 405);
+    return internal(coordinator(env), "/challenge-respond", id, {
+      userId: id,
+      challengeId: challengeCancel[1],
+      action: "cancel",
+    });
   }
   if (path === "/ratings" && request.method === "GET")
     return json(

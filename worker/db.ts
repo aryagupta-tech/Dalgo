@@ -1,5 +1,11 @@
 import { supabaseSecretKey, type Env } from "./env";
-import type { Arena, Mode, Player } from "../shared/types";
+import type {
+  Arena,
+  FriendChallenge,
+  FriendIdentity,
+  Mode,
+  Player,
+} from "../shared/types";
 import type { MatchRecord } from "./core";
 import { AppError } from "./core";
 export async function db<T>(
@@ -44,6 +50,67 @@ export async function db<T>(
       : await r.json()
   ) as T;
 }
+export async function getFriendIdentity(
+  env: Env,
+  id: string,
+): Promise<FriendIdentity> {
+  const rows = await db<any[]>(
+    env,
+    `profiles?id=eq.${id}&select=id,public_id,display_name,username,avatar_url`,
+  );
+  if (!rows[0])
+    throw new AppError(
+      "This player profile is not ready yet. Try again in a moment.",
+      503,
+    );
+  return {
+    id: rows[0].id,
+    publicId: rows[0].public_id,
+    name: rows[0].display_name || rows[0].username,
+    ...(rows[0].avatar_url ? { avatar: rows[0].avatar_url } : {}),
+  };
+}
+
+export async function findFriendByPublicId(
+  env: Env,
+  publicId: string,
+): Promise<FriendIdentity | null> {
+  const rows = await db<any[]>(
+    env,
+    `profiles?public_id=eq.${encodeURIComponent(publicId)}&select=id,public_id,display_name,username,avatar_url&limit=1`,
+  );
+  if (!rows[0]) return null;
+  return {
+    id: rows[0].id,
+    publicId: rows[0].public_id,
+    name: rows[0].display_name || rows[0].username,
+    ...(rows[0].avatar_url ? { avatar: rows[0].avatar_url } : {}),
+  };
+}
+
+export async function persistFriendChallenge(
+  env: Env,
+  challenge: FriendChallenge,
+) {
+  return db(env, "friend_challenges?on_conflict=id", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({
+      id: challenge.id,
+      challenger_id: challenge.challenger.id,
+      challenged_id: challenge.challenged.id,
+      arena: challenge.arena,
+      status: challenge.status,
+      match_id: challenge.matchId ?? null,
+      created_at: new Date(challenge.createdAt).toISOString(),
+      expires_at: new Date(challenge.expiresAt).toISOString(),
+      responded_at: challenge.respondedAt
+        ? new Date(challenge.respondedAt).toISOString()
+        : null,
+    }),
+  });
+}
+
 export async function getPlayer(
   env: Env,
   id: string,

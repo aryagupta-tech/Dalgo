@@ -60,6 +60,7 @@ import {
 import { Brand, EmptyState, Footer, SignIn } from "./components/Chrome";
 import { arenaKeys, formatClock, useHistory, useRatings } from "./data";
 import { DemoPage, LiveMatchPage, LiveQueue } from "./components/MatchPage";
+import { FriendPlay } from "./components/FriendPlay";
 const arenaDetails = {
   easy: {
     subtitle: "Start with the fundamentals.",
@@ -79,6 +80,7 @@ const arenaDetails = {
 };
 const navigation = [
   { to: "/", label: "Play", icon: Swords },
+  { to: "/friends", label: "Play a friend", icon: UserRound },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { to: "/history", label: "Match history", icon: Clock3 },
   { to: "/profile", label: "Your profile", icon: UserRound },
@@ -151,7 +153,7 @@ export default function App() {
             sx={{
               display: { xs: "grid", sm: "flex" },
               gridColumn: "1/-1",
-              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
               flexDirection: "column",
               gap: { xs: 0, sm: 0.75 },
               mt: { xs: 2, sm: 0 },
@@ -338,6 +340,10 @@ export default function App() {
           <Route
             path="/match/:id"
             element={<LiveMatchPage onSignIn={() => setSignIn(true)} />}
+          />
+          <Route
+            path="/friends"
+            element={<FriendPlay onSignIn={() => setSignIn(true)} />}
           />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route

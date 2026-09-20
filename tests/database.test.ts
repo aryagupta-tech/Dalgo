@@ -8,18 +8,20 @@ import {
   it,
 } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 // Run from the repository root, or set DALGO_PROJECT_ROOT to that directory.
 // PostgreSQL is embedded and ephemeral; this never connects to Supabase.
-const migration = readFileSync(
-  resolve(
-    process.env.DALGO_PROJECT_ROOT ?? process.cwd(),
-    "supabase/migrations/202609110001_dalgo.sql",
-  ),
-  "utf8",
+const migrationRoot = resolve(
+  process.env.DALGO_PROJECT_ROOT ?? process.cwd(),
+  "supabase/migrations",
 );
+const migration = readdirSync(migrationRoot)
+  .filter((name) => name.endsWith(".sql"))
+  .sort()
+  .map((name) => readFileSync(resolve(migrationRoot, name), "utf8"))
+  .join("\n");
 const A = "11111111-1111-4111-8111-111111111111";
 const B = "11111111-1111-4111-8111-222222222222";
 const C = "33333333-3333-4333-8333-333333333333";
@@ -225,8 +227,9 @@ describe("Supabase migration and trusted settlement contract", () => {
       id: string;
       username: string;
       avatar_url: string | null;
+      public_id: string;
     }>(
-      "select id, username, avatar_url from public.profiles where id=any($1::uuid[])",
+      "select id, username, avatar_url, public_id from public.profiles where id=any($1::uuid[])",
       [[A, B]],
     );
     expect(profiles.rows).toHaveLength(2);
@@ -234,7 +237,9 @@ describe("Supabase migration and trusted settlement contract", () => {
     for (const p of profiles.rows) {
       expect(p.username).toMatch(/^[a-z0-9_]{3,32}$/);
       expect(p.avatar_url).toBeNull();
+      expect(p.public_id).toMatch(/^DLG-[A-F0-9]{4}(?:-[A-F0-9]{4}){3}$/);
     }
+    expect(new Set(profiles.rows.map((p) => p.public_id)).size).toBe(2);
     const ratings = await pg.query<{
       arena: string;
       mode: string;
@@ -266,6 +271,46 @@ describe("Supabase migration and trusted settlement contract", () => {
         )
       ).rows,
     ).toHaveLength(6);
+  });
+
+  it("creates stable player IDs and restricts friend challenges to their participants", async () => {
+    const existing = await pg.query<{ public_id: string }>(
+      "select public_id from public.profiles where id=$1",
+      [EXISTING],
+    );
+    expect(existing.rows[0].public_id).toMatch(
+      /^DLG-[A-F0-9]{4}(?:-[A-F0-9]{4}){3}$/,
+    );
+    const challengeId = crypto.randomUUID();
+    await pg.exec("set local role service_role");
+    await pg.query(
+      `insert into public.friend_challenges
+       (id, challenger_id, challenged_id, arena, status, created_at, expires_at)
+       values($1,$2,$3,'easy','open',now(),now()+interval '10 minutes')`,
+      [challengeId, A, B],
+    );
+    await pg.exec("reset role");
+
+    await asBrowser("authenticated", A, async () => {
+      expect(
+        (await pg.query("select id from public.friend_challenges")).rows,
+      ).toEqual([{ id: challengeId }]);
+      await expectSqlError(
+        "update public.friend_challenges set status='accepted' where id=$1",
+        [challengeId],
+        "42501",
+      );
+      await expectSqlError(
+        "select public_id from public.profiles where id=$1",
+        [B],
+        "42501",
+      );
+    });
+    await asBrowser("authenticated", C, async () => {
+      expect(
+        (await pg.query("select id from public.friend_challenges")).rows,
+      ).toEqual([]);
+    });
   });
 
   it("settles equal-rated humans atomically with zero-sum +16/-16", async () => {

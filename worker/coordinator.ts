@@ -22,7 +22,13 @@ import {
   parseArena,
   type MatchRecord,
 } from "./core";
-import { getPlayer, recentProblems } from "./db";
+import {
+  findFriendByPublicId,
+  getFriendIdentity,
+  getPlayer,
+  persistFriendChallenge,
+  recentProblems,
+} from "./db";
 import { creditSpent } from "./judge";
 import { codeboxHealthy, usesCodebox } from "./codebox";
 import {
@@ -30,6 +36,8 @@ import {
   DEFAULT_ATTEMPT_LIMITS,
   type AttemptLimits,
   type Arena,
+  type FriendChallenge,
+  type FriendChallengeView,
   type Player,
   type Problem,
   type QueueView,
@@ -67,6 +75,8 @@ interface CoordinatorState {
     string,
     { record: MatchRecord; reservationKeys: string[] }
   >;
+  challenges: Record<string, FriendChallenge>;
+  challengeAuditPending: Record<string, true>;
 }
 function dayKey(now: number, offset: number) {
   return new Date(now - offset * 3600000).toISOString().slice(0, 10);
@@ -88,8 +98,12 @@ export class Coordinator extends DurableObject<Env> {
         lastReconciled: 0,
         healthy: false,
         assignments: {},
+        challenges: {},
+        challengeAuditPending: {},
       };
       this.data.admissions ??= {};
+      this.data.challenges ??= {};
+      this.data.challengeAuditPending ??= {};
       if (this.data.provider !== (env.JUDGE_PROVIDER ?? "codebox")) {
         this.data.provider = env.JUDGE_PROVIDER ?? "codebox";
         this.data.healthy = false;
@@ -116,6 +130,107 @@ export class Coordinator extends DurableObject<Env> {
   private async save() {
     await this.ctx.storage.put("state", this.data);
   }
+  private challengeSnapshot(userId: string): FriendChallengeView {
+    const all = Object.values(this.data.challenges)
+      .filter(
+        (challenge) =>
+          challenge.challenger.id === userId ||
+          challenge.challenged.id === userId,
+      )
+      .sort((a, b) => b.createdAt - a.createdAt);
+    return {
+      serverNow: Date.now(),
+      incoming: all.filter(
+        (challenge) =>
+          challenge.status === "open" && challenge.challenged.id === userId,
+      ),
+      outgoing: all.filter(
+        (challenge) =>
+          challenge.status === "open" && challenge.challenger.id === userId,
+      ),
+      recent: all
+        .filter((challenge) => challenge.status !== "open")
+        .slice(0, 20),
+      ...(this.data.entries[userId]?.matchId
+        ? { currentMatchId: this.data.entries[userId].matchId }
+        : {}),
+    };
+  }
+  private broadcastChallenges(userId: string) {
+    for (const ws of this.ctx.getWebSockets(userId)) {
+      try {
+        ws.send(
+          JSON.stringify({
+            type: "challenges",
+            data: this.challengeSnapshot(userId),
+          }),
+        );
+      } catch {}
+    }
+  }
+  private openChallengeFor(userId: string) {
+    return Object.values(this.data.challenges).find(
+      (challenge) =>
+        challenge.status === "open" &&
+        (challenge.challenger.id === userId ||
+          challenge.challenged.id === userId),
+    );
+  }
+  private userBusy(userId: string) {
+    return (
+      Boolean(this.data.entries[userId]) ||
+      Object.values(this.data.reservations).some((reservation) =>
+        reservation.userIds.includes(userId),
+      )
+    );
+  }
+  private async expireChallenges() {
+    const now = Date.now();
+    const expired = Object.values(this.data.challenges).filter(
+      (challenge) => challenge.status === "open" && challenge.expiresAt <= now,
+    );
+    if (!expired.length) return;
+    for (const challenge of expired) {
+      challenge.status = "expired";
+      challenge.respondedAt = now;
+      this.data.challengeAuditPending[challenge.id] = true;
+    }
+    await this.save();
+    for (const challenge of expired) {
+      await this.auditChallenge(challenge);
+      this.broadcastChallenges(challenge.challenger.id);
+      this.broadcastChallenges(challenge.challenged.id);
+    }
+  }
+  private async auditChallenge(challenge: FriendChallenge) {
+    try {
+      await persistFriendChallenge(this.env, challenge);
+      if (this.data.challengeAuditPending[challenge.id]) {
+        delete this.data.challengeAuditPending[challenge.id];
+        await this.save();
+      }
+    } catch (error) {
+      this.data.challengeAuditPending[challenge.id] = true;
+      await this.save();
+      console.error(
+        JSON.stringify({
+          event: "friend_challenge_audit_failed",
+          challengeId: challenge.id,
+          message: (error as Error).message,
+        }),
+      );
+    }
+  }
+  private async retryChallengeAudits() {
+    for (const id of Object.keys(this.data.challengeAuditPending)) {
+      const challenge = this.data.challenges[id];
+      if (!challenge) {
+        delete this.data.challengeAuditPending[id];
+        continue;
+      }
+      await this.auditChallenge(challenge);
+    }
+  }
   private roll() {
     const now = Date.now(),
       day = dayKey(now, Number(this.env.JUDGE_RESET_HOUR_UTC) || 0);
@@ -136,6 +251,13 @@ export class Coordinator extends DurableObject<Env> {
     }
     for (const [id, l] of Object.entries(this.data.leases))
       if (l.until < now) delete this.data.leases[id];
+    for (const [id, challenge] of Object.entries(this.data.challenges))
+      if (
+        challenge.status !== "open" &&
+        !this.data.challengeAuditPending[id] &&
+        (challenge.respondedAt ?? challenge.createdAt) < now - 86_400_000
+      )
+        delete this.data.challenges[id];
   }
   private cap() {
     return Math.floor(Number(this.env.JUDGE_DAILY_QUOTA) * 0.8);
@@ -231,6 +353,7 @@ export class Coordinator extends DurableObject<Env> {
     try {
       return await this.serial.run(async () => {
         this.roll();
+        await this.expireChallenges();
         const url = new URL(request.url);
         const body =
           request.method === "POST" ? ((await request.json()) as any) : {};
@@ -243,15 +366,210 @@ export class Coordinator extends DurableObject<Env> {
           pair[1].send(
             JSON.stringify({ type: "queue", data: this.snapshot(userId) }),
           );
+          pair[1].send(
+            JSON.stringify({
+              type: "challenges",
+              data: this.challengeSnapshot(userId),
+            }),
+          );
           return new Response(null, { status: 101, webSocket: pair[0] });
         }
         if (url.pathname === "/status")
           return json(this.snapshot(url.searchParams.get("userId")!));
+        if (url.pathname === "/challenge-status")
+          return json(this.challengeSnapshot(url.searchParams.get("userId")!));
+        if (url.pathname === "/challenge-create") {
+          const userId = body.userId as string;
+          const requestId = body.requestId as string;
+          const existing = this.data.challenges[requestId];
+          if (existing) {
+            if (existing.challenger.id !== userId)
+              throw new AppError(
+                "That challenge identifier is already in use.",
+                409,
+              );
+            return json(existing);
+          }
+          const arena = parseArena(body.arena);
+          const admission = admissionStatus(this.env, userId);
+          if (!admission.canJoin) throw new AppError(admission.reason, 403);
+          if (this.userBusy(userId))
+            throw new AppError(
+              "Finish or leave your current match first.",
+              409,
+            );
+          if (this.openChallengeFor(userId))
+            throw new AppError(
+              "Respond to your current friend challenge first.",
+              409,
+            );
+          const challenged = await findFriendByPublicId(
+            this.env,
+            body.friendPublicId as string,
+          );
+          if (!challenged)
+            throw new AppError("No player was found with that Dalgo ID.", 404);
+          if (challenged.id === userId)
+            throw new AppError("You cannot challenge yourself.", 400);
+          if (!admissionStatus(this.env, challenged.id).canJoin)
+            throw new AppError(
+              "This player is not available for live challenges.",
+              409,
+            );
+          if (
+            this.userBusy(challenged.id) ||
+            this.openChallengeFor(challenged.id)
+          )
+            throw new AppError(
+              "This player already has a match or challenge open.",
+              409,
+            );
+          const challenger = await getFriendIdentity(this.env, userId);
+          const now = Date.now();
+          const challenge: FriendChallenge = {
+            id: requestId,
+            arena,
+            status: "open",
+            challenger,
+            challenged,
+            createdAt: now,
+            expiresAt: now + 10 * 60_000,
+          };
+          this.data.challenges[challenge.id] = challenge;
+          this.data.challengeAuditPending[challenge.id] = true;
+          await this.save();
+          await this.auditChallenge(challenge);
+          this.broadcastChallenges(challenger.id);
+          this.broadcastChallenges(challenged.id);
+          await this.schedule();
+          return json(challenge, 201);
+        }
+        if (url.pathname === "/challenge-respond") {
+          const userId = body.userId as string;
+          const challenge = this.data.challenges[body.challengeId as string];
+          if (!challenge) throw new AppError("Challenge not found.", 404);
+          if (body.action === "accept" && challenge.status === "accepted") {
+            if (challenge.challenged.id !== userId)
+              throw new AppError(
+                "Only the invited player can accept this challenge.",
+                403,
+              );
+            return json(challenge);
+          }
+          if (challenge.status !== "open")
+            throw new AppError("This challenge is no longer open.", 409);
+          if (body.action === "cancel") {
+            if (challenge.challenger.id !== userId)
+              throw new AppError(
+                "Only the challenger can cancel this challenge.",
+                403,
+              );
+            challenge.status = "cancelled";
+          } else if (body.action === "decline") {
+            if (challenge.challenged.id !== userId)
+              throw new AppError(
+                "Only the invited player can decline this challenge.",
+                403,
+              );
+            challenge.status = "declined";
+          } else if (body.action === "accept") {
+            if (challenge.challenged.id !== userId)
+              throw new AppError(
+                "Only the invited player can accept this challenge.",
+                403,
+              );
+            const ids = [challenge.challenger.id, challenge.challenged.id];
+            for (const id of ids) {
+              const admission = admissionStatus(this.env, id);
+              if (!admission.canJoin) throw new AppError(admission.reason, 403);
+              if (this.userBusy(id))
+                throw new AppError(
+                  "One of you already has a queue or match open.",
+                  409,
+                );
+            }
+            if (Date.now() - this.data.lastReconciled > 5000)
+              await this.reconcile();
+            if (!this.data.healthy)
+              throw new AppError("The execution server is unavailable.", 503);
+            if (usesCodebox(this.env) && this.serverFull())
+              throw new AppError(
+                "The execution server is busy. Try again shortly.",
+                503,
+              );
+            const attemptLimits = configuredAttemptLimits(this.env)!;
+            const reserved = executionReservation(attemptLimits, this.cost());
+            if (!usesCodebox(this.env) && this.remaining() < reserved.total * 2)
+              throw new AppError(
+                "There is not enough execution capacity for this match.",
+                503,
+              );
+            const players = await Promise.all(
+              ids.map((id) =>
+                getPlayer(this.env, id, challenge.arena, "human"),
+              ),
+            );
+            const entries = ids.map((id, index): Entry => ({
+              userId: id,
+              arena: challenge.arena,
+              joinedAt: challenge.createdAt,
+              rating: players[index].rating,
+              player: players[index],
+              requestId: challenge.id,
+              status: "assigning",
+              attemptLimits: { ...attemptLimits },
+            }));
+            const nextAdmissions = Object.fromEntries(
+              entries.map((entry) => [
+                entry.userId,
+                recordAdmission(this.data.admissions[entry.userId], Date.now()),
+              ]),
+            );
+            for (const entry of entries) {
+              this.data.admissions[entry.userId] = nextAdmissions[entry.userId];
+              this.data.entries[entry.userId] = entry;
+              this.data.reservations[entry.userId] = {
+                remaining: reserved.total,
+                creditCost: this.cost(),
+                userIds: [entry.userId],
+                budgets: {
+                  [entry.userId]: {
+                    base: reserved.base,
+                    retries: reserved.retries,
+                  },
+                },
+              };
+            }
+            challenge.status = "accepted";
+            challenge.respondedAt = Date.now();
+            this.data.challengeAuditPending[challenge.id] = true;
+            challenge.matchId = await this.createMatch(entries, challenge);
+            await this.auditChallenge(challenge);
+            this.broadcastChallenges(challenge.challenger.id);
+            this.broadcastChallenges(challenge.challenged.id);
+            return json(challenge);
+          } else {
+            throw new AppError("Choose accept, decline, or cancel.");
+          }
+          challenge.respondedAt = Date.now();
+          this.data.challengeAuditPending[challenge.id] = true;
+          await this.save();
+          await this.auditChallenge(challenge);
+          this.broadcastChallenges(challenge.challenger.id);
+          this.broadcastChallenges(challenge.challenged.id);
+          await this.schedule();
+          return json(challenge);
+        }
         if (url.pathname === "/join") {
           const userId = body.userId as string;
           // A reconnect or a second tab must recover the original assignment even
           // when new admissions have since been paused or the tester list changed.
           if (this.data.entries[userId]) return json(this.snapshot(userId));
+          if (this.openChallengeFor(userId))
+            throw new AppError(
+              "Respond to or cancel your friend challenge before joining the queue.",
+              409,
+            );
           const arena = parseArena(body.arena);
           const admission = admissionStatus(this.env, userId);
           if (!admission.canJoin)
@@ -419,7 +737,10 @@ export class Coordinator extends DurableObject<Env> {
       for (const userId of removed) this.broadcast(userId);
     }
   }
-  private async createMatch(entries: Entry[]) {
+  private async createMatch(
+    entries: Entry[],
+    acceptedChallenge?: FriendChallenge,
+  ): Promise<string> {
     const humans: Player[] = [];
     for (const e of entries)
       humans.push(
@@ -498,8 +819,10 @@ export class Coordinator extends DurableObject<Env> {
       e.status = "assigning";
       e.matchId = id;
     }
+    if (acceptedChallenge) acceptedChallenge.matchId = id;
     await this.save();
     await this.finishAssignment(id);
+    return id;
   }
   private async finishAssignment(id: string) {
     const assignment = this.data.assignments[id];
@@ -567,9 +890,14 @@ export class Coordinator extends DurableObject<Env> {
     }
   }
   private async schedule() {
+    const openChallenges = Object.values(this.data.challenges).filter(
+      (challenge) => challenge.status === "open",
+    );
     if (
       !Object.keys(this.data.entries).length &&
-      !Object.keys(this.data.assignments).length
+      !Object.keys(this.data.assignments).length &&
+      !openChallenges.length &&
+      !Object.keys(this.data.challengeAuditPending).length
     ) {
       await this.ctx.storage.deleteAlarm();
       return;
@@ -577,15 +905,32 @@ export class Coordinator extends DurableObject<Env> {
     const waiting = Object.values(this.data.entries).some(
       (e) => e.status === "waiting",
     );
+    const hasAssignments = Object.keys(this.data.assignments).length > 0;
+    const hasEntries = Object.keys(this.data.entries).length > 0;
+    const hasPendingAudit =
+      Object.keys(this.data.challengeAuditPending).length > 0;
+    const periodicDelay =
+      waiting || hasAssignments
+        ? 1000
+        : hasEntries || hasPendingAudit
+          ? 60000
+          : Number.POSITIVE_INFINITY;
+    const expiryDelay = openChallenges.length
+      ? Math.max(
+          250,
+          Math.min(...openChallenges.map((c) => c.expiresAt)) - Date.now(),
+        )
+      : Number.POSITIVE_INFINITY;
     await this.ctx.storage.setAlarm(
-      Date.now() +
-        (waiting || Object.keys(this.data.assignments).length ? 1000 : 60000),
+      Date.now() + Math.min(periodicDelay, expiryDelay),
     );
   }
   async alarm() {
     await this.serial.run(async () => {
       try {
         this.roll();
+        await this.expireChallenges();
+        await this.retryChallengeAudits();
         await this.releaseIneligibleWaiting();
         for (const id of Object.keys(this.data.assignments))
           await this.finishAssignment(id);

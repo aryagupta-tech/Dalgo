@@ -22,6 +22,28 @@ vi.mock("../worker/db.ts", () => ({
     name: id,
     rating: 1200,
   })),
+  getFriendIdentity: vi.fn(async (_env: any, id: string) => ({
+    id,
+    publicId:
+      id === A
+        ? "DLG-AAAA-AAAA-AAAA-AAAA"
+        : id === B
+          ? "DLG-BBBB-BBBB-BBBB-BBBB"
+          : "DLG-CCCC-CCCC-CCCC-CCCC",
+    name: id,
+  })),
+  findFriendByPublicId: vi.fn(async (_env: any, publicId: string) => {
+    const id =
+      publicId === "DLG-AAAA-AAAA-AAAA-AAAA"
+        ? A
+        : publicId === "DLG-BBBB-BBBB-BBBB-BBBB"
+          ? B
+          : publicId === "DLG-CCCC-CCCC-CCCC-CCCC"
+            ? C
+            : null;
+    return id ? { id, publicId, name: id } : null;
+  }),
+  persistFriendChallenge: vi.fn(async () => null),
   recentProblems: vi.fn(async () => ({})),
 }));
 vi.mock("../worker/judge.ts", () => ({
@@ -44,7 +66,7 @@ import {
 import { MatchRoom } from "../worker/match.ts";
 import { Coordinator } from "../worker/coordinator.ts";
 import { execute, creditSpent } from "../worker/judge.ts";
-import { settle, getPlayer } from "../worker/db.ts";
+import { settle, getPlayer, persistFriendChallenge } from "../worker/db.ts";
 import { MAX_JUDGE_MS, type MatchRecord } from "../worker/core.ts";
 import bank from "../worker/problems.json";
 
@@ -222,6 +244,7 @@ beforeEach(() => {
   vi.mocked(settle).mockClear();
   vi.mocked(creditSpent).mockClear();
   vi.mocked(getPlayer).mockClear();
+  vi.mocked(persistFriendChallenge).mockClear();
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubGlobal(
@@ -456,6 +479,302 @@ describe("authoritative match lifecycle", () => {
       expect(execute).not.toHaveBeenCalled();
     },
   );
+});
+
+describe("direct friend challenges", () => {
+  const challengeRequest = (
+    path: string,
+    body: Record<string, unknown>,
+    userId: string,
+  ) => request(path, { userId, ...body }, userId);
+
+  it("creates an idempotent private invite and blocks queueing while it is open", async () => {
+    const ctx = new MemoryContext();
+    const coordinator = new Coordinator(ctx as any, env());
+    await ctx.ready;
+    const challengeId = crypto.randomUUID();
+    const created = await coordinator.fetch(
+      challengeRequest(
+        "/challenge-create",
+        {
+          requestId: challengeId,
+          friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+          arena: "medium",
+        },
+        A,
+      ),
+    );
+    expect(created.status).toBe(201);
+    expect(await created.json()).toMatchObject({
+      id: challengeId,
+      arena: "medium",
+      status: "open",
+      challenger: { id: A },
+      challenged: { id: B },
+    });
+    const retry = await coordinator.fetch(
+      challengeRequest(
+        "/challenge-create",
+        {
+          requestId: challengeId,
+          friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+          arena: "hard",
+        },
+        A,
+      ),
+    );
+    expect(retry.status).toBe(200);
+    expect(await retry.json()).toMatchObject({
+      id: challengeId,
+      arena: "medium",
+    });
+    expect(
+      (
+        await coordinator.fetch(
+          request(
+            "/join",
+            { userId: A, requestId: crypto.randomUUID(), arena: "easy" },
+            A,
+          ),
+        )
+      ).status,
+    ).toBe(409);
+    expect(persistFriendChallenge).toHaveBeenCalledOnce();
+  });
+
+  it("rejects self, unknown, duplicate, and unauthorized challenge actions", async () => {
+    const ctx = new MemoryContext();
+    const coordinator = new Coordinator(ctx as any, env());
+    await ctx.ready;
+    expect(
+      (
+        await coordinator.fetch(
+          challengeRequest(
+            "/challenge-create",
+            {
+              requestId: crypto.randomUUID(),
+              friendPublicId: "DLG-AAAA-AAAA-AAAA-AAAA",
+              arena: "easy",
+            },
+            A,
+          ),
+        )
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await coordinator.fetch(
+          challengeRequest(
+            "/challenge-create",
+            {
+              requestId: crypto.randomUUID(),
+              friendPublicId: "DLG-DDDD-DDDD-DDDD-DDDD",
+              arena: "easy",
+            },
+            A,
+          ),
+        )
+      ).status,
+    ).toBe(404);
+    const id = crypto.randomUUID();
+    await coordinator.fetch(
+      challengeRequest(
+        "/challenge-create",
+        {
+          requestId: id,
+          friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+          arena: "easy",
+        },
+        A,
+      ),
+    );
+    expect(
+      (
+        await coordinator.fetch(
+          challengeRequest(
+            "/challenge-create",
+            {
+              requestId: crypto.randomUUID(),
+              friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+              arena: "hard",
+            },
+            C,
+          ),
+        )
+      ).status,
+    ).toBe(409);
+    expect(
+      (
+        await coordinator.fetch(
+          challengeRequest(
+            "/challenge-respond",
+            { challengeId: id, action: "accept" },
+            C,
+          ),
+        )
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await coordinator.fetch(
+          challengeRequest(
+            "/challenge-respond",
+            { challengeId: id, action: "cancel" },
+            B,
+          ),
+        )
+      ).status,
+    ).toBe(403);
+  });
+
+  it("lets only the invited player accept and creates the normal authoritative human match", async () => {
+    const initialized: MatchRecord[] = [];
+    const ctx = new MemoryContext();
+    const runtime = env({
+      MATCHES: {
+        idFromName: (name: string) => name,
+        get: () => ({
+          fetch: vi.fn(async (_url: string, init: RequestInit) => {
+            initialized.push(JSON.parse(String(init.body)));
+            return Response.json({ ok: true });
+          }),
+        }),
+      },
+    });
+    const coordinator = new Coordinator(ctx as any, runtime);
+    await ctx.ready;
+    const challengeId = crypto.randomUUID();
+    await coordinator.fetch(
+      challengeRequest(
+        "/challenge-create",
+        {
+          requestId: challengeId,
+          friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+          arena: "hard",
+        },
+        A,
+      ),
+    );
+    const accepted = await coordinator.fetch(
+      challengeRequest(
+        "/challenge-respond",
+        { challengeId, action: "accept" },
+        B,
+      ),
+    );
+    expect(accepted.status).toBe(200);
+    const challenge = (await accepted.json()) as any;
+    expect(challenge).toMatchObject({
+      id: challengeId,
+      status: "accepted",
+      matchId: expect.any(String),
+    });
+    expect(initialized).toHaveLength(1);
+    expect(initialized[0]).toMatchObject({
+      id: challenge.matchId,
+      arena: "hard",
+      mode: "human",
+      players: [{ id: A }, { id: B }],
+      bot: null,
+    });
+    expect(initialized[0].startsAt).toBe(T0 + 5000);
+    const state = await ctx.storage.get("state");
+    expect(state.entries[A]).toMatchObject({
+      status: "matched",
+      matchId: challenge.matchId,
+    });
+    expect(state.entries[B]).toMatchObject({
+      status: "matched",
+      matchId: challenge.matchId,
+    });
+    expect(state.reservations[challenge.matchId].userIds).toEqual([A, B]);
+    const retry = await coordinator.fetch(
+      challengeRequest(
+        "/challenge-respond",
+        { challengeId, action: "accept" },
+        B,
+      ),
+    );
+    expect(await retry.json()).toMatchObject({ matchId: challenge.matchId });
+    expect(initialized).toHaveLength(1);
+  });
+
+  it("retries a failed Supabase challenge audit after a durable restart", async () => {
+    vi.mocked(persistFriendChallenge).mockRejectedValueOnce(
+      new Error("database unavailable"),
+    );
+    const ctx = new MemoryContext();
+    const runtime = env();
+    const coordinator = new Coordinator(ctx as any, runtime);
+    await ctx.ready;
+    const challengeId = crypto.randomUUID();
+    expect(
+      (
+        await coordinator.fetch(
+          challengeRequest(
+            "/challenge-create",
+            {
+              requestId: challengeId,
+              friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+              arena: "easy",
+            },
+            A,
+          ),
+        )
+      ).status,
+    ).toBe(201);
+    expect((await ctx.storage.get("state")).challengeAuditPending).toEqual({
+      [challengeId]: true,
+    });
+    const restartedContext = new MemoryContext(ctx.storage);
+    const restarted = new Coordinator(restartedContext as any, runtime);
+    await restartedContext.ready;
+    await restarted.alarm();
+    expect((await ctx.storage.get("state")).challengeAuditPending).toEqual({});
+    expect(persistFriendChallenge).toHaveBeenCalledTimes(2);
+  });
+
+  it("expires unanswered challenges durably and allows a new invite", async () => {
+    const ctx = new MemoryContext();
+    const coordinator = new Coordinator(ctx as any, env());
+    await ctx.ready;
+    const challengeId = crypto.randomUUID();
+    await coordinator.fetch(
+      challengeRequest(
+        "/challenge-create",
+        {
+          requestId: challengeId,
+          friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+          arena: "easy",
+        },
+        A,
+      ),
+    );
+    now += 10 * 60_000 + 1;
+    const view = (await (
+      await coordinator.fetch(request(`/challenge-status?userId=${A}`))
+    ).json()) as any;
+    expect(view.outgoing).toEqual([]);
+    expect(view.recent[0]).toMatchObject({
+      id: challengeId,
+      status: "expired",
+    });
+    expect(
+      (
+        await coordinator.fetch(
+          challengeRequest(
+            "/challenge-create",
+            {
+              requestId: crypto.randomUUID(),
+              friendPublicId: "DLG-BBBB-BBBB-BBBB-BBBB",
+              arena: "medium",
+            },
+            A,
+          ),
+        )
+      ).status,
+    ).toBe(201);
+  });
 });
 
 describe("global admission and execution reservations", () => {
