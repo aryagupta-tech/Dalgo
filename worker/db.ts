@@ -73,6 +73,13 @@ export async function db<T>(
           400,
         );
     }
+    if (path === "rpc/swap_profile_avatar")
+      throw new AppError(
+        detail?.code === "22023"
+          ? "The profile picture is invalid."
+          : "Your profile picture could not be saved. Try again.",
+        detail?.code === "22023" ? 400 : 503,
+      );
     if (
       path.startsWith("friend_requests") ||
       path.startsWith("friendships") ||

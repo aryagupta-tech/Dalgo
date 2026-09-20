@@ -10,7 +10,7 @@ The owner-facing steps are in [REQUIREMENTS.md](REQUIREMENTS.md). Use `npm run c
 
 ## Cloudflare
 
-Staging runs at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev). Disabled production runs separately at [https://dalgo.dalgo-arya.workers.dev](https://dalgo.dalgo-arya.workers.dev). Both include static assets, isolated SQLite-backed Durable Objects, WebSockets, independent signing secrets, and a daily source-retention cron. URL query strings are redacted from observability logs.
+Staging runs at [https://staging.dalgo.site](https://staging.dalgo.site), and production runs at [https://dalgo.site](https://dalgo.site). `www.dalgo.site` redirects permanently to the matching apex path and query. The existing `workers.dev` addresses remain available during DNS and OAuth cutover. Both environments include static assets, isolated SQLite-backed Durable Objects, WebSockets, independent signing secrets, and a daily source-retention cron. Staging responses carry `X-Robots-Tag: noindex`, and URL query strings are redacted from observability logs.
 
 Codebox is connected privately through named Cloudflare Tunnel `dalgo-codebox-staging` and Workers VPC service `01a0bdc2-e64f-7b63-8dae-b0c78031a859`. The Worker binding is `CODEBOX`; the API token is a Worker secret. The execution API has no public hostname.
 
@@ -18,9 +18,13 @@ The full edge-to-executor route returned `ready=true`, `executor=isolate`, and `
 
 ## Supabase
 
-The dedicated `dalgo-staging` project exists in Mumbai with ref `gtdofekbolymsrrullpb`. Five versioned migrations are applied and 30 immutable problem versions are seeded, 10 per arena. All public tables have RLS. Browser roles have an explicit deny policy for the problem bank because rows include hidden tests and reference solutions; the backend secret role supplies sanitized statements through the Worker.
+The dedicated `dalgo-staging` project exists in Mumbai with ref `gtdofekbolymsrrullpb`. Versioned migrations and 30 immutable problem versions are applied, 10 per arena. All public tables have RLS. Browser roles have an explicit deny policy for the problem bank because rows include hidden tests and reference solutions; the backend secret role supplies sanitized statements through the Worker. Profile pictures use the public-read `profile-avatars` bucket; only the trusted Worker may write or delete objects.
 
-Database/RLS security checks have no findings. Dalgo uses Google/GitHub only, and the unused Email provider is disabled. The Auth advisor still reports its generic leaked-password warning because the protection is unavailable on the Free plan; Dalgo exposes no password login surface. The Site URL is the production Worker, while the production, staging, and local development origins remain in the redirect allowlist. Both Google redirects and signed-in sessions passed staging acceptance.
+Database/RLS security checks have no findings. Dalgo uses Google/GitHub only, and the unused Email provider is disabled. The Auth advisor still reports its generic leaked-password warning because the protection is unavailable on the Free plan; Dalgo exposes no password login surface. The Auth Site URL is `https://dalgo.site`; exact redirects include `https://dalgo.site/**`, `https://staging.dalgo.site/**`, the temporary Workers origins during cutover, and `http://127.0.0.1:5173/**` for local development.
+
+## Domain cutover
+
+The `dalgo.site` zone must be active in Cloudflare before Wrangler can attach its custom domains. At the registrar, replace the GoDaddy nameservers with the two nameservers assigned by Cloudflare. After the zone becomes active, remove the imported parking records for the apex and `www`, deploy staging, complete OAuth and live-play smoke tests, then deploy production. Keep the Workers origins enabled until TLS, redirects, API, WebSocket, and Codebox checks pass on all custom domains.
 
 Use `npm run seed:problems:staging` to inspect the seed set or append `-- --apply` to insert missing immutable versions. The seeder refuses to overwrite an existing version with changed content.
 
