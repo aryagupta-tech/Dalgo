@@ -26,6 +26,6 @@ The machine-readable report is in the ignored `artifacts/codebox-verification.js
 - Staging has the `CODEBOX` VPC binding and private `CODEBOX_AUTH_TOKEN` secret. A short-lived edge Worker verified the complete Cloudflare edge → Workers VPC → tunnel → Google VM → Codebox path and received `ready=true`, `executor=isolate`, and `concurrency=1`.
 - Supabase project `gtdofekbolymsrrullpb` is restored. Three versioned migrations are applied, 30 distinct problems are seeded (10 per arena), all public tables use RLS, hidden problem data has an explicit deny policy for browser roles, and the security advisor reports no findings.
 
-## Still required before live staging
+## Completed on live staging
 
-Create two real Supabase users through the deployed OAuth flow, configure their UUIDs in the server-only staging allowlist, and complete signed-in bot and two-human matches, reconnects, OAuth redirects, WebSocket recovery, judging races, and settlement recovery. Staging remains at `LIVE_MATCHES_ENABLED=false` until those users exist. Public admission remains a separate rollout decision after the staging checks.
+Two real Google users were added to the server-only allowlist. A live human match verified cancellation, human priority, identical problems/clocks, WebSocket reconnect, hosted sample/scored execution, opponent submission privacy, idempotent replay, +16/−16 Elo settlement, and saved history. A separate live bot match verified the 15-second fallback, explicit bot label, capacity rejection while busy, resignation, bot-only rating update, and persistence. Production remains disabled pending owner visual/privacy review.

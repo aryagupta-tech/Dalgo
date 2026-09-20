@@ -1,6 +1,6 @@
 # Capped beta launch record
 
-**Current decision: online play disabled.** Cloudflare staging is deployed at https://dalgo-staging.dalgo-arya.workers.dev and disabled production is deployed at https://dalgo.dalgo-arya.workers.dev. Both report `playEnabled=false`; production uses `ADMISSION_MODE=disabled`. Supabase, hosted Codebox, and the private Cloudflare route are connected. Two real OAuth users and signed-in staging acceptance remain pending.
+**Current decision: tester-only staging enabled; public play disabled.** Staging at https://dalgo-staging.dalgo-arya.workers.dev reports `playEnabled=true` for two server-side allowlisted accounts. Production at https://dalgo.dalgo-arya.workers.dev reports `playEnabled=false` with `ADMISSION_MODE=disabled`. OAuth and signed-in human/bot staging acceptance passed; owner visual/privacy review remains before public admission.
 
 ## Verified evidence
 
@@ -15,9 +15,9 @@
 
 The detailed executor record is in [CODEBOX-VERIFICATION.md](CODEBOX-VERIFICATION.md). Machine-readable reports stay in ignored `artifacts/` files because they include operational detail.
 
-## Two-account staging acceptance
+## Two-account staging acceptance — passed 20 September 2026
 
-Create two users by signing in from separate browser profiles. Add their Supabase UUIDs to the server-only `TESTER_USER_IDS` list, redeploy staging, and set `LIVE_MATCHES_ENABLED=true` only for the acceptance window.
+Two Google users are stored in the server-only `TESTER_USER_IDS` list and staging is enabled only for those accounts. The live acceptance created one human match and one labelled bot match and verified the complete Worker → Codebox → settlement path.
 
 - Verify Google and GitHub sign-in, six ratings, sign-out, expired tokens, and redirect URLs.
 - Queue both testers in the same arena. Confirm identical problem versions and clocks, widening rating windows, human priority, 15-second bot fallback, and permanently fixed opponents.
@@ -30,7 +30,7 @@ Create two users by signing in from separate browser profiles. Add their Supabas
 - Review the lobby, queue, workspace, results, all four starters, draft restoration, keyboard controls, reduced motion, focus visibility, and mobile layouts.
 - Run the retention cron and confirm private submission sources disappear after the retention window while compact match history remains.
 
-After the tests, turn live staging off again while reviewing evidence. A failed gate keeps demo mode available and ranked play closed.
+The automated live checks passed. Keep staging tester-only during the owner’s visual review; any new failure closes live staging before production changes.
 
 ## Opening the public beta
 
