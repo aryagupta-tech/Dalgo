@@ -10,11 +10,11 @@ The owner-facing steps are in [REQUIREMENTS.md](REQUIREMENTS.md). Use `npm run c
 
 ## Cloudflare
 
-Staging runs at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev). It includes static assets, SQLite-backed Durable Objects, WebSockets, an independent signing secret, and a daily source-retention cron. URL query strings are redacted from observability logs.
+Staging runs at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev). Disabled production runs separately at [https://dalgo.dalgo-arya.workers.dev](https://dalgo.dalgo-arya.workers.dev). Both include static assets, isolated SQLite-backed Durable Objects, WebSockets, independent signing secrets, and a daily source-retention cron. URL query strings are redacted from observability logs.
 
 Codebox is connected privately through named Cloudflare Tunnel `dalgo-codebox-staging` and Workers VPC service `01a0bdc2-e64f-7b63-8dae-b0c78031a859`. The Worker binding is `CODEBOX`; the API token is a Worker secret. The execution API has no public hostname.
 
-The full edge-to-executor route returned `ready=true`, `executor=isolate`, and `concurrency=1`. The verified timestamp is stored in staging, but live play stays off until tester acceptance passes.
+The full edge-to-executor route returned `ready=true`, `executor=isolate`, and `concurrency=1`. The verified timestamp and private VPC binding are stored in both environments. Production has its Supabase, Codebox, and independent WebSocket secrets configured, while live play stays off until tester acceptance passes.
 
 ## Supabase
 

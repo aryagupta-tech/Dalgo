@@ -1,6 +1,6 @@
 # Capped beta launch record
 
-**Current decision: online play disabled.** Cloudflare staging is deployed at https://dalgo-staging.dalgo-arya.workers.dev with `LIVE_MATCHES_ENABLED=false`. Supabase, hosted Codebox, and the private Cloudflare route are connected. Two real OAuth users and signed-in staging acceptance remain pending.
+**Current decision: online play disabled.** Cloudflare staging is deployed at https://dalgo-staging.dalgo-arya.workers.dev and disabled production is deployed at https://dalgo.dalgo-arya.workers.dev. Both report `playEnabled=false`; production uses `ADMISSION_MODE=disabled`. Supabase, hosted Codebox, and the private Cloudflare route are connected. Two real OAuth users and signed-in staging acceptance remain pending.
 
 ## Verified evidence
 
