@@ -174,15 +174,12 @@ export function SignIn({ onClose }: { onClose: () => void }) {
       <Typography
         component="h2"
         variant="h4"
-        sx={{ fontSize: "1.875rem", mb: 2 }}
+        sx={{ fontSize: "1.875rem", mb: 1 }}
       >
         Sign in to Dalgo
       </Typography>
-      <Typography color="text.secondary">
-        Continue with Google or GitHub. New players choose a username next.
-      </Typography>
       {client ? (
-        <Stack spacing={1.25} sx={{ mt: 3 }}>
+        <Stack spacing={1.25} sx={{ mt: 1 }}>
           <Button
             variant="outlined"
             disabled={busy}
@@ -260,7 +257,7 @@ export function EmptyState({
   children,
 }: {
   title: string;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <Stack
@@ -295,13 +292,15 @@ export function EmptyState({
         >
           {title}
         </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ maxWidth: 440, lineHeight: 1.7 }}
-        >
-          {children}
-        </Typography>
+        {children && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ maxWidth: 440, lineHeight: 1.7 }}
+          >
+            {children}
+          </Typography>
+        )}
       </Box>
     </Stack>
   );

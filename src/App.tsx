@@ -354,7 +354,7 @@ function PageHeading({
   children,
 }: {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   children?: ReactNode;
 }) {
   return (
@@ -382,16 +382,18 @@ function PageHeading({
         >
           {title}
         </Typography>
-        <Typography
-          color="text.secondary"
-          sx={{
-            mt: 1.25,
-            fontSize: { xs: ".875rem", sm: "1rem" },
-            lineHeight: 1.65,
-          }}
-        >
-          {subtitle}
-        </Typography>
+        {subtitle && (
+          <Typography
+            color="text.secondary"
+            sx={{
+              mt: 1.25,
+              fontSize: { xs: ".875rem", sm: "1rem" },
+              lineHeight: 1.65,
+            }}
+          >
+            {subtitle}
+          </Typography>
+        )}
       </Box>
       {children}
     </Stack>
@@ -509,10 +511,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
   return (
     <Page>
       <PageTop section="PLAY" />
-      <PageHeading
-        title="Choose your arena"
-        subtitle="Select a difficulty and find an opponent."
-      />
+      <PageHeading title="Choose your arena" />
       {user &&
         (currentQueue?.matchId || currentQueue?.status === "waiting") && (
           <Alert
@@ -534,17 +533,13 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                 ? "Your match is still active."
                 : "Your opponent search is still active."}
             </Typography>
-            <Typography variant="body2" sx={{ mt: 1, mb: 2 }}>
-              {currentQueue.matchId
-                ? "Return to your draft and the shared clock."
-                : "Return to your active search."}
-            </Typography>
             {currentQueue.matchId ? (
               <Button
                 component={Link}
                 to={"/match/" + currentQueue.matchId}
                 variant="contained"
                 endIcon={<ArrowRight size={16} />}
+                sx={{ mt: 2 }}
               >
                 Resume match
               </Button>
@@ -559,6 +554,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                   })
                 }
                 endIcon={<ArrowRight size={16} />}
+                sx={{ mt: 2 }}
               >
                 Resume search
               </Button>
@@ -815,15 +811,6 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                 {rating ? `${rating.wins} wins` : "1,200"}
               </Typography>
             </Stack>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 1.6, lineHeight: 1.65 }}
-            >
-              {user
-                ? "Each arena has separate human and bot ratings."
-                : "Sign in to track your rating and match history."}
-            </Typography>
             {error && (
               <Alert severity="error" sx={{ mt: 1.5 }}>
                 {error}
@@ -916,12 +903,15 @@ function RecentHistory() {
         <MatchRows rows={rows.slice(0, 3)} userId={user.id} />
       ) : (
         <EmptyState
-          title={loading ? "Loading matches…" : "No matches played yet."}
+          title={
+            loading
+              ? "Loading matches…"
+              : user
+                ? "No matches played yet."
+                : "Sign in to view matches."
+          }
         >
-          {error ||
-            (user
-              ? "Results and rating changes appear here."
-              : "Sign in to see your matches.")}
+          {error || undefined}
         </EmptyState>
       )}
     </Box>
@@ -986,10 +976,7 @@ function Leaderboard() {
   return (
     <Page>
       <PageTop section="LEADERBOARD" />
-      <PageHeading
-        title="Leaderboard"
-        subtitle="Top ratings by arena and opponent type."
-      />
+      <PageHeading title="Leaderboard" />
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2.5}
@@ -1255,10 +1242,7 @@ function History({ onSignIn }: { onSignIn: () => void }) {
   return (
     <Page>
       <PageTop section="MATCH HISTORY" />
-      <PageHeading
-        title="Match history"
-        subtitle="Results, opponents, and rating changes."
-      />
+      <PageHeading title="Match history" />
       <Paper
         component="section"
         variant="outlined"
@@ -1286,12 +1270,15 @@ function History({ onSignIn }: { onSignIn: () => void }) {
           <MatchRows rows={rows} userId={user.id} />
         ) : (
           <EmptyState
-            title={loading ? "Loading your record…" : "No matches on record."}
+            title={
+              loading
+                ? "Loading your record…"
+                : user
+                  ? "No matches on record."
+                  : "Sign in to view match history."
+            }
           >
-            {error ||
-              (user
-                ? "Finished matches appear here."
-                : "Sign in to see your match history.")}
+            {error || undefined}
           </EmptyState>
         )}
       </Paper>

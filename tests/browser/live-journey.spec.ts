@@ -174,7 +174,9 @@ test("resuming a paused search reads its canonical request and cancels without a
   await expect(
     page.getByRole("heading", { name: "Finding an opponent" }),
   ).toBeVisible();
-  await expect(page.getByText(/a bot joins after 15 seconds/i)).toBeVisible();
+  await expect(
+    page.getByText(/bot fallback starts after 15 seconds/i),
+  ).toBeVisible();
   await expect(page.getByText(/Human-first search/i)).toHaveCount(0);
   await page
     .getByRole("button", { name: "Cancel search", exact: true })
