@@ -35,6 +35,8 @@ for (const viewport of [
     await mockApp(page, true);
     await page.goto("/");
 
+    await expect(page).toHaveTitle("dalgo — The coding club");
+
     await expect(
       page.getByRole("heading", { name: "Choose your arena", level: 1 }),
     ).toBeVisible();
@@ -87,11 +89,17 @@ test("unavailable live play shows a public status without leaking staging detail
 
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Sign in to Dalgo" }),
+    page.getByRole("heading", { name: "Sign in to dalgo" }),
   ).toBeVisible();
   await expect(
     page.getByText("Sign-in is temporarily unavailable."),
   ).toBeVisible();
+  await expect(
+    page.getByText(
+      "Continue with Google or GitHub. New players choose a username next.",
+      { exact: true },
+    ),
+  ).toHaveCount(0);
   await expect(page.getByText(/service verification/i)).toHaveCount(0);
 });
 
@@ -121,7 +129,7 @@ test("privacy and contact details are public and usable", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByText("Arya Gupta", { exact: false })).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Email Dalgo support" }),
+    page.getByRole("link", { name: "Email dalgo support" }),
   ).toHaveAttribute("href", /mailto:aryaguptaa\.vns@gmail\.com/);
   await expect(
     page.getByRole("heading", { name: "Access and deletion requests" }),

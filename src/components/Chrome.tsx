@@ -23,7 +23,7 @@ export function Brand({
     <Box
       component={Link}
       to="/"
-      aria-label="Dalgo home"
+      aria-label="dalgo home"
       sx={{
         display: "inline-flex",
         alignItems: "center",
@@ -117,9 +117,14 @@ export function Modal({
             letterSpacing: ".075em",
           }}
         >
-          <Box component="span" aria-hidden="true">
-            DALGO /{" "}
+          <Box
+            component="span"
+            aria-hidden="true"
+            sx={{ textTransform: "none" }}
+          >
+            dalgo
           </Box>
+          {" / "}
           {title}
         </Typography>
         <IconButton aria-label="Close dialog" onClick={onClose} size="small">
@@ -174,15 +179,12 @@ export function SignIn({ onClose }: { onClose: () => void }) {
       <Typography
         component="h2"
         variant="h4"
-        sx={{ fontSize: "1.875rem", mb: 2 }}
+        sx={{ fontSize: "1.875rem", mb: 1 }}
       >
-        Sign in to Dalgo
-      </Typography>
-      <Typography color="text.secondary">
-        Continue with Google or GitHub. New players choose a username next.
+        Sign in to dalgo
       </Typography>
       {client ? (
-        <Stack spacing={1.25} sx={{ mt: 3 }}>
+        <Stack spacing={1.25} sx={{ mt: 1 }}>
           <Button
             variant="outlined"
             disabled={busy}
@@ -260,7 +262,7 @@ export function EmptyState({
   children,
 }: {
   title: string;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <Stack
@@ -295,13 +297,15 @@ export function EmptyState({
         >
           {title}
         </Typography>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ maxWidth: 440, lineHeight: 1.7 }}
-        >
-          {children}
-        </Typography>
+        {children && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ maxWidth: 440, lineHeight: 1.7 }}
+          >
+            {children}
+          </Typography>
+        )}
       </Box>
     </Stack>
   );
@@ -324,7 +328,7 @@ export function Footer() {
         letterSpacing: ".03em",
       }}
     >
-      <Box component="span">DALGO · DSA 1V1</Box>
+      <Box component="span">dalgo · DSA 1V1</Box>
       <Stack
         component="span"
         direction="row"

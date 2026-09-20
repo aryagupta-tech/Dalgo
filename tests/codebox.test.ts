@@ -27,7 +27,7 @@ const configured = {
 } as unknown as Env;
 afterEach(() => vi.restoreAllMocks());
 describe("Codebox adapter", () => {
-  it("checks answers in Dalgo rather than trusting the execution status", () => {
+  it("checks answers in dalgo rather than trusting the execution status", () => {
     expect(
       interpretCodebox(
         { status: { id: 3 }, exit_code: 0, stdout: output },

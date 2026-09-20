@@ -443,7 +443,10 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           letterSpacing: ".08em",
         }}
       >
-        DALGO / FRIENDS
+        <Box component="span" sx={{ textTransform: "none" }}>
+          dalgo
+        </Box>{" "}
+        / FRIENDS
       </Typography>
       <Stack
         component="header"
@@ -466,9 +469,6 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           >
             Play with friends
           </Typography>
-          <Typography color="text.secondary" sx={{ mt: 1.25 }}>
-            Challenge any player by username, or save them to your friends list.
-          </Typography>
         </Box>
       </Stack>
 
@@ -478,13 +478,11 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           sx={{ p: { xs: 2.5, sm: 4 }, bgcolor: "#101010" }}
         >
           <Typography variant="h5">Sign in to play with friends</Typography>
-          <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
-            Choose a username so other players can find you.
-          </Typography>
           <Button
             variant="contained"
             onClick={onSignIn}
             startIcon={<UserPlus size={17} />}
+            sx={{ mt: 2.5 }}
           >
             Sign in
           </Button>
@@ -498,8 +496,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           )}
           {requestedUsername && (
             <Alert severity="info" icon={<RefreshCw size={18} />}>
-              Rematch @{requestedUsername} · {ARENAS[arena].name}. Send a
-              challenge below.
+              Rematch @{requestedUsername} · {ARENAS[arena].name}
             </Alert>
           )}
           {view.currentMatchId && (
@@ -567,14 +564,6 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                   </Button>
                 </>
               )}
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 2, lineHeight: 1.65 }}
-              >
-                Share your username to receive friend requests and match
-                challenges.
-              </Typography>
             </Paper>
 
             <Paper
@@ -654,13 +643,6 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
               <Box>
                 <Typography component="h2" variant="h6">
                   Add a friend
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.5 }}
-                >
-                  Send a request by username.
                 </Typography>
               </Box>
               <Stack

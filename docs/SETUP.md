@@ -1,4 +1,4 @@
-# Dalgo service setup
+# dalgo service setup
 
 Work in `/Users/arya/Developer/Dalgo`. The Documents path is obsolete.
 
@@ -20,7 +20,7 @@ The full edge-to-executor route returned `ready=true`, `executor=isolate`, and `
 
 The dedicated `dalgo-staging` project exists in Mumbai with ref `gtdofekbolymsrrullpb`. Versioned migrations and 30 immutable problem versions are applied, 10 per arena. All public tables have RLS. Browser roles have an explicit deny policy for the problem bank because rows include hidden tests and reference solutions; the backend secret role supplies sanitized statements through the Worker. Profile pictures use the public-read `profile-avatars` bucket; only the trusted Worker may write or delete objects.
 
-Database/RLS security checks have no findings. Dalgo uses Google/GitHub only, and the unused Email provider is disabled. The Auth advisor still reports its generic leaked-password warning because the protection is unavailable on the Free plan; Dalgo exposes no password login surface. The versioned Auth configuration in `supabase/config.toml` sets the Site URL to `https://dalgo.site` and allows only the validated production and staging routes plus the local Vite origins. It contains no `workers.dev` fallback.
+Database/RLS security checks have no findings. Dalgo uses Google/GitHub only, and the unused Email provider is disabled. The Auth advisor still reports its generic leaked-password warning because the protection is unavailable on the Free plan; dalgo exposes no password login surface. The versioned Auth configuration in `supabase/config.toml` sets the Site URL to `https://dalgo.site` and allows only the validated production and staging routes plus the local Vite origins. It contains no `workers.dev` fallback.
 
 ## Domain cutover
 

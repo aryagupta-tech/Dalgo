@@ -1,4 +1,4 @@
-# Dalgo: current status and remaining requirements
+# dalgo: current status and remaining requirements
 
 Work only in `/Users/arya/Developer/Dalgo`.
 

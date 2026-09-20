@@ -1,4 +1,4 @@
-# Contributing to Dalgo
+# Contributing to dalgo
 
 Dalgo uses two shared branches:
 

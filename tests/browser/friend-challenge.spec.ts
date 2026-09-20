@@ -219,7 +219,7 @@ test("the intended friend can accept and enters the authoritative match route", 
   await expect(page).toHaveURL(new RegExp(`/match/${matchId}$`));
 });
 
-test("a new OAuth account must choose a username before using Dalgo", async ({
+test("a new OAuth account must choose a username before using dalgo", async ({
   page,
 }) => {
   await authenticate(page);
@@ -268,12 +268,12 @@ test("a new OAuth account must choose a username before using Dalgo", async ({
   await expect(
     page.getByRole("heading", { name: "Choose your username" }),
   ).toBeVisible();
-  await page
-    .getByRole("textbox", { name: "Username", exact: true })
-    .fill("New_Player");
-  await expect(
-    page.getByText("Your public username: @new_player"),
-  ).toBeVisible();
+  const username = page.getByRole("textbox", {
+    name: "Username",
+    exact: true,
+  });
+  await username.fill("New_Player");
+  await expect(username).toHaveValue("new_player");
   await page.getByRole("button", { name: "Save username" }).click();
   await expect(
     page.getByRole("heading", { name: "Choose your username" }),
