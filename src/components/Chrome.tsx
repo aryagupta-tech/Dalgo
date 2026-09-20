@@ -134,12 +134,21 @@ export function Modal({
 export function oauthReturnUrl(
   location: Pick<Location, "origin" | "pathname">,
 ) {
+  const allowedOrigins = new Set([
+    "https://dalgo.site",
+    "https://staging.dalgo.site",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+  ]);
   const path = location.pathname;
   const allowed =
     /^\/(?:match\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|friends|history|profile|leaderboard|privacy)?$/i.test(
       path,
     );
-  return new URL(allowed ? path : "/", location.origin).href;
+  const origin = allowedOrigins.has(location.origin)
+    ? location.origin
+    : "https://dalgo.site";
+  return new URL(allowed ? path : "/", origin).href;
 }
 export function SignIn({ onClose }: { onClose: () => void }) {
   const { client } = useAuth();
