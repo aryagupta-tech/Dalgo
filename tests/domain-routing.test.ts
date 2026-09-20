@@ -19,11 +19,14 @@ function runtime(mode: "staging" | "public") {
 }
 
 describe("custom domain routing", () => {
-  it("runs the Worker before assets so host redirects and noindex headers apply", () => {
+  it("runs the Worker before assets and exposes only custom domains", () => {
     const config = parse(readFileSync("wrangler.jsonc", "utf8")) as {
       assets?: { run_worker_first?: boolean | string[] };
+      env?: Record<string, { workers_dev?: boolean }>;
     };
     expect(config.assets?.run_worker_first).toBe(true);
+    expect(config.env?.staging?.workers_dev).toBe(false);
+    expect(config.env?.production?.workers_dev).toBe(false);
   });
 
   it("permanently redirects www to the canonical apex with path and query", async () => {

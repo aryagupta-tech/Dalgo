@@ -1,6 +1,6 @@
 # Capped beta launch record
 
-**Current decision: capped public play enabled.** Staging at https://dalgo-staging.dalgo-arya.workers.dev remains limited to two server-side allowlisted accounts. Production at https://dalgo.dalgo-arya.workers.dev uses `ADMISSION_MODE=public` with `playEnabled=true`. The one-match and one-execution capacity caps remain enforced.
+**Current decision: capped public play enabled.** Staging at https://staging.dalgo.site is protected by Cloudflare Access and remains limited to approved tester emails plus the server-side tester allowlist. Production at https://dalgo.site uses `ADMISSION_MODE=public` with `playEnabled=true`. The `workers.dev` routes are disabled. The one-match and one-execution capacity caps remain enforced.
 
 ## Verified evidence
 

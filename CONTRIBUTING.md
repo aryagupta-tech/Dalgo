@@ -1,11 +1,10 @@
 # Contributing to Dalgo
 
-main is production and develop is staging. Do not commit or push feature work directly to either branch.
+Dalgo uses two shared branches:
 
-1. Start from the latest develop.
-2. Create feature/<short-name>.
-3. Run the test suite and open a pull request into develop.
-4. Test the merged commit at https://staging.dalgo.site.
-5. Promote tested work with a develop to main pull request.
+- `develop` is the testing branch deployed to `https://staging.dalgo.site`.
+- `main` is the public branch deployed to `https://dalgo.site`.
 
-Run npm run setup:git-hooks once per checkout to block accidental direct commits and pushes on this computer. GitHub Actions verifies every pull request, deploys develop to staging, and deploys main to production.
+Commit feature work to `develop`, run the verification suite, and deploy it to staging for review. Promote a tested release with a `develop` to `main` pull request. Never push feature work directly to `main`.
+
+GitHub Actions verifies pushes and pull requests. Cloudflare deployments are explicit release steps because the Worker uses a private VPC binding that must be deployed from an authorized operator session.

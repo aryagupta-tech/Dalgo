@@ -4,10 +4,8 @@ if [ "${DALGO_ALLOW_PROTECTED_PUSH:-}" = "1" ]; then
 fi
 
 while read -r _local_ref _local_sha remote_ref _remote_sha; do
-  case "$remote_ref" in
-    refs/heads/main|refs/heads/develop)
-      echo "Direct pushes to ${remote_ref#refs/heads/} are blocked. Push a feature branch and merge a pull request." >&2
-      exit 1
-      ;;
-  esac
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "Direct pushes to main are blocked. Push develop and promote with a pull request." >&2
+    exit 1
+  fi
 done
