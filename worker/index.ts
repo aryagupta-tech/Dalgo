@@ -10,6 +10,7 @@ import { admissionStatus } from "./admission";
 import { configuredAttemptLimits } from "./limits";
 import { DEFAULT_ATTEMPT_LIMITS } from "../shared/types";
 import { AppError, json, parseArena } from "./core";
+import { updateProfileAvatar, validateAvatar } from "./avatar";
 import {
   claimUsername,
   createFriendRequest,
@@ -180,6 +181,11 @@ async function api(request: Request, env: Env) {
   }
   if (path === "/profile" && request.method === "GET")
     return json(await getFriendIdentity(env, id));
+  if (path === "/profile/avatar" && request.method === "PUT") {
+    const bytes = new Uint8Array(await request.arrayBuffer());
+    validateAvatar(bytes, request.headers.get("Content-Type"));
+    return json(await updateProfileAvatar(env, id, bytes));
+  }
   if (path === "/profile/username" && request.method === "PUT") {
     const body = (await request.json()) as { username?: unknown };
     if (typeof body.username !== "string")
@@ -430,7 +436,23 @@ async function limitBody(request: Request) {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
+    const hostname = url.hostname.toLowerCase();
+    if (hostname === "www.dalgo.site") {
+      url.hostname = "dalgo.site";
+      return Response.redirect(url.toString(), 308);
+    }
+    if (!url.pathname.startsWith("/api/")) {
+      const asset = await env.ASSETS.fetch(request);
+      if (admissionMode(env) !== "staging" && hostname !== "staging.dalgo.site")
+        return asset;
+      const headers = new Headers(asset.headers);
+      headers.set("X-Robots-Tag", "noindex");
+      return new Response(asset.body, {
+        status: asset.status,
+        statusText: asset.statusText,
+        headers,
+      });
+    }
     const origin = request.headers.get("Origin");
     if (origin && !origins(env, request).includes(origin))
       return json({ error: "This origin is not allowed." }, 403);
@@ -438,7 +460,7 @@ export default {
       return json({ error: "Request is too large." }, 413);
     let response: Response;
     try {
-      if (request.method === "POST" || request.method === "DELETE")
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method))
         request = await limitBody(request);
       response =
         request.method === "OPTIONS"
@@ -469,9 +491,14 @@ export default {
       headers.set("Vary", "Origin");
     }
     headers.set("Access-Control-Allow-Headers", "Authorization,Content-Type");
-    headers.set("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+    headers.set(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+    );
     headers.set("Access-Control-Expose-Headers", "Retry-After");
     headers.set("X-Content-Type-Options", "nosniff");
+    if (admissionMode(env) === "staging" || hostname === "staging.dalgo.site")
+      headers.set("X-Robots-Tag", "noindex");
     headers.set("Referrer-Policy", "no-referrer");
     return new Response(response.body, { status: response.status, headers });
   },

@@ -1,6 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const playerId = "11111111-1111-4111-8111-111111111111";
+const avatarFixture = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFElEQVR42mP8z8AARAwMjDAGAA8AAQUBAScAAAAASUVORK5CYII=",
+  "base64",
+);
 const profile = {
   id: playerId,
   username: "test_account",
@@ -112,6 +116,14 @@ function appConfig() {
 }
 
 async function mockSignedInApi(page: Page, failAccountData = false) {
+  let currentProfile: typeof profile & { avatar?: string } = { ...profile };
+  await page.route("https://cdn.example.invalid/profile-avatar.webp", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "image/png",
+      body: avatarFixture,
+    }),
+  );
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/config") return route.fulfill({ json: appConfig() });
@@ -119,13 +131,20 @@ async function mockSignedInApi(page: Page, failAccountData = false) {
       return route.fulfill({
         json: { mode: "public", canJoin: true, reason: "" },
       });
+    if (path === "/api/profile/avatar" && route.request().method() === "PUT") {
+      currentProfile = {
+        ...currentProfile,
+        avatar: "https://cdn.example.invalid/profile-avatar.webp",
+      };
+      return route.fulfill({ json: currentProfile });
+    }
     if (path === "/api/profile")
       return failAccountData
         ? route.fulfill({
             status: 503,
             json: { error: "Profile service unavailable." },
           })
-        : route.fulfill({ json: profile });
+        : route.fulfill({ json: currentProfile });
     if (path === "/api/ratings")
       return failAccountData
         ? route.fulfill({
@@ -239,4 +258,43 @@ test("signed-out profile gives a direct sign-in path", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Sign in to Dalgo" }),
   ).toBeVisible();
+});
+
+test("player can crop and save a profile picture", async ({ page }) => {
+  await authenticate(page);
+  await mockSignedInApi(page);
+  await page.goto("/profile");
+
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "avatar.png",
+    mimeType: "image/png",
+    buffer: avatarFixture,
+  });
+
+  await expect(
+    page.getByRole("dialog", { name: "Crop profile picture" }),
+  ).toBeVisible();
+  const save = page.getByRole("button", { name: "Save picture" });
+  await expect(save).toBeEnabled();
+  const upload = page.waitForRequest(
+    (request) =>
+      request.url().endsWith("/api/profile/avatar") &&
+      request.method() === "PUT",
+  );
+  await save.click();
+  const request = await upload;
+  expect(request.headers()["content-type"]).toContain("image/webp");
+  expect(request.postDataBuffer()?.byteLength).toBeGreaterThan(0);
+
+  await expect(
+    page.getByRole("dialog", { name: "Crop profile picture" }),
+  ).toBeHidden();
+  await expect(
+    page
+      .locator('section[aria-labelledby="profile-identity-heading"]')
+      .locator("img"),
+  ).toHaveAttribute("src", "https://cdn.example.invalid/profile-avatar.webp");
+  await expect(
+    page.getByRole("link", { name: "Your account" }).locator("img"),
+  ).toHaveAttribute("src", "https://cdn.example.invalid/profile-avatar.webp");
 });

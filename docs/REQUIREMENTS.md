@@ -4,7 +4,8 @@ Work only in `/Users/arya/Developer/Dalgo`.
 
 ## Connected and verified
 
-- Cloudflare staging: https://dalgo-staging.dalgo-arya.workers.dev
+- Canonical production: https://dalgo.site
+- Tester staging: https://staging.dalgo.site
 - Supabase project: **dalgo-staging**, ref `gtdofekbolymsrrullpb`, Mumbai. Five versioned migrations are applied, RLS is enabled, database/RLS checks have no findings, and 30 original problems are loaded (10 per arena). The Auth advisor retains its Free-plan password warning even though password/email sign-in is disabled.
 - Codebox runs on Google Cloud VM `dalgo-codebox` in project `dalgo-508410`. It is reachable only through Cloudflare Tunnel and Workers VPC, with one execution and one match at a time.
 - Local and hosted verification passed for Python, C++, Java, and JavaScript across all 30 problems. Wrong answers, compile/runtime failures, timeouts, memory/output limits, network blocking, isolation, idempotency, and service restarts were tested.
@@ -12,9 +13,10 @@ Work only in `/Users/arya/Developer/Dalgo`.
 
 ## What you need to do
 
-1. **Perform the visual review you reserved for yourself.** Check the lobby, queue, workspace, and results on desktop and mobile.
-2. **Privacy/contact complete.** Arya Gupta and `aryaguptaa.vns@gmail.com` are published in the [privacy and data-request notice](PRIVACY.md).
-3. **Monitor the capped public opening.** Production admits signed-in users while retaining one active match and one execution at a time.
+1. Change `dalgo.site` at GoDaddy to Cloudflare's assigned nameservers: `tani.ns.cloudflare.com` and `yadiel.ns.cloudflare.com`.
+2. Connect the GitHub app to the private `aryagupta-tech/Dalgo` repository so release branches, pull requests, environments, and Actions secrets can be configured without direct pushes to `main`.
+3. Perform the visual review you reserved for yourself. Check the lobby, queue, workspace, profile-picture crop, and results on desktop and mobile.
+4. Monitor the capped public opening. Production admits signed-in users while retaining one active match and one execution at a time.
 
 No card details, account passwords, paid plan, additional Cloudflare access, or additional Supabase access are required. The Google Cloud VM uses trial credit and has a fixed deletion action for 14 December 2026. Extending it requires a separate decision.
 

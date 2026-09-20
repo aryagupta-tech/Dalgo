@@ -68,7 +68,15 @@ describe("Supabase migration and trusted settlement contract", () => {
       create role authenticated;
       create role service_role bypassrls;
       create schema auth;
+      create schema storage;
       create table auth.users (id uuid primary key, raw_user_meta_data jsonb not null default '{}');
+      create table storage.buckets (
+        id text primary key,
+        name text not null,
+        public boolean not null default false,
+        file_size_limit bigint,
+        allowed_mime_types text[]
+      );
       create function auth.uid() returns uuid language sql stable as $$
         select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
       $$;
@@ -221,6 +229,79 @@ describe("Supabase migration and trusted settlement contract", () => {
     );
     return id;
   }
+
+  it("creates a constrained public avatar bucket without browser write grants", async () => {
+    const bucket = await pg.query<{
+      public: boolean;
+      file_size_limit: number;
+      allowed_mime_types: string[];
+    }>(
+      "select public, file_size_limit, allowed_mime_types from storage.buckets where id='profile-avatars'",
+    );
+    expect(bucket.rows).toEqual([
+      {
+        public: true,
+        file_size_limit: 512000,
+        allowed_mime_types: ["image/webp"],
+      },
+    ]);
+    const grants = await pg.query<{ grantee: string }>(
+      "select grantee from information_schema.role_routine_grants where routine_schema='public' and routine_name='swap_profile_avatar' order by grantee",
+    );
+    expect(grants.rows.map((row) => row.grantee)).toContain("service_role");
+    expect(grants.rows.map((row) => row.grantee)).not.toEqual(
+      expect.arrayContaining(["PUBLIC", "anon", "authenticated"]),
+    );
+  });
+
+  it("atomically swaps owned avatar paths and returns the previous object", async () => {
+    const firstPath = A + "/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.webp";
+    const secondPath = A + "/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp";
+    await pg.exec("set local role service_role");
+    const first = await pg.query<{
+      previous_storage_path: string | null;
+      avatar_url: string;
+    }>(
+      "select previous_storage_path, avatar_url from public.swap_profile_avatar($1,$2,$3)",
+      [A, "https://project.invalid/storage/first.webp", firstPath],
+    );
+    expect(first.rows[0]).toEqual({
+      previous_storage_path: null,
+      avatar_url: "https://project.invalid/storage/first.webp",
+    });
+    const second = await pg.query<{
+      previous_storage_path: string | null;
+      avatar_url: string;
+    }>(
+      "select previous_storage_path, avatar_url from public.swap_profile_avatar($1,$2,$3)",
+      [A, "https://project.invalid/storage/second.webp", secondPath],
+    );
+    expect(second.rows[0]).toEqual({
+      previous_storage_path: firstPath,
+      avatar_url: "https://project.invalid/storage/second.webp",
+    });
+    await pg.exec("reset role");
+  });
+
+  it("rejects invalid or browser-written avatar storage paths", async () => {
+    await pg.exec("set local role service_role");
+    await expectSqlError(
+      "select * from public.swap_profile_avatar($1,$2,$3)",
+      [
+        A,
+        "https://project.invalid/avatar.webp",
+        B + "/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.webp",
+      ],
+      "22023",
+    );
+    await asBrowser("authenticated", A, async () => {
+      await expectSqlError(
+        "update public.profiles set avatar_url=$1 where id=$2",
+        ["https://attacker.invalid/avatar.webp", A],
+        "42501",
+      );
+    });
+  });
 
   it("creates safe unique OAuth profiles and exactly six independent 1200 ratings", async () => {
     const profiles = await pg.query<{
