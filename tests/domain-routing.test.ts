@@ -11,7 +11,7 @@ function runtime(mode: "staging" | "public") {
     ASSETS: {
       fetch: vi.fn(
         async () =>
-          new Response("<html>Dalgo</html>", {
+          new Response("<html>dalgo</html>", {
             headers: { "Content-Type": "text/html" },
           }),
       ),
@@ -25,10 +25,7 @@ describe("custom domain routing", () => {
       assets?: { run_worker_first?: boolean | string[] };
       workers_dev?: boolean;
       preview_urls?: boolean;
-      env?: Record<
-        string,
-        { workers_dev?: boolean; preview_urls?: boolean }
-      >;
+      env?: Record<string, { workers_dev?: boolean; preview_urls?: boolean }>;
     };
     expect(config.assets?.run_worker_first).toBe(true);
     expect(config.workers_dev).toBe(false);

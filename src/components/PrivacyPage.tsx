@@ -51,7 +51,10 @@ export function PrivacyPage() {
           color: "text.secondary",
         }}
       >
-        DALGO / PRIVACY & CONTACT
+        <Box component="span" sx={{ textTransform: "none" }}>
+          dalgo
+        </Box>{" "}
+        / PRIVACY & CONTACT
       </Typography>
       <Stack
         component="header"
@@ -62,7 +65,7 @@ export function PrivacyPage() {
           Privacy and data requests
         </Typography>
         <Typography color="text.secondary" sx={{ lineHeight: 1.7 }}>
-          This notice explains how Dalgo uses and stores data, and how to
+          This notice explains how dalgo uses and stores data, and how to
           request access or deletion.
         </Typography>
         <Typography
@@ -96,16 +99,16 @@ export function PrivacyPage() {
               .
             </Typography>
             <Button
-              href={`mailto:${supportEmail}?subject=Dalgo%20support%20request`}
+              href={`mailto:${supportEmail}?subject=dalgo%20support%20request`}
               variant="outlined"
               startIcon={<Mail size={17} />}
               sx={{ alignSelf: "flex-start" }}
             >
-              Email Dalgo support
+              Email dalgo support
             </Button>
           </PrivacySection>
 
-          <PrivacySection title="Information Dalgo stores">
+          <PrivacySection title="Information dalgo stores">
             <Typography>
               Google or GitHub sign-in provides an account identifier and may
               provide a display name, email address, and avatar. Dalgo also
@@ -117,7 +120,7 @@ export function PrivacyPage() {
               Usernames, display names, profile pictures, ratings, and match
               statistics may appear to other players or on leaderboards.
               Uploaded profile pictures are stored in a public Supabase bucket
-              so they can be displayed throughout Dalgo. Submitted source code
+              so they can be displayed throughout dalgo. Submitted source code
               and hidden problem data are never shown to opponents.
             </Typography>
           </PrivacySection>
@@ -125,7 +128,7 @@ export function PrivacyPage() {
           <PrivacySection title="Code execution and service providers">
             <Typography>
               Live Run and Submit actions send source code and test inputs from
-              Cloudflare to Dalgo's private Codebox service on Google Cloud.
+              Cloudflare to dalgo's private Codebox service on Google Cloud.
               Expected hidden answers and service credentials are excluded from
               execution payloads.
             </Typography>
@@ -133,13 +136,13 @@ export function PrivacyPage() {
               Dalgo uses Supabase for authentication and stored application
               data, Cloudflare for the website and live match coordination, and
               Google Cloud for private code execution. These services process
-              data only as needed to provide Dalgo.
+              data only as needed to provide dalgo.
             </Typography>
           </PrivacySection>
 
           <PrivacySection title="Retention">
             <Typography>
-              Private submitted source is retained in Dalgo's database and live
+              Private submitted source is retained in dalgo's database and live
               match storage for up to 30 days. Codebox source and output records
               are removed after 24 hours. Compact verdicts, match history, and
               rating changes may be retained after source removal.
@@ -160,7 +163,7 @@ export function PrivacyPage() {
 
           <PrivacySection title="Access and deletion requests">
             <Typography>
-              Email the support address from the email connected to your Dalgo
+              Email the support address from the email connected to your dalgo
               account and include your username. Dalgo may ask for additional
               verification before disclosing or deleting account data.
             </Typography>
@@ -175,7 +178,7 @@ export function PrivacyPage() {
 
           <PrivacySection title="Changes to this notice">
             <Typography>
-              This page will be updated when Dalgo changes its providers,
+              This page will be updated when dalgo changes its providers,
               retention periods, public features, or contact details. The date
               above identifies the current version.
             </Typography>

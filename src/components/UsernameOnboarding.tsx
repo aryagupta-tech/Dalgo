@@ -96,7 +96,10 @@ export function UsernameOnboarding() {
             letterSpacing: ".09em",
           }}
         >
-          DALGO / USERNAME
+          <Box component="span" sx={{ textTransform: "none" }}>
+            dalgo
+          </Box>{" "}
+          / USERNAME
         </Typography>
         <Typography
           id="username-onboarding-title"

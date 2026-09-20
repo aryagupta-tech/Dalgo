@@ -1,6 +1,6 @@
 # Friend challenges
 
-After Google or GitHub sign-in, Dalgo requires each player to choose a unique public username. Usernames use 3–20 lowercase letters, numbers, or underscores and remain stable so friends can use them for direct challenges. Existing accounts complete the same one-time onboarding step.
+After Google or GitHub sign-in, dalgo requires each player to choose a unique public username. Usernames use 3–20 lowercase letters, numbers, or underscores and remain stable so friends can use them for direct challenges. Existing accounts complete the same one-time onboarding step.
 
 The **Play a friend** screen lets a signed-in player copy this ID, enter a friend’s ID, choose an arena, and send a ten-minute challenge. The invited player can accept or decline; the sender can cancel. Accepted challenges use the same rated human match pipeline as normal matchmaking: versioned problem selection, five-second preparation, server clocks, MatchRoom WebSockets, Codebox judging, Elo settlement, history, and reconnection.
 

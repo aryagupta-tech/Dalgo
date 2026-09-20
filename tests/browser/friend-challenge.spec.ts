@@ -219,7 +219,7 @@ test("the intended friend can accept and enters the authoritative match route", 
   await expect(page).toHaveURL(new RegExp(`/match/${matchId}$`));
 });
 
-test("a new OAuth account must choose a username before using Dalgo", async ({
+test("a new OAuth account must choose a username before using dalgo", async ({
   page,
 }) => {
   await authenticate(page);

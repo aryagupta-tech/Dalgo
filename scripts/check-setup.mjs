@@ -243,7 +243,7 @@ if (
     const report = evaluateSetup(process.env);
     if (args.includes("--json")) console.log(JSON.stringify(report, null, 2));
     else {
-      console.log("Dalgo local staging configuration (no network requests)");
+      console.log("dalgo local staging configuration (no network requests)");
       for (const check of report.checks)
         console.log(
           `${check.status === "configured" ? "OK" : "NEEDED"}  ${check.requirement}`,
