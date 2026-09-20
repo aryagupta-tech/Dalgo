@@ -17,10 +17,15 @@
 - Hosted recovery checks passed: parallel duplicates executed once; conflicting payloads were rejected; API and Redis restarts preserved the job; a killed worker returned an infrastructure error without rerunning; missing authentication, expired jobs, and forbidden options were rejected.
 - Python 3.12.3, GCC 13.3.0 with C++17, OpenJDK 17.0.20, Node 24.21.0, and isolate 2.7 were verified.
 
-The machine-readable report is in the ignored `artifacts/codebox-verification.json`. The hosted API remains private and the temporary SSH forward was closed after verification.
+The machine-readable report is in the ignored `artifacts/codebox-verification.json`. The hosted API remains private and the temporary SSH forward was closed after verification. The verified timestamp recorded in staging is `2026-09-20T07:49:07.429Z`.
+
+## Completed on Cloudflare and Supabase
+
+- Cloudflare is authorized as `aryaguptaa.vns@gmail.com`. The named tunnel `dalgo-codebox-staging` is healthy and runs as a system service on the VM.
+- Workers VPC service `01a0bdc2-e64f-7b63-8dae-b0c78031a859` reaches Codebox at `127.0.0.1:3000`; no public Codebox hostname exists.
+- Staging has the `CODEBOX` VPC binding and private `CODEBOX_AUTH_TOKEN` secret. A short-lived edge Worker verified the complete Cloudflare edge → Workers VPC → tunnel → Google VM → Codebox path and received `ready=true`, `executor=isolate`, and `concurrency=1`.
+- Supabase project `gtdofekbolymsrrullpb` is restored. Three versioned migrations are applied, 30 distinct problems are seeded (10 per arena), all public tables use RLS, hidden problem data has an explicit deny policy for browser roles, and the security advisor reports no findings.
 
 ## Still required before live staging
 
-Cloudflare Wrangler authorization, named tunnel/VPC service creation, the `CODEBOX` VPC binding, and the staging `CODEBOX_AUTH_TOKEN` secret remain pending. Staging still has `LIVE_MATCHES_ENABLED=false` and no judge verification timestamp, so ranked play remains safely disabled.
-
-After the private binding is connected, verify its health from the deployed Worker, configure two real Supabase tester IDs, and complete signed-in bot and two-human matches, reconnects, OAuth redirects, WebSocket recovery, judging races, and settlement recovery. Public admission remains a separate rollout decision after those staging checks.
+Create two real Supabase users through the deployed OAuth flow, configure their UUIDs in the server-only staging allowlist, and complete signed-in bot and two-human matches, reconnects, OAuth redirects, WebSocket recovery, judging races, and settlement recovery. Staging remains at `LIVE_MATCHES_ENABLED=false` until those users exist. Public admission remains a separate rollout decision after the staging checks.

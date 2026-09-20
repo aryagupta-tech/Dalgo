@@ -1,56 +1,44 @@
-> **Codebox migration:** The current judge and hosting instructions are in [CODEBOX.md](CODEBOX.md). The JDoodle quota/setup details below are historical and do not apply to the Codebox deployment.
-
 # Dalgo service setup
 
 Work in `/Users/arya/Developer/Dalgo`. The Documents path is obsolete.
 
-The owner-facing requirements are in [REQUIREMENTS.md](REQUIREMENTS.md). Use `npm run setup:local` to initialize private staging settings and `npm run check:setup` to inspect missing fields without exposing values.
+The owner-facing steps are in [REQUIREMENTS.md](REQUIREMENTS.md). Use `npm run check:setup` to inspect missing fields without exposing values.
 
-## Current safe deployment defaults
+## Safe deployment defaults
 
-`npm run deploy:staging` builds the UI and deploys `dalgo-staging`. Its own Coordinator and MatchRoom namespaces are isolated from production. Staging admission mode is selected, but `LIVE_MATCHES_ENABLED=false` keeps execution off. `npm run deploy:production` targets `dalgo` with admission disabled. The compatibility alias `deploy:cloudflare` now targets staging.
+`npm run deploy:staging` builds the React/Material UI frontend and deploys `dalgo-staging`. Its Coordinator and MatchRoom Durable Object namespaces are isolated from production. Staging uses `ADMISSION_MODE=staging`, while `LIVE_MATCHES_ENABLED=false` blocks real matchmaking. `npm run deploy:production` targets `dalgo` with admission disabled.
 
-A direct API deployment must upload the same Worker bundle, static assets, environment values, SQLite class migration and cron as `wrangler.jsonc`. Use the connected Cloudflare account; never create a temporary or paid account as a deployment workaround.
+## Cloudflare
 
-## Cloudflare connection
+Staging runs at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev). It includes static assets, SQLite-backed Durable Objects, WebSockets, an independent signing secret, and a daily source-retention cron. URL query strings are redacted from observability logs.
 
-Cloudflare write access is verified as of 12 September 2026. The staging Worker is deployed at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev), with its static assets, SQLite Coordinator/MatchRoom namespaces, an independent signing secret, and the daily `0 3 * * *` retention schedule. URL query strings are redacted in observability logs.
+Codebox is connected privately through named Cloudflare Tunnel `dalgo-codebox-staging` and Workers VPC service `01a0bdc2-e64f-7b63-8dae-b0c78031a859`. The Worker binding is `CODEBOX`; the API token is a Worker secret. The execution API has no public hostname.
 
-The earlier authentication error `10000` is resolved. The account subdomain is `dalgo-arya.workers.dev`; no further Cloudflare setup is currently needed from the owner. Live matches remain disabled until Supabase, OAuth, judge evidence and staging acceptance are complete.
-
-Deployment smoke checks returned 200 for configuration, the demo page and all 30 public problems, and 401 for unauthenticated admission. The updated deployment connects the saved Supabase and JDoodle settings while keeping real play disabled pending judge evidence.
+The full edge-to-executor route returned `ready=true`, `executor=isolate`, and `concurrency=1`. The verified timestamp is stored in staging, but live play stays off until tester acceptance passes.
 
 ## Supabase
 
-The dedicated `dalgo-staging` project exists in Mumbai with ref `gtdofekbolymsrrullpb`. Both version-controlled migrations are applied and all 30 problems are seeded. Google/GitHub provider settings are enabled. The private staging file contains the validated project URL and keys. The unrelated Lockedin project was left untouched.
+The dedicated `dalgo-staging` project exists in Mumbai with ref `gtdofekbolymsrrullpb`. Three versioned migrations are applied and 30 immutable problem versions are seeded, 10 per arena. All public tables have RLS. Browser roles have an explicit deny policy for the problem bank because rows include hidden tests and reference solutions; the backend secret role supplies sanitized statements through the Worker.
 
-Use `npm run seed:problems:staging` for an inspection or append `-- --apply` for immutable-version seeding. Modern server keys are sent as `apikey`, not as JWT Bearer tokens.
+The Supabase security advisor reports no findings. Fresh-database unused-index notices are expected until real queries run. Google and GitHub provider settings are enabled, while their complete browser redirect journeys still need owner testing.
 
-The Supabase bootstrap event trigger retains owner execution; unnecessary browser grants were revoked. The remaining informational advisor notice for `public.problems` is intentional: RLS is enabled without browser policies because hidden content is backend-only. See [the Supabase advisor explanation](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy). Public statements are served separately, without hidden tests or solutions.
+Use `npm run seed:problems:staging` to inspect the seed set or append `-- --apply` to insert missing immutable versions. The seeder refuses to overwrite an existing version with changed content.
 
-The exact OAuth callback and frontend redirect settings are in `REQUIREMENTS.md`. Provider flags are verified; the owner will perform browser sign-in testing.
+## Secrets and configuration
 
-## Worker secrets
-
-Use `.dev.vars.example` for local development. `.dev.vars` and `.dev.vars.staging` are ignored. Generate a distinct 32-byte-or-longer random `WEBSOCKET_SIGNING_SECRET`; never reuse a Supabase key as a signing key.
-
-Store these in the staging Worker's secret bindings:
+Use `.dev.vars.example` for local development. `.dev.vars` and `.dev.vars.staging` are ignored. No second `.env` file is required. Keep these only in local ignored settings and Cloudflare secret bindings:
 
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
 - `WEBSOCKET_SIGNING_SECRET`
-- `JDOODLE_CLIENT_ID`, `JDOODLE_CLIENT_SECRET`
-- `TESTER_USER_IDS`: comma-separated UUIDs of real Supabase test users
+- `CODEBOX_AUTH_TOKEN`
+- `TESTER_USER_IDS`: comma-separated UUIDs of two real Supabase users
 
-No secret belongs in a `VITE_` variable. A combined frontend/API deployment gets its public Supabase URL/key from `/api/config`, so frontend build credentials are optional.
+No secret belongs in a `VITE_` variable. The frontend receives only the public Supabase URL and publishable key from `/api/config`.
 
 ## Admission and first real match
 
-`GET /api/admission` authenticates the current user and returns `{mode, canJoin, reason}`. The frontend refreshes this after account changes. Actual enforcement occurs in the Coordinator; editing browser state cannot grant access. Unknown modes and malformed allowlists deny new admissions.
+`GET /api/admission` authenticates the current user and returns `{mode, canJoin, reason}`. Actual eligibility is enforced in the Coordinator; browser state cannot grant access. Unknown modes and malformed allowlists deny admission.
 
-Staging requires the judge evidence in `LAUNCH.md`, `ADMISSION_MODE=staging`, a valid tester list, and `LIVE_MATCHES_ENABLED=true`. Public mode additionally requires completing the two-account staging acceptance. A pause blocks fresh searches, releases unassigned waiting reservations, and preserves active/assigned matches and settlement retries. Fresh searches are capped per account at six per minute and thirty per hour; idempotent retries do not consume that budget.
+The initial Codebox capacity is one active match and one execution at a time. Each player retains three preview runs and five scored submissions. A busy executor pauses new admission without consuming a daily-credit budget. Active matches continue when fresh admission is paused.
 
-JDoodle verification is opt-in. At a verified cost of one credit per execution, all 30 problems plus 32 probes need 272 executions and an estimated 274-credit budget including retries. Split the matrix across quota days; never upgrade billing to finish it. A bounded memory probe can be inconclusive and must not be recorded as a pass.
-
-## Owner input still required
-
-See `REQUIREMENTS.md` for the pending attempt-policy decision, real judge evidence, two test identities, and public contact details. Provider credentials and project creation are complete. Never paste private keys or passwords into chat.
+Staging can be enabled only after two OAuth users exist, both UUIDs are configured in `TESTER_USER_IDS`, and the owner is ready to run the acceptance checklist in [LAUNCH.md](LAUNCH.md). Production remains disabled until that checklist passes.

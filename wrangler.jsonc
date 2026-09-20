@@ -64,7 +64,7 @@
       "vars": {
         "ADMISSION_MODE": "staging",
         "LIVE_MATCHES_ENABLED": "false",
-        "JUDGE_VERIFIED_AT": "",
+        "JUDGE_VERIFIED_AT": "2026-09-20T07:49:07.429Z",
         "JUDGE_DAILY_QUOTA": "0",
         "JUDGE_CREDIT_COST": "0",
         "JUDGE_PROVIDER": "codebox",
@@ -76,6 +76,12 @@
       "triggers": {
         "crons": ["0 3 * * *"],
       },
+      "vpc_services": [
+        {
+          "binding": "CODEBOX",
+          "service_id": "01a0bdc2-e64f-7b63-8dae-b0c78031a859",
+        },
+      ],
     },
     "production": {
       "name": "dalgo",

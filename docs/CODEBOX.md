@@ -42,19 +42,19 @@ gcloud compute ssh dalgo-codebox \
 
 Then run `npm run verify:codebox` and `npm run verify:codebox:recovery`. A passing local report does not replace this hosted run.
 
-## Connect Cloudflare privately
+## Cloudflare private connection
 
-Create the named tunnel `dalgo-codebox-staging` and run `cloudflared` as a service on the VM. Create an HTTP Workers VPC service that reaches `localhost:3000` through that tunnel; do not create a public hostname for Codebox.
+The named tunnel `dalgo-codebox-staging` runs as a system service on the VM. HTTP Workers VPC service `01a0bdc2-e64f-7b63-8dae-b0c78031a859` reaches `localhost:3000` through that tunnel. Codebox has no public hostname.
 
-Save the returned service ID in staging:
+The staging binding is versioned in `wrangler.jsonc`:
 
 ```sh
 node scripts/configure-codebox-binding.mjs staging SERVICE_ID
 ```
 
-Set the Worker secret `CODEBOX_AUTH_TOKEN` from `services/codebox/.env` using Wrangler secret input. Never store this token in a `VITE_` variable or print it. Deploy with `npm run deploy:staging` while `LIVE_MATCHES_ENABLED=false`.
+The private Worker secret `CODEBOX_AUTH_TOKEN` is installed separately. Never store this token in a `VITE_` variable or print it. Deploy with `npm run deploy:staging` while `LIVE_MATCHES_ENABLED=false`.
 
-After hosted verification, set `JUDGE_VERIFIED_AT` to the hosted verification time, retain `MAX_ACTIVE_MATCHES=1` and `JUDGE_CONCURRENCY=1`, configure the two tester user IDs, and enable staging only. Verify real bot and human matches, reconnects, timeouts, judging races, and settlement recovery before considering public admission.
+Hosted verification and the private edge-to-Codebox health check are complete. Staging records the verification time and retains `MAX_ACTIVE_MATCHES=1` and `JUDGE_CONCURRENCY=1`. Configure two tester user IDs before enabling staging, then verify real bot and human matches, reconnects, timeouts, judging races, and settlement recovery before considering public admission.
 
 ## Operations and recovery
 
