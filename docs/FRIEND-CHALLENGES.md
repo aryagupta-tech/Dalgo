@@ -28,4 +28,4 @@ All routes below require a Supabase bearer token.
 | `DELETE` | `/api/challenges/:id`         | Cancel as the challenger                                             |
 | `GET`    | `/api/challenges/events`      | Authenticated WebSocket updates using a short-lived socket ticket    |
 
-Acceptance applies the same admission mode, tester allowlist, Codebox health, active-match capacity, attempt limits, and execution reservation checks as normal matchmaking. Production remains disabled by configuration until the public launch gates pass.
+Acceptance applies the same admission mode, Codebox health, active-match capacity, attempt limits, and execution reservation checks as normal matchmaking. Production uses capped public admission with one active match and one execution at a time.

@@ -77,7 +77,7 @@ The setup command creates private ignored credentials, preserves Supabase settin
 
 There is no Codebox daily credit allowance. The initial free server admits one active match and one execution at a time, with three sample runs and five submissions per player. Interrupted requests reuse a durable job ID. An uncertain outcome that could change the winner voids the match.
 
-See [docs/CODEBOX.md](docs/CODEBOX.md) for Google Cloud provisioning, private Cloudflare Tunnel/VPC setup, and hosted acceptance. Local execution success does not establish hosted launch readiness. Do not enable public play until the hosted and two-account checks pass.
+See [docs/CODEBOX.md](docs/CODEBOX.md) for Google Cloud provisioning, private Cloudflare Tunnel/VPC setup, and hosted acceptance. Hosted execution and two-account acceptance passed before capped public admission opened. Keep the one-match and one-execution caps, and close new admission if executor or settlement health fails.
 
 ## Cloudflare deployment
 

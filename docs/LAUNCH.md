@@ -10,9 +10,10 @@
 - Hosted recovery passed for parallel idempotent requests, conflicting payloads, API/Redis restarts, worker failure without duplicate execution, authentication, expiry, and forbidden options.
 - Codebox reports isolate 2.7, Python 3.12.3, GCC 13.3.0 with C++17, OpenJDK 17.0.20, and Node 24.21.0.
 - The Cloudflare edge → Workers VPC → named tunnel → Google VM → Codebox route passed a private health request. No execution port or hostname is public.
-- Supabase has three applied migrations, seven RLS-protected public tables, 30 distinct problem versions, and no database/RLS security findings. Hidden tests and reference solutions are denied to browser roles. The Auth advisor retains the Free plan’s generic leaked-password warning, but Dalgo exposes no password login surface.
+- Supabase has four applied migrations, eight RLS-protected public tables, 30 distinct problem versions, and no database/RLS security findings. Hidden tests and reference solutions are denied to browser roles. The Auth advisor retains the Free plan’s generic leaked-password warning, but Dalgo exposes no password login surface.
 - Supabase Auth exposes Google/GitHub only. Email sign-in is disabled, the production Worker is the Site URL, and production, staging, and local development origins are allowlisted redirects.
 - The initial cap is one match and one execution at a time. Codebox uses server capacity instead of daily execution credits.
+- Stable public Dalgo player IDs and participant-only friend challenge storage are migrated. Direct challenge acceptance reuses the authoritative human MatchRoom, Codebox, Elo, and settlement path.
 
 The detailed executor record is in [CODEBOX-VERIFICATION.md](CODEBOX-VERIFICATION.md). Machine-readable reports stay in ignored `artifacts/` files because they include operational detail.
 
