@@ -114,9 +114,11 @@ export function PrivacyPage() {
               verdicts, rating changes, and submission records.
             </Typography>
             <Typography>
-              Usernames, display names, avatars, ratings, and match statistics
-              may appear to other players or on leaderboards. Submitted source
-              code and hidden problem data are never shown to opponents.
+              Usernames, display names, profile pictures, ratings, and match
+              statistics may appear to other players or on leaderboards.
+              Uploaded profile pictures are stored in a public Supabase bucket
+              so they can be displayed throughout Dalgo. Submitted source code
+              and hidden problem data are never shown to opponents.
             </Typography>
           </PrivacySection>
 

@@ -7,7 +7,7 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"],
+    "run_worker_first": true,
   },
   "durable_objects": {
     "bindings": [
@@ -49,6 +49,13 @@
   "env": {
     "staging": {
       "name": "dalgo-staging",
+      "workers_dev": true,
+      "routes": [
+        {
+          "pattern": "staging.dalgo.site",
+          "custom_domain": true,
+        },
+      ],
       "durable_objects": {
         "bindings": [
           {
@@ -85,6 +92,17 @@
     },
     "production": {
       "name": "dalgo",
+      "workers_dev": true,
+      "routes": [
+        {
+          "pattern": "dalgo.site",
+          "custom_domain": true,
+        },
+        {
+          "pattern": "www.dalgo.site",
+          "custom_domain": true,
+        },
+      ],
       "durable_objects": {
         "bindings": [
           {

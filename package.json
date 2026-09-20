@@ -27,7 +27,8 @@
     "codebox:up": "docker compose -f services/codebox/compose.yaml up -d --build",
     "codebox:down": "docker compose -f services/codebox/compose.yaml down",
     "verify:codebox": "node --env-file-if-exists=.dev.vars.staging scripts/verify-codebox.mjs",
-    "verify:codebox:recovery": "node --env-file-if-exists=.dev.vars.staging scripts/verify-codebox-recovery.mjs"
+    "verify:codebox:recovery": "node --env-file-if-exists=.dev.vars.staging scripts/verify-codebox-recovery.mjs",
+    "setup:git-hooks": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -43,6 +44,7 @@
     "monaco-editor": "^0.52.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-easy-crop": "^6.2.3",
     "react-router-dom": "^7.9.0"
   },
   "devDependencies": {

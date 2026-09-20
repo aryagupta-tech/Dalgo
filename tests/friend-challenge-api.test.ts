@@ -328,3 +328,89 @@ describe("friend challenge API boundary", () => {
     ]);
   });
 });
+
+function validAvatarWebp() {
+  const bytes = new Uint8Array(30);
+  bytes.set(new TextEncoder().encode("RIFF"), 0);
+  new DataView(bytes.buffer).setUint32(4, 22, true);
+  bytes.set(new TextEncoder().encode("WEBP"), 8);
+  bytes.set(new TextEncoder().encode("VP8 "), 12);
+  new DataView(bytes.buffer).setUint32(16, 10, true);
+  bytes[23] = 0x9d;
+  bytes[24] = 0x01;
+  bytes[25] = 0x2a;
+  new DataView(bytes.buffer).setUint16(26, 512, true);
+  new DataView(bytes.buffer).setUint16(28, 512, true);
+  return bytes;
+}
+
+describe("profile avatar API boundary", () => {
+  it("requires authentication and a canonical WebP upload", async () => {
+    const env = runtime();
+    const unauthenticated = await worker.fetch(
+      new Request("https://dalgo.invalid/api/profile/avatar", {
+        method: "PUT",
+        headers: { "Content-Type": "image/webp" },
+        body: validAvatarWebp(),
+      }),
+      env,
+    );
+    expect(unauthenticated.status).toBe(401);
+
+    const invalid = await worker.fetch(
+      request("/profile/avatar", {
+        method: "PUT",
+        headers: { "Content-Type": "image/png" },
+        body: validAvatarWebp(),
+      }),
+      env,
+    );
+    expect(invalid.status).toBe(415);
+    expect(db).not.toHaveBeenCalled();
+  });
+
+  it("derives the avatar owner only from the verified session", async () => {
+    const env = runtime();
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response("{}", { status: 200 }))
+      .mockResolvedValueOnce(new Response("[]", { status: 200 }));
+    vi.mocked(db).mockResolvedValueOnce([
+      {
+        previous_storage_path: null,
+        profile_id: A,
+        display_name: "Chosen name",
+        username: "chosen_name",
+        username_configured_at: "2026-09-20T00:00:00Z",
+        avatar_url: "https://offline.invalid/storage/avatar.webp",
+      },
+    ]);
+
+    const response = await worker.fetch(
+      request("/profile/avatar", {
+        method: "PUT",
+        headers: { "Content-Type": "image/webp" },
+        body: validAvatarWebp(),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    const rpcBody = JSON.parse(String(vi.mocked(db).mock.calls[0][2]?.body));
+    expect(rpcBody.p_user_id).toBe(A);
+    expect(rpcBody.p_storage_path).toMatch(new RegExp("^" + A + "/"));
+  });
+
+  it("advertises PUT for cross-origin profile updates", async () => {
+    const response = await worker.fetch(
+      new Request("https://dalgo.invalid/api/profile/avatar", {
+        method: "OPTIONS",
+        headers: { Origin: "https://dalgo.invalid" },
+      }),
+      runtime(),
+    );
+    expect(response.status).toBe(204);
+    expect(response.headers.get("Access-Control-Allow-Methods")).toContain(
+      "PUT",
+    );
+  });
+});

@@ -29,6 +29,7 @@ import { ARENAS, type Mode, type Rating } from "../../shared/types";
 import { useAuth } from "../auth";
 import { arenaKeys, useRatings } from "../data";
 import { EmptyState, Footer } from "./Chrome";
+import { ProfileAvatarEditor } from "./ProfileAvatarEditor";
 
 const mono = '"JetBrains Mono", monospace';
 
@@ -153,6 +154,7 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
     profile,
     profileLoading,
     profileError,
+    refreshProfile,
   } = useAuth();
   const {
     ratings,
@@ -161,6 +163,7 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
   } = useRatings();
   const [signOutBusy, setSignOutBusy] = useState(false);
   const [signOutError, setSignOutError] = useState("");
+  const [avatarOverride, setAvatarOverride] = useState("");
   const stats = useMemo(() => totalStats(ratings), [ratings]);
   const joined = joinedLabel(user?.created_at);
   const provider = accountProvider(user?.app_metadata?.provider);
@@ -280,7 +283,7 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
               sx={{ alignItems: { xs: "flex-start", sm: "center" } }}
             >
               <Avatar
-                src={profile?.avatar}
+                src={avatarOverride || profile?.avatar}
                 slotProps={{ img: { alt: "" } }}
                 sx={{
                   width: { xs: 68, sm: 78 },
@@ -350,6 +353,13 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
                   </Stack>
                 )}
               </Box>
+              <ProfileAvatarEditor
+                disabled={profileLoading}
+                onSaved={(updated) => {
+                  setAvatarOverride(updated.avatar ?? "");
+                  refreshProfile();
+                }}
+              />
             </Stack>
             {profileError && (
               <Alert severity="error" sx={{ mt: 2.5 }}>

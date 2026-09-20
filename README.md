@@ -8,7 +8,7 @@ The public lobby, live queue, match workspace, results, ratings, history, leader
 
 The backend includes Supabase OAuth verification, durable human matchmaking and bot fallback, direct friend challenges with unique usernames chosen during account creation, execution reservations, a private **Codebox** adapter with durable submission polling, receipt-ordered adjudication, and transactional settlement. New admissions support disabled, tester-only staging, and public modes, with a durable request budget. Active matches can finish after admissions close.
 
-Cloudflare staging is deployed at [https://dalgo-staging.dalgo-arya.workers.dev](https://dalgo-staging.dalgo-arya.workers.dev) with tester-only live play enabled for two server-side allowlisted accounts. The capped public Worker is deployed at [https://dalgo.dalgo-arya.workers.dev](https://dalgo.dalgo-arya.workers.dev) with its private service bindings and secrets. Supabase is provisioned with all 30 problems and explicit row-level access policies. OAuth sign-in and signed-in human/bot staging acceptance passed through the private Codebox path. Supabase Auth exposes Google/GitHub only, uses the production Worker as its Site URL, and allowlists production, staging, and local redirects. Public play admits signed-in users while retaining one active match and one execution at a time. See [docs/SETUP.md](docs/SETUP.md) for account setup and [docs/LAUNCH.md](docs/LAUNCH.md) for launch evidence.
+The canonical production address is [https://dalgo.site](https://dalgo.site), with `www.dalgo.site` permanently redirecting to the apex domain. Tester-only staging runs at [https://staging.dalgo.site](https://staging.dalgo.site). The existing `workers.dev` addresses remain enabled only during the DNS and OAuth cutover. Both Workers retain their private service bindings and secrets. Supabase is provisioned with all 30 problems and explicit row-level access policies. OAuth sign-in and signed-in human/bot staging acceptance passed through the private Codebox path. Public play admits signed-in users while retaining one active match and one execution at a time. See [docs/SETUP.md](docs/SETUP.md) for account setup and [docs/LAUNCH.md](docs/LAUNCH.md) for launch evidence.
 
 Dalgo's operator, support contact, retention terms, and account/data-request process are published in [docs/PRIVACY.md](docs/PRIVACY.md) and on the application's `/privacy` route.
 
@@ -83,7 +83,7 @@ See [docs/CODEBOX.md](docs/CODEBOX.md) for Google Cloud provisioning, private Cl
 
 ## Cloudflare deployment
 
-The checked-in configuration uses a free Workers subdomain, SQLite-backed Durable Objects, Worker assets, and a daily source-purge trigger. Authenticate Wrangler with your own Cloudflare account. Keep live play disabled until the hosted judge is verified.
+The checked-in configuration uses Cloudflare custom domains, SQLite-backed Durable Objects, Worker assets, and a daily source-purge trigger. `develop` deploys only tester staging, while `main` deploys only production after a reviewed promotion pull request. The existing Workers subdomains remain enabled during cutover and are disabled after custom-domain smoke tests. Authenticate Wrangler with your own Cloudflare account.
 
 Use [docs/SETUP.md](docs/SETUP.md) for modern Supabase keys, a separate WebSocket signing secret, and tester access. Secrets are scoped to the selected environment. `ALLOWED_ORIGINS` controls CORS, not tester eligibility.
 
@@ -92,7 +92,7 @@ npm run check:staging
 npm run deploy:staging
 ```
 
-Production has a separate `npm run deploy:production` command. Its checked-in public admission settings assume the hosted executor and two-account acceptance evidence recorded in [docs/LAUNCH.md](docs/LAUNCH.md) remain valid. Configure the final origin in Supabase Auth and disable admission immediately if production smoke checks fail.
+Production has a separate `npm run deploy:production` command. Configure Supabase Auth with `https://dalgo.site` as its Site URL and exact production, staging, and local redirect origins. Disable admission immediately if production smoke checks fail. The branch and release rules are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Source map
 

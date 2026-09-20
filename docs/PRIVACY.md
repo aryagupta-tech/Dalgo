@@ -6,9 +6,9 @@ Dalgo is operated by **Arya Gupta**. For support, privacy questions, or account 
 
 ## Information Dalgo stores
 
-Google or GitHub sign-in provides an account identifier and may provide a display name, email address, and avatar. Dalgo also stores the player's chosen username, six arena ratings, match participation, verdicts, rating changes, and submission records.
+Google or GitHub sign-in provides an account identifier and may provide a display name, email address, and avatar. Dalgo also stores profile pictures uploaded by the player, the player's chosen username, six arena ratings, match participation, verdicts, rating changes, and submission records.
 
-Usernames, display names, avatars, ratings, and match statistics may appear to other players or on leaderboards. Submitted source code and hidden problem data are never shown to opponents.
+Usernames, display names, profile pictures, ratings, and match statistics may appear to other players or on leaderboards. Uploaded profile pictures are stored in a public Supabase bucket so Dalgo can display them throughout the service. Submitted source code and hidden problem data are never shown to opponents.
 
 ## Code execution and service providers
 
