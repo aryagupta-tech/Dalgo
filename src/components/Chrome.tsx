@@ -168,7 +168,7 @@ export function SignIn({ onClose }: { onClose: () => void }) {
         variant="h4"
         sx={{ fontSize: "1.875rem", mb: 2 }}
       >
-        Your place at the table.
+        Sign in to Dalgo
       </Typography>
       <Typography color="text.secondary">
         Keep your ratings and match history with a Dalgo account.
@@ -219,11 +219,10 @@ export function SignIn({ onClose }: { onClose: () => void }) {
               fontWeight: 600,
             }}
           >
-            Sign-in isn’t connected yet.
+            Sign-in is unavailable.
           </Typography>
           <Typography variant="body2" sx={{ mt: 1, mb: 2 }}>
-            You can try the complete demo without an account. Real matches and
-            saved ratings open after service verification.
+            You can still explore the match experience without an account.
           </Typography>
           <Button
             component={Link}
@@ -355,14 +354,8 @@ export function Footer() {
         letterSpacing: ".03em",
       }}
     >
-      <Box component="span">
-        DALGO{" "}
-        <Box component="span" sx={{ px: 1, color: "#949494" }}>
-          /
-        </Box>{" "}
-        DSA COMPETITION
-      </Box>
-      <Box component="span">Free beta · v0.2</Box>
+      <Box component="span">DALGO · DSA 1V1</Box>
+      <Box component="span">Python · C++ · Java · JavaScript</Box>
     </Stack>
   );
 }

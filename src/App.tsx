@@ -12,10 +12,8 @@ import {
 import {
   ArrowRight,
   ArrowUpRight,
-  BookOpen,
   ChevronRight,
   Clock3,
-  Flag,
   LogOut,
   Play,
   Swords,
@@ -27,7 +25,6 @@ import {
   Avatar,
   Box,
   Button,
-  Chip,
   FormControlLabel,
   List,
   ListItem,
@@ -62,21 +59,9 @@ import { arenaKeys, formatClock, useHistory, useRatings } from "./data";
 import { DemoPage, LiveMatchPage, LiveQueue } from "./components/MatchPage";
 import { FriendPlay } from "./components/FriendPlay";
 const arenaDetails = {
-  easy: {
-    subtitle: "Start with the fundamentals.",
-    topics: "Arrays, strings, hash maps",
-    note: "A focused problem with a direct approach. Speed and careful edge cases make the difference.",
-  },
-  medium: {
-    subtitle: "Find the better approach.",
-    topics: "Trees, graphs, dynamic programming",
-    note: "A problem that rewards pattern recognition. Choose your approach before you start typing.",
-  },
-  hard: {
-    subtitle: "Make every decision count.",
-    topics: "Advanced graphs, DP, optimization",
-    note: "A deeper problem with tighter constraints. Correctness and complexity both matter.",
-  },
+  easy: { topics: "Arrays, strings, hash maps" },
+  medium: { topics: "Trees, graphs, dynamic programming" },
+  hard: { topics: "Advanced graphs, DP, optimization" },
 };
 const navigation = [
   { to: "/", label: "Play", icon: Swords },
@@ -87,7 +72,7 @@ const navigation = [
 ];
 export default function App() {
   useDalgoTools();
-  const { user, client, config } = useAuth();
+  const { user, client } = useAuth();
   const [signIn, setSignIn] = useState(false);
   const location = useLocation();
   const matchRoute = /^\/(demo|match|preview)\//.test(location.pathname);
@@ -131,20 +116,6 @@ export default function App() {
             }}
           >
             <Brand compactAtMedium />
-            <Typography
-              component="span"
-              variant="overline"
-              sx={{
-                display: { xs: "none", md: "block" },
-                mt: 1.25,
-                fontFamily: '"JetBrains Mono", monospace',
-                fontSize: ".75rem",
-                letterSpacing: ".12em",
-                color: "text.secondary",
-              }}
-            >
-              THE CODING CLUB
-            </Typography>
           </Box>
           <List
             component="nav"
@@ -159,7 +130,7 @@ export default function App() {
               mt: { xs: 2, sm: 0 },
             }}
           >
-            {navigation.map(({ to, label, icon: Icon }, index) => (
+            {navigation.map(({ to, label, icon: Icon }) => (
               <ListItemButton
                 key={to}
                 component={NavLink}
@@ -199,61 +170,10 @@ export default function App() {
                 >
                   {label}
                 </Typography>
-                <Typography
-                  component="span"
-                  sx={{
-                    display: { xs: "none", lg: "inline" },
-                    ml: "auto",
-                    fontFamily: '"JetBrains Mono", monospace',
-                    fontSize: ".75rem",
-                    color: "#949494",
-                  }}
-                >
-                  0{index + 1}
-                </Typography>
               </ListItemButton>
             ))}
           </List>
           <Box sx={{ mt: { xs: 0, sm: "auto" }, gridColumn: 2, gridRow: 1 }}>
-            <Box
-              sx={{ display: { xs: "none", md: "block" }, px: 1.1, pb: 2.75 }}
-            >
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{
-                  alignItems: "center",
-                }}
-              >
-                <Box
-                  aria-hidden="true"
-                  sx={{
-                    width: 6,
-                    height: 6,
-                    backgroundColor: "#eeeeee",
-                    flexShrink: 0,
-                  }}
-                />
-                <Typography variant="body2">
-                  {config.playEnabled
-                    ? config.admissionMode === "staging"
-                      ? "Tester matches open"
-                      : "Ranked play open"
-                    : "Demo available"}
-                </Typography>
-              </Stack>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mt: 0.75 }}
-              >
-                {config.admissionMode === "staging"
-                  ? "Private staging"
-                  : config.playEnabled
-                    ? "Free beta"
-                    : "Ranked play not open yet"}
-              </Typography>
-            </Box>
             {user ? (
               <Stack spacing={1}>
                 <Button
@@ -402,20 +322,13 @@ function Page({ children }: { children: ReactNode }) {
     </Box>
   );
 }
-function PageTop({
-  section,
-  children,
-}: {
-  section: string;
-  children?: ReactNode;
-}) {
+function PageTop({ section }: { section: string }) {
   return (
     <Stack
       direction="row"
       spacing={1.5}
       sx={{
         alignItems: "center",
-        justifyContent: "space-between",
         minHeight: 32,
       }}
     >
@@ -429,7 +342,7 @@ function PageTop({
           color: "text.secondary",
         }}
       >
-        CLUBHOUSE{" "}
+        DALGO{" "}
         <Box
           component="span"
           sx={{ px: { xs: 0.75, sm: 1.6 }, color: "#949494" }}
@@ -438,18 +351,6 @@ function PageTop({
         </Box>{" "}
         {section}
       </Typography>
-      {children || (
-        <Chip
-          label="FREE BETA"
-          size="small"
-          variant="outlined"
-          sx={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: ".7rem",
-            borderRadius: "3px",
-          }}
-        />
-      )}
     </Stack>
   );
 }
@@ -485,7 +386,7 @@ function PageHeading({
             overflowWrap: "anywhere",
           }}
         >
-          {title}.
+          {title}
         </Typography>
         <Typography
           color="text.secondary"
@@ -617,30 +518,9 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
     <Page>
       <PageTop section="PLAY" />
       <PageHeading
-        title="The arena"
-        subtitle="One problem. Two players. First correct solution wins."
-      >
-        <Typography
-          sx={{
-            display: { xs: "none", lg: "block" },
-            flexShrink: 0,
-            textAlign: "right",
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: ".75rem",
-            lineHeight: 1.9,
-            letterSpacing: ".06em",
-            color: "#c9c9c9",
-          }}
-        >
-          RATED 1v1
-          <Box
-            component="span"
-            sx={{ display: "block", color: "text.secondary" }}
-          >
-            10 / 20 / 30 MIN
-          </Box>
-        </Typography>
-      </PageHeading>
+        title="Choose an arena"
+        subtitle="Play a rated 1v1 match on the same problem and server clock."
+      />
       {user &&
         (currentQueue?.matchId || currentQueue?.status === "waiting") && (
           <Alert
@@ -728,18 +608,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
             }}
           >
             <Box sx={{ px: { xs: 2.25, sm: 3 }, pt: 2.75 }}>
-              <SectionHeading title="Choose your match">
-                <Typography
-                  variant="overline"
-                  sx={{
-                    fontFamily: '"JetBrains Mono", monospace',
-                    fontSize: ".7rem",
-                    color: "text.secondary",
-                  }}
-                >
-                  01 — DIFFICULTY
-                </Typography>
-              </SectionHeading>
+              <SectionHeading title="Choose your match" />
             </Box>
             <RadioGroup
               name="arena"
@@ -768,25 +637,12 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                         display: "grid",
                         gridTemplateColumns: {
                           xs: "minmax(0, 1fr) 48px",
-                          sm: "31px minmax(0, 1fr) 62px",
+                          sm: "minmax(0, 1fr) 62px",
                         },
                         alignItems: "center",
                         gap: { xs: 1.3, sm: 1.9 },
                       }}
                     >
-                      <Typography
-                        component="span"
-                        aria-hidden="true"
-                        sx={{
-                          display: { xs: "none", sm: "inline" },
-                          fontFamily: '"JetBrains Mono", monospace',
-                          fontSize: ".75rem",
-                          color:
-                            arena === a ? "text.primary" : "text.secondary",
-                        }}
-                      >
-                        0{i + 1}
-                      </Typography>
                       <Box>
                         <Typography
                           component="strong"
@@ -850,60 +706,6 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                 />
               ))}
             </RadioGroup>
-            <Box sx={{ p: { xs: 2.25, sm: 3 } }}>
-              <Typography
-                variant="overline"
-                sx={{
-                  fontFamily: '"JetBrains Mono", monospace',
-                  fontSize: ".75rem",
-                }}
-              >
-                {ARENAS[arena].name.toUpperCase()} /{" "}
-                {ARENAS[arena].duration / 60} MINUTES
-              </Typography>
-              <Typography
-                component="h3"
-                variant="h6"
-                sx={{ fontSize: "1.125rem", mt: 1.1, mb: 0.9 }}
-              >
-                {arenaDetails[arena].subtitle}
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ lineHeight: 1.65, maxWidth: 480, minHeight: 45 }}
-              >
-                {arenaDetails[arena].note}
-              </Typography>
-              <Stack
-                direction="row"
-                useFlexGap
-                spacing={2.4}
-                sx={{
-                  flexWrap: "wrap",
-                  mt: 2.5,
-                  color: "#cecece",
-                }}
-              >
-                {[
-                  { icon: Swords, text: "1 vs 1" },
-                  { icon: Flag, text: "First correct wins" },
-                  { icon: BookOpen, text: "Same problem" },
-                ].map(({ icon: Icon, text }) => (
-                  <Stack
-                    key={text}
-                    direction="row"
-                    spacing={0.75}
-                    sx={{
-                      alignItems: "center",
-                    }}
-                  >
-                    <Icon size={15} aria-hidden="true" />
-                    <Typography variant="caption">{text}</Typography>
-                  </Stack>
-                ))}
-              </Stack>
-            </Box>
             <Stack
               direction={{ xs: "column", sm: "row" }}
               spacing={1.75}
@@ -924,8 +726,8 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                   }}
                 >
                   {config.playEnabled
-                    ? "Ready to queue"
-                    : "A full match, in demo mode"}
+                    ? `${ARENAS[arena].name} · ${ARENAS[arena].duration / 60} minutes`
+                    : `${ARENAS[arena].name} demo · ${ARENAS[arena].duration / 60} minutes`}
                 </Typography>
                 <Typography
                   variant="caption"
@@ -933,8 +735,8 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                   sx={{ display: "block", mt: 0.6, maxWidth: { sm: 240 } }}
                 >
                   {config.playEnabled
-                    ? "Human opponent first. Bot fallback after 15s."
-                    : "Try the clock, editor, and example results."}
+                    ? "Nearby human ratings are matched first. A bot is assigned after 15 seconds."
+                    : "Live matches are currently unavailable. Demo code is not executed and ratings are not saved."}
                 </Typography>
               </Box>
               <Button
@@ -953,32 +755,6 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                 {config.playEnabled ? "Find a match" : "Try demo"}
               </Button>
             </Stack>
-            {!config.playEnabled && (
-              <Box
-                sx={{
-                  px: { xs: 2.25, sm: 3 },
-                  pb: 1.9,
-                  backgroundColor: "#151515",
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: "block" }}
-                >
-                  No account required. No code execution or saved ratings.
-                </Typography>
-                {config.admissionMode === "staging" && (
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: "block", mt: 0.5 }}
-                  >
-                    {config.reason}
-                  </Typography>
-                )}
-              </Box>
-            )}
           </Paper>
           <RecentHistory />
         </Box>
@@ -1057,7 +833,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
             >
               {user
                 ? "Each arena has separate human and bot ratings."
-                : "Sign in when ranked play opens to establish your rating."}
+                : "Sign in to track your rating and match history."}
             </Typography>
             {error && (
               <Alert severity="error" sx={{ mt: 1.5 }}>
@@ -1082,7 +858,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                 color: "text.secondary",
               }}
             >
-              THE MATCH RULES
+              MATCH RULES
             </Typography>
             <Stack
               component="ol"
@@ -1090,72 +866,28 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
               sx={{ listStyle: "none", p: 0, mt: 2.75, mb: 0 }}
             >
               {[
-                ["Same starting line", "Identical problem and a shared clock."],
-                ["Correctness comes first", "Pass every hidden test to win."],
-                [
-                  "A separate bot ladder",
-                  "Simulated opponents never change your human rating.",
-                ],
-              ].map(([title, description], i) => (
-                <Stack
-                  component="li"
-                  key={title}
-                  direction="row"
-                  spacing={1.75}
-                >
+                "Both players receive the same problem and server clock.",
+                "The first submission to pass every test wins.",
+                "Bot matches use a separate rating.",
+              ].map((rule) => (
+                <Stack component="li" key={rule} direction="row" spacing={1.75}>
                   <Typography
                     component="span"
+                    aria-hidden="true"
                     sx={{
-                      fontFamily: '"JetBrains Mono", monospace',
-                      fontSize: ".75rem",
+                      fontSize: "1rem",
                       color: "text.secondary",
-                      pt: 0.4,
+                      lineHeight: 1.45,
                     }}
                   >
-                    0{i + 1}
+                    •
                   </Typography>
-                  <Box>
-                    <Typography
-                      component="strong"
-                      variant="body2"
-                      sx={{
-                        fontWeight: 500,
-                      }}
-                    >
-                      {title}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 0.6, lineHeight: 1.6 }}
-                    >
-                      {description}
-                    </Typography>
-                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {rule}
+                  </Typography>
                 </Stack>
               ))}
             </Stack>
-            <Box
-              sx={{ mt: 3.25, pt: 2.75, borderTop: 1, borderColor: "divider" }}
-            >
-              <Typography
-                variant="overline"
-                sx={{
-                  fontFamily: '"JetBrains Mono", monospace',
-                  fontSize: ".75rem",
-                  color: "text.secondary",
-                }}
-              >
-                YOUR LANGUAGE
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: "block", mt: 1.1, lineHeight: 1.8 }}
-              >
-                Python · C++ · Java · JavaScript
-              </Typography>
-            </Box>
           </Box>
         </Box>
       </Box>
@@ -1200,7 +932,7 @@ function RecentHistory() {
           {error ||
             (user
               ? "Your completed matches and rating changes will appear here."
-              : "Your match history starts with your first ranked game. Demo results stay out of the record.")}
+              : "Sign in to see your completed matches and rating changes.")}
         </EmptyState>
       )}
     </Box>
@@ -1266,7 +998,7 @@ function Leaderboard() {
     <Page>
       <PageTop section="LEADERBOARD" />
       <PageHeading
-        title="The standings"
+        title="Leaderboard"
         subtitle="Rankings by arena. Human and bot results are kept separate."
       />
       <Stack
@@ -1398,7 +1130,7 @@ function Leaderboard() {
                       {error ||
                         (config.playEnabled
                           ? "Complete a match to establish a rating in this arena."
-                          : "Rankings open with the live beta. Demo matches don’t enter the standings.")}
+                          : "No ratings are available for this arena yet.")}
                     </EmptyState>
                   </TableCell>
                 </TableRow>
@@ -1502,7 +1234,7 @@ function History({ onSignIn }: { onSignIn: () => void }) {
     <Page>
       <PageTop section="MATCH HISTORY" />
       <PageHeading
-        title="Your record"
+        title="Match history"
         subtitle="Completed matches, verdicts, and rating changes."
       />
       <Paper
@@ -1537,7 +1269,7 @@ function History({ onSignIn }: { onSignIn: () => void }) {
             {error ||
               (user
                 ? "Your completed matches will be recorded here."
-                : "Sign in when the beta opens to keep your match history. Demo results are never saved here.")}
+                : "Sign in to see completed matches and rating changes.")}
           </EmptyState>
         )}
       </Paper>
@@ -1676,9 +1408,9 @@ function Profile({ onSignIn }: { onSignIn: () => void }) {
           </>
         ) : (
           <>
-            <EmptyState title="Your seat is waiting.">
-              Sign in when ranked play opens. You’ll start at 1,200 in each
-              arena, with separate ratings for human and simulated bot matches.
+            <EmptyState title="Sign in to view your ratings.">
+              Every arena starts at 1,200, with separate ratings for human and
+              bot matches.
             </EmptyState>
             <Button
               variant="contained"

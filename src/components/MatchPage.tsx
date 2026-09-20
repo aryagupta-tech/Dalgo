@@ -558,7 +558,7 @@ function QueueStage({
       </Typography>
       <Typography variant="h1" sx={{ fontSize: { xs: 30, sm: 40 }, my: 1.75 }}>
         {phase === "capacity"
-          ? "The execution server is busy."
+          ? "All matches are busy."
           : paused
             ? "Search paused."
             : ready
@@ -694,7 +694,7 @@ function QueueStage({
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {ready
-                ? "Demo opponent · no execution credits"
+                ? "Illustrative opponent"
                 : paused
                   ? "No new opponent will be assigned"
                   : "Rating window expands while you wait"}
@@ -744,7 +744,7 @@ function QueueStage({
         sx={{ mt: 2.5 }}
       >
         {demo
-          ? "Skipping affects this demo only. The normal search lasts 15 seconds."
+          ? "Skipping affects this demo only. Live searches last 15 seconds."
           : paused
             ? "Start another search from the lobby when matches are available."
             : "If no suitable human is found after 15 seconds, a clearly labelled bot is assigned."}

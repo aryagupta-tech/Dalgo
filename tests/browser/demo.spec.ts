@@ -49,7 +49,7 @@ for (const width of [375, 768, 1440]) {
     await page.setViewportSize({ width, height: width === 375 ? 812 : 1000 });
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "The arena." }),
+      page.getByRole("heading", { name: "Choose an arena" }),
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "Try demo" })).toBeVisible();
     await page.getByRole("radio", { name: /Medium/ }).check();
