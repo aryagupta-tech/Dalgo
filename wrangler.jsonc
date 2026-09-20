@@ -49,7 +49,7 @@
   "env": {
     "staging": {
       "name": "dalgo-staging",
-      "workers_dev": true,
+      "workers_dev": false,
       "routes": [
         {
           "pattern": "staging.dalgo.site",
@@ -92,7 +92,7 @@
     },
     "production": {
       "name": "dalgo",
-      "workers_dev": true,
+      "workers_dev": false,
       "routes": [
         {
           "pattern": "dalgo.site",

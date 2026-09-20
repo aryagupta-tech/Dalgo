@@ -1,10 +1,6 @@
 #!/bin/sh
 branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
-case "$branch" in
-  main|develop)
-    if [ "${DALGO_ALLOW_PROTECTED_COMMIT:-}" != "1" ]; then
-      echo "Direct commits to $branch are blocked. Create a feature branch and open a pull request." >&2
-      exit 1
-    fi
-    ;;
-esac
+if [ "$branch" = "main" ] && [ "${DALGO_ALLOW_PROTECTED_COMMIT:-}" != "1" ]; then
+  echo "Direct commits to main are blocked. Commit to develop and promote with a pull request." >&2
+  exit 1
+fi
