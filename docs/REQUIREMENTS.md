@@ -14,14 +14,15 @@ Work only in `/Users/arya/Developer/Dalgo`.
 
 1. **Perform the visual review you reserved for yourself.** Tester-only staging is live. Check the lobby, queue, workspace, and results on desktop and mobile.
 2. **Provide an operator name and public support email.** These complete the privacy and data-request contact notice before public registration.
-3. **Disable the unused Email provider in Supabase Auth.** Dalgo exposes Google/GitHub sign-in only. The Free plan cannot enable the Pro-only leaked-password check, so disabling password/email sign-in keeps the public authentication surface aligned with the product.
-4. **Confirm the capped public opening.** Production is deployed but remains disabled until the preceding items are complete.
+3. **Confirm the capped public opening.** Production is deployed but remains disabled until the preceding items are complete.
 
 No card details, account passwords, paid plan, additional Cloudflare access, or additional Supabase access are required. The Google Cloud VM uses trial credit and has a fixed deletion action for 14 December 2026. Extending it requires a separate decision.
 
 ## Completed staging acceptance
 
 Two Google identities created valid profiles and six ratings each. Tester-only staging passed a real human match and a real bot match through Cloudflare Workers, Durable Objects, Workers VPC, Codebox, and Supabase. The checks covered cancellation, human priority, bot fallback, WebSocket reconnects, shared clocks/problems, hosted Run/Submit, +16/−16 Elo, idempotent replay, opponent-code privacy, busy capacity, resignation, and saved history.
+
+The unused Supabase Email provider is disabled. The production Worker is the Auth Site URL, and the redirect allowlist contains production, staging, and local development origins.
 
 ## Local commands
 

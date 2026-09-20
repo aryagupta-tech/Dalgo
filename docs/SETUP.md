@@ -20,7 +20,7 @@ The full edge-to-executor route returned `ready=true`, `executor=isolate`, and `
 
 The dedicated `dalgo-staging` project exists in Mumbai with ref `gtdofekbolymsrrullpb`. Three versioned migrations are applied and 30 immutable problem versions are seeded, 10 per arena. All public tables have RLS. Browser roles have an explicit deny policy for the problem bank because rows include hidden tests and reference solutions; the backend secret role supplies sanitized statements through the Worker.
 
-Database/RLS security checks have no findings. The Auth advisor reports the Free plan’s unavailable leaked-password protection while the Email provider is enabled. Dalgo uses Google/GitHub only, so disable Email Auth before public admission. Both Google redirects and signed-in sessions passed staging acceptance.
+Database/RLS security checks have no findings. Dalgo uses Google/GitHub only, and the unused Email provider is disabled. The Auth advisor still reports its generic leaked-password warning because the protection is unavailable on the Free plan; Dalgo exposes no password login surface. The Site URL is the production Worker, while the production, staging, and local development origins remain in the redirect allowlist. Both Google redirects and signed-in sessions passed staging acceptance.
 
 Use `npm run seed:problems:staging` to inspect the seed set or append `-- --apply` to insert missing immutable versions. The seeder refuses to overwrite an existing version with changed content.
 
@@ -41,4 +41,4 @@ No secret belongs in a `VITE_` variable. The frontend receives only the public S
 
 The initial Codebox capacity is one active match and one execution at a time. Each player retains three preview runs and five scored submissions. A busy executor pauses new admission without consuming a daily-credit budget. Active matches continue when fresh admission is paused.
 
-Staging is enabled for two OAuth tester UUIDs and the automated live checklist passed. Production remains disabled until the owner completes the visual/privacy review and Email Auth is disabled.
+Staging is enabled for two OAuth tester UUIDs and the automated live checklist passed. Production remains disabled until the owner completes the visual/privacy review and publishes the operator/privacy contact details.
