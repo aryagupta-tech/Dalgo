@@ -97,7 +97,7 @@ export interface AttemptLimits {
   runs: number;
   submits: number;
 }
-// Older live matches and the isolated demo retain their original allowance.
+// Older live matches retain their original allowance.
 export const DEFAULT_ATTEMPT_LIMITS: Readonly<AttemptLimits> = Object.freeze({
   runs: 3,
   submits: 5,

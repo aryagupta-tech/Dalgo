@@ -3,7 +3,7 @@
 ## Completed locally
 
 - Frontend build and TypeScript checks passed.
-- All 181 offline regressions passed, including SQL settlement, receipt ordering, username onboarding, friend challenges, bot races, Codebox recovery, capacity ownership, and launch gates.
+- All 163 offline regressions passed, including SQL settlement, receipt ordering, username onboarding, friend challenges, bot races, Codebox recovery, capacity ownership, and launch gates.
 - All 148 execution checks passed on local ARM64 Docker: 30 original problems in each of four languages, 24 wrong-answer/compiler/runtime/resource probes, two cross-job isolation checks, and two output-file tampering checks.
 - The local Redis/API/worker recovery run passed: concurrent duplicate requests returned one job; conflicting payloads were rejected; API and Redis restarts preserved the result; a killed worker produced an infrastructure error without rerunning the attempt; unauthenticated, expired, and unsupported requests were rejected.
 

@@ -69,10 +69,12 @@ test("unavailable live play shows a public status without leaking staging detail
   await mockApp(page, false);
   await page.goto("/");
 
-  await expect(page.getByRole("button", { name: "Try demo" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Matches unavailable" }),
+  ).toBeDisabled();
   await expect(
     page.getByText(
-      "Live matches are currently unavailable. Demo code is not executed and ratings are not saved.",
+      "Live matches are temporarily unavailable. Please try again later.",
     ),
   ).toBeVisible();
   await expect(page.getByText("PRIVATE STAGING INTERNAL STATUS")).toHaveCount(
@@ -83,7 +85,9 @@ test("unavailable live play shows a public status without leaking staging detail
   await expect(
     page.getByRole("heading", { name: "Sign in to Dalgo" }),
   ).toBeVisible();
-  await expect(page.getByText("Sign-in is unavailable.")).toBeVisible();
+  await expect(
+    page.getByText("Sign-in is temporarily unavailable."),
+  ).toBeVisible();
   await expect(page.getByText(/service verification/i)).toHaveCount(0);
 });
 
@@ -100,9 +104,7 @@ test("public account pages use direct launch copy", async ({ page }) => {
       page.getByRole("heading", { name: heading, level: 1 }),
     ).toBeVisible();
     const text = await page.locator("body").innerText();
-    expect(text).not.toMatch(
-      /beta opens|ranked play opens|demo results|your seat/i,
-    );
+    expect(text).not.toMatch(/beta opens|ranked play opens|your seat/i);
   }
 });
 
@@ -128,4 +130,17 @@ test("privacy and contact details are public and usable", async ({ page }) => {
     .getByRole("link", { name: "Privacy & contact" })
     .click();
   await expect(page).toHaveURL(/\/privacy$/);
+});
+
+test("removed preview routes do not expose a local match simulation", async ({
+  page,
+}) => {
+  await mockApp(page, true);
+  for (const path of ["/demo/easy", "/preview/easy"]) {
+    await page.goto(path);
+    await expect(
+      page.getByRole("heading", { name: "Page not found." }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Try demo" })).toHaveCount(0);
+  }
 });

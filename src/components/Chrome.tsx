@@ -6,7 +6,6 @@ import {
   Avatar,
   Box,
   Button,
-  Chip,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -137,7 +136,7 @@ export function oauthReturnUrl(
 ) {
   const path = location.pathname;
   const allowed =
-    /^\/(?:match\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|demo\/(?:easy|medium|hard)|friends|history|profile|leaderboard|privacy)?$/i.test(
+    /^\/(?:match\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|friends|history|profile|leaderboard|privacy)?$/i.test(
       path,
     );
   return new URL(allowed ? path : "/", location.origin).href;
@@ -215,24 +214,13 @@ export function SignIn({ onClose }: { onClose: () => void }) {
           <Typography
             component="strong"
             variant="body2"
-            sx={{
-              fontWeight: 600,
-            }}
+            sx={{ fontWeight: 600 }}
           >
-            Sign-in is unavailable.
+            Sign-in is temporarily unavailable.
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1, mb: 2 }}>
-            You can still explore the match experience without an account.
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            Please try again later.
           </Typography>
-          <Button
-            component={Link}
-            variant="contained"
-            to="/demo/easy"
-            onClick={onClose}
-            endIcon={<ArrowUpRight size={17} />}
-          >
-            Try the demo
-          </Button>
         </Alert>
       )}
       {error && (
@@ -257,41 +245,6 @@ export function SignIn({ onClose }: { onClose: () => void }) {
         .
       </Typography>
     </Modal>
-  );
-}
-export function DemoNotice() {
-  return (
-    <Stack
-      direction="row"
-      spacing={1.5}
-      sx={{
-        alignItems: "center",
-        px: { xs: 2, sm: 3 },
-        py: 1.2,
-        borderBottom: 1,
-        borderColor: "divider",
-        backgroundColor: "#191919",
-        color: "text.secondary",
-      }}
-    >
-      <Chip
-        label="DEMO"
-        size="small"
-        variant="outlined"
-        sx={{
-          borderColor: "#505050",
-          backgroundColor: "#202020",
-          fontFamily: '"JetBrains Mono", monospace',
-          fontSize: ".75rem",
-        }}
-      />
-      <Typography
-        variant="body2"
-        sx={{ fontSize: { xs: ".75rem", sm: ".875rem" }, lineHeight: 1.6 }}
-      >
-        Demo: code is not executed and ratings are not saved.
-      </Typography>
-    </Stack>
   );
 }
 export function EmptyState({

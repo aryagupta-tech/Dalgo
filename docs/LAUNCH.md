@@ -5,7 +5,7 @@
 ## Verified evidence
 
 - The React/TypeScript production build passes and the interface is implemented with React, Material UI, and Monaco.
-- All 181 backend regressions pass, covering SQL settlement, submission receipt ordering, username onboarding, friend challenges, bot races, reconnect behavior, capacity ownership, launch gates, and Codebox recovery.
+- All 163 backend regressions pass, covering SQL settlement, submission receipt ordering, username onboarding, friend challenges, bot races, reconnect behavior, capacity ownership, launch gates, and Codebox recovery.
 - The complete 148-execution suite passed on the hosted ARM64 Google Cloud VM: reference solutions for 30 problems in Python, C++, Java, and JavaScript, plus wrong-answer, compile/runtime, timeout, memory, output, network, isolation, and output-file probes.
 - Hosted recovery passed for parallel idempotent requests, conflicting payloads, API/Redis restarts, worker failure without duplicate execution, authentication, expiry, and forbidden options.
 - Codebox reports isolate 2.7, Python 3.12.3, GCC 13.3.0 with C++17, OpenJDK 17.0.20, and Node 24.21.0.

@@ -7,7 +7,7 @@ export function admissionStatus(env: Env, userId?: string) {
     return {
       mode,
       canJoin: false,
-      reason: "Online matches are paused. You can still try the demo.",
+      reason: "Online matches are paused. Please try again later.",
     };
   if (
     mode === "staging" &&
@@ -17,7 +17,7 @@ export function admissionStatus(env: Env, userId?: string) {
       mode,
       canJoin: false,
       reason:
-        "Live matches are limited to invited testers while the beta is checked. You can still try the demo.",
+        "Live matches are limited to invited testers while the beta is checked.",
     };
   if (!launchReady(env))
     return {

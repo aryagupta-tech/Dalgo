@@ -24,7 +24,7 @@ Operational logs may contain error details, timing, capacity, and match identifi
 
 ## Browser storage
 
-Demo countdowns and drafts use browser session storage. Live editor drafts and sign-in sessions use browser storage. Players can remove these through their browser's site-data controls. Demo code is not sent for execution, and demo results do not change saved ratings.
+Live editor drafts and sign-in sessions use browser storage. Players can remove these through their browser's site-data controls.
 
 ## Access and deletion requests
 

@@ -134,15 +134,11 @@ test("a paused lobby resumes a real match and exposes only sample output inspect
   }));
   await page.goto("/");
   await expect(
-    page.getByRole("button", { name: "Try demo", exact: true }),
-  ).toBeVisible();
+    page.getByRole("button", { name: "Matches unavailable", exact: true }),
+  ).toBeDisabled();
   await page.getByRole("link", { name: "Resume match" }).click();
   await expect(page).toHaveURL(new RegExp("/match/" + matchId + "$"));
   await expect(page.getByText("RANKED 1v1", { exact: true })).toBeVisible();
-  await expect(page.getByText("DEMO MATCH", { exact: true })).toHaveCount(0);
-  await expect(
-    page.getByText("Demo: code is not executed and ratings are not saved."),
-  ).toHaveCount(0);
   await page.getByText("Case 1 · failed", { exact: true }).click();
   await expect(page.getByText("Actual", { exact: true })).toBeVisible();
   await expect(

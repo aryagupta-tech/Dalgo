@@ -76,7 +76,9 @@ for (const [id, allowed] of [
     });
     await page.goto("/");
     await expect(
-      page.getByRole("button", { name: allowed ? "Find a match" : "Try demo" }),
+      page.getByRole("button", {
+        name: allowed ? "Find a match" : "Matches unavailable",
+      }),
     ).toBeVisible();
     await expect.poll(() => headers.length).toBe(1);
     expect(headers[0]).toMatch(/^Bearer /);
@@ -142,7 +144,9 @@ for (const [id, allowed] of [
       expect(cancellations).toBe(0);
     }
     await page.getByRole("button", { name: "Sign out", exact: true }).click();
-    await expect(page.getByRole("button", { name: "Try demo" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Matches unavailable" }),
+    ).toBeDisabled();
     await expect(
       page.getByRole("button", { name: "Find a match" }),
     ).toHaveCount(0);

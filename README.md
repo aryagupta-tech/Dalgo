@@ -4,7 +4,7 @@ A dark DSA duel arena built with React, TypeScript, Material UI, Vite, Monaco, S
 
 ## Current state
 
-The redesigned lobby and full `/demo/:arena` journey are implemented. The demo includes a 15-second search, labelled simulated opponent, five-second preparation, timed workspace, four language starters, preview actions, and illustrative results. Drafts/countdowns survive reload within the browser session. `/preview/:arena` redirects to the demo. Demo actions never execute code or save ratings.
+The public lobby, live queue, match workspace, results, ratings, history, leaderboards, and direct friend challenges are implemented. The product contains no local match simulation or preview route; unavailable live play is shown as a service state.
 
 The backend includes Supabase OAuth verification, durable human matchmaking and bot fallback, direct friend challenges with unique usernames chosen during account creation, execution reservations, a private **Codebox** adapter with durable submission polling, receipt-ordered adjudication, and transactional settlement. New admissions support disabled, tester-only staging, and public modes, with a durable request budget. Active matches can finish after admissions close.
 
@@ -38,7 +38,7 @@ In a second terminal:
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173`. Vite proxies `/api` and WebSockets to the local Worker on port 8787. Without service configuration, demo mode works and privileged routes reject unauthenticated requests.
+Open `http://127.0.0.1:5173`. Vite proxies `/api` and WebSockets to the local Worker on port 8787. Without service configuration, live play is unavailable and privileged routes reject unauthenticated requests.
 
 ```sh
 npm test

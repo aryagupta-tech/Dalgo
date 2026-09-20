@@ -1,14 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  Link,
-  NavLink,
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { Link, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -56,7 +47,7 @@ import {
 } from "../shared/types";
 import { Brand, EmptyState, Footer, SignIn } from "./components/Chrome";
 import { arenaKeys, formatClock, useHistory, useRatings } from "./data";
-import { DemoPage, LiveMatchPage, LiveQueue } from "./components/MatchPage";
+import { LiveMatchPage, LiveQueue } from "./components/MatchPage";
 import { FriendPlay } from "./components/FriendPlay";
 import { UsernameOnboarding } from "./components/UsernameOnboarding";
 import { PrivacyPage } from "./components/PrivacyPage";
@@ -77,7 +68,7 @@ export default function App() {
   const { user, client, profile } = useAuth();
   const [signIn, setSignIn] = useState(false);
   const location = useLocation();
-  const matchRoute = /^\/(demo|match|preview)\//.test(location.pathname);
+  const matchRoute = /^\/match\//.test(location.pathname);
   return (
     <Box
       sx={{
@@ -263,8 +254,6 @@ export default function App() {
             path="/"
             element={<Lobby onSignIn={() => setSignIn(true)} />}
           />
-          <Route path="/demo/:arena" element={<DemoPage />} />
-          <Route path="/preview/:arena" element={<PreviewRedirect />} />
           <Route
             path="/match/:id"
             element={<LiveMatchPage onSignIn={() => setSignIn(true)} />}
@@ -306,15 +295,6 @@ export default function App() {
       {signIn && <SignIn onClose={() => setSignIn(false)} />}
       <UsernameOnboarding />
     </Box>
-  );
-}
-function PreviewRedirect() {
-  const { arena } = useParams();
-  return (
-    <Navigate
-      replace
-      to={"/demo/" + (arenaKeys.includes(arena as Arena) ? arena : "easy")}
-    />
   );
 }
 function Page({ children }: { children: ReactNode }) {
@@ -522,7 +502,6 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
     setQueue(null);
     setRecoveryVersion((version) => version + 1);
   }
-  const nav = useNavigate();
   const rating = ratings.find((r) => r.arena === arena && r.mode === mode);
   return (
     <Page>
@@ -735,9 +714,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                     fontWeight: 500,
                   }}
                 >
-                  {config.playEnabled
-                    ? `${ARENAS[arena].name} · ${ARENAS[arena].duration / 60} minutes`
-                    : `${ARENAS[arena].name} demo · ${ARENAS[arena].duration / 60} minutes`}
+                  {ARENAS[arena].name} · {ARENAS[arena].duration / 60} minutes
                 </Typography>
                 <Typography
                   variant="caption"
@@ -746,23 +723,22 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                 >
                   {config.playEnabled
                     ? "Nearby human ratings are matched first. A bot is assigned after 15 seconds."
-                    : "Live matches are currently unavailable. Demo code is not executed and ratings are not saved."}
+                    : "Live matches are temporarily unavailable. Please try again later."}
                 </Typography>
               </Box>
               <Button
                 variant="contained"
                 startIcon={<Play size={17} fill="currentColor" />}
                 endIcon={<ArrowRight size={18} />}
+                disabled={!config.playEnabled}
                 sx={{ minHeight: 47, px: 2.4, flexShrink: 0 }}
-                onClick={() =>
-                  config.playEnabled
-                    ? user
-                      ? setQueue({ arena, resume: false, userId: user.id })
-                      : onSignIn()
-                    : nav("/demo/" + arena)
-                }
+                onClick={() => {
+                  if (!config.playEnabled) return;
+                  if (user) setQueue({ arena, resume: false, userId: user.id });
+                  else onSignIn();
+                }}
               >
-                {config.playEnabled ? "Find a match" : "Try demo"}
+                {config.playEnabled ? "Find a match" : "Matches unavailable"}
               </Button>
             </Stack>
           </Paper>

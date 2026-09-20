@@ -150,13 +150,8 @@ export function PrivacyPage() {
 
           <PrivacySection title="Browser storage">
             <Typography>
-              Demo countdowns and drafts use browser session storage. Live
-              editor drafts and sign-in sessions use browser storage. You can
-              remove these through your browser's site-data controls.
-            </Typography>
-            <Typography>
-              Demo code is not sent for execution, and demo results do not
-              change saved ratings.
+              Live editor drafts and sign-in sessions use browser storage. You
+              can remove these through your browser's site-data controls.
             </Typography>
           </PrivacySection>
 

@@ -9,7 +9,7 @@ interface PendingRequest {
   source: string;
 }
 
-/** Live transport only. Demo controllers never call these operations. */
+/** Authoritative transport for live match operations. */
 export function useLiveMatch(id: string, userId: string) {
   const [match, setMatch] = useState<MatchView | null>(null);
   const [now, setNow] = useState(Date.now());

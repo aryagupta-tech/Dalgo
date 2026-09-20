@@ -39,6 +39,6 @@ No secret belongs in a `VITE_` variable. The frontend receives only the public S
 
 `GET /api/admission` authenticates the current user and returns `{mode, canJoin, reason}`. Actual eligibility is enforced in the Coordinator; browser state cannot grant access. Unknown modes and malformed allowlists deny admission.
 
-The initial Codebox capacity is one active match and one execution at a time. Each player retains three preview runs and five scored submissions. A busy executor pauses new admission without consuming a daily-credit budget. Active matches continue when fresh admission is paused.
+The initial Codebox capacity is one active match and one execution at a time. Each player retains three sample runs and five scored submissions. A busy executor pauses new admission without consuming a daily-credit budget. Active matches continue when fresh admission is paused.
 
 Staging is enabled for two OAuth tester UUIDs and the automated live checklist passed. Production uses public admission with one active match and one execution at a time. Disable both admission variables immediately if executor health or settlement smoke checks fail.
