@@ -183,6 +183,26 @@ export interface FriendChallengeView {
   recent: FriendChallenge[];
   currentMatchId?: string;
 }
+export type FriendRequestStatus =
+  "pending" | "accepted" | "declined" | "cancelled";
+export interface FriendRequest {
+  id: string;
+  status: FriendRequestStatus;
+  sender: FriendIdentity;
+  receiver: FriendIdentity;
+  createdAt: number;
+  respondedAt?: number;
+}
+export interface Friendship {
+  id: string;
+  friend: FriendIdentity;
+  friendsSince: number;
+}
+export interface FriendsView {
+  friends: Friendship[];
+  incoming: FriendRequest[];
+  outgoing: FriendRequest[];
+}
 export interface HistoryRow {
   id: string;
   arena: Arena;
@@ -194,7 +214,7 @@ export interface HistoryRow {
     reason: string;
     deltas: Record<string, number>;
   };
-  opponent?: string;
+  opponent?: FriendIdentity;
   problem_title?: string;
 }
 export interface LeaderRow {

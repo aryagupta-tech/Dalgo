@@ -1,12 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Check, Copy, Swords, UserPlus, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Check,
+  Copy,
+  RefreshCw,
+  Swords,
+  UserPlus,
+  Users,
+  X,
+} from "lucide-react";
 import {
   Alert,
   Avatar,
   Box,
   Button,
-  Chip,
   CircularProgress,
   FormControlLabel,
   Paper,
@@ -22,17 +29,59 @@ import {
   type FriendChallenge,
   type FriendChallengeView,
   type FriendIdentity,
+  type FriendRequest,
+  type FriendsView,
 } from "../../shared/types";
 import { api, connectEvents } from "../api";
 import { useAuth } from "../auth";
 
 const arenas = Object.keys(ARENAS) as Arena[];
-const emptyView = (): FriendChallengeView => ({
+const emptyChallenges = (): FriendChallengeView => ({
   serverNow: Date.now(),
   incoming: [],
   outgoing: [],
   recent: [],
 });
+const emptyFriends = (): FriendsView => ({
+  friends: [],
+  incoming: [],
+  outgoing: [],
+});
+
+function Person({ person }: { person: FriendIdentity }) {
+  return (
+    <Stack
+      direction="row"
+      spacing={1.5}
+      sx={{ alignItems: "center", minWidth: 0 }}
+    >
+      <Avatar
+        src={person.avatar}
+        variant="rounded"
+        sx={{
+          width: 38,
+          height: 38,
+          bgcolor: "#222",
+          border: "1px solid #454545",
+        }}
+      >
+        {person.name.slice(0, 1).toUpperCase()}
+      </Avatar>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ fontWeight: 600 }} noWrap>
+          {person.name}
+        </Typography>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontFamily: '"JetBrains Mono", monospace' }}
+        >
+          @{person.username}
+        </Typography>
+      </Box>
+    </Stack>
+  );
+}
 
 function ChallengeRow({
   challenge,
@@ -63,38 +112,21 @@ function ChallengeRow({
         borderColor: "divider",
       }}
     >
-      <Stack
-        direction="row"
-        spacing={1.5}
-        sx={{ alignItems: "center", minWidth: 0 }}
-      >
-        <Avatar
-          src={other.avatar}
-          variant="rounded"
+      <Box>
+        <Person person={other} />
+        <Typography
+          variant="caption"
+          color="text.secondary"
           sx={{
-            width: 38,
-            height: 38,
-            bgcolor: "#222",
-            border: "1px solid #454545",
+            display: "block",
+            mt: 1,
+            fontFamily: '"JetBrains Mono", monospace',
           }}
         >
-          {other.name.slice(0, 1).toUpperCase()}
-        </Avatar>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{ fontWeight: 600 }} noWrap>
-            {other.name}
-          </Typography>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ fontFamily: '"JetBrains Mono", monospace' }}
-          >
-            {other.username ? `@${other.username} · ` : ""}
-            {ARENAS[challenge.arena].name.toUpperCase()} ·{" "}
-            {incoming ? "CHALLENGED YOU" : "INVITE SENT"}
-          </Typography>
-        </Box>
-      </Stack>
+          {ARENAS[challenge.arena].name.toUpperCase()} ·{" "}
+          {incoming ? "CHALLENGED YOU" : "INVITE SENT"}
+        </Typography>
+      </Box>
       <Stack direction="row" spacing={1}>
         {incoming ? (
           <>
@@ -131,22 +163,106 @@ function ChallengeRow({
   );
 }
 
+function FriendRequestRow({
+  request,
+  incoming,
+  busy,
+  onAction,
+}: {
+  request: FriendRequest;
+  incoming: boolean;
+  busy: string;
+  onAction: (
+    request: FriendRequest,
+    action: "accept" | "decline" | "cancel",
+  ) => void;
+}) {
+  const other = incoming ? request.sender : request.receiver;
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", sm: "minmax(0, 1fr) auto" },
+        alignItems: "center",
+        gap: 2,
+        px: { xs: 2, sm: 2.5 },
+        py: 2,
+        borderTop: 1,
+        borderColor: "divider",
+      }}
+    >
+      <Person person={other} />
+      <Stack direction="row" spacing={1}>
+        {incoming ? (
+          <>
+            <Button
+              size="small"
+              variant="contained"
+              disabled={Boolean(busy)}
+              onClick={() => onAction(request, "accept")}
+            >
+              Accept friend
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              color="inherit"
+              disabled={Boolean(busy)}
+              onClick={() => onAction(request, "decline")}
+            >
+              Decline
+            </Button>
+          </>
+        ) : (
+          <Button
+            size="small"
+            variant="outlined"
+            color="inherit"
+            disabled={Boolean(busy)}
+            onClick={() => onAction(request, "cancel")}
+          >
+            Cancel request
+          </Button>
+        )}
+      </Stack>
+    </Box>
+  );
+}
+
 export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
   const { user, config } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedArena = searchParams.get("arena");
+  const requestedUsername = searchParams.get("challenge") ?? "";
   const [profile, setProfile] = useState<FriendIdentity | null>(null);
-  const [view, setView] = useState<FriendChallengeView>(emptyView);
-  const [arena, setArena] = useState<Arena>("easy");
-  const [friendUsername, setFriendUsername] = useState("");
+  const [view, setView] = useState<FriendChallengeView>(emptyChallenges);
+  const [friends, setFriends] = useState<FriendsView>(emptyFriends);
+  const [arena, setArena] = useState<Arena>(
+    arenas.includes(requestedArena as Arena)
+      ? (requestedArena as Arena)
+      : "easy",
+  );
+  const [friendUsername, setFriendUsername] = useState(requestedUsername);
+  const [requestUsername, setRequestUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
+  const refreshFriends = useCallback(async (quiet = false) => {
+    try {
+      setFriends(await api<FriendsView>("/friends"));
+    } catch (reason) {
+      if (!quiet) setError((reason as Error).message);
+    }
+  }, []);
+
   useEffect(() => {
     if (!user) {
       setProfile(null);
-      setView(emptyView());
+      setView(emptyChallenges());
+      setFriends(emptyFriends());
       return;
     }
     let stopped = false;
@@ -155,11 +271,13 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
     Promise.all([
       api<FriendIdentity>("/profile"),
       api<FriendChallengeView>("/challenges"),
+      api<FriendsView>("/friends"),
     ])
-      .then(([identity, challenges]) => {
+      .then(([identity, challenges, friendState]) => {
         if (!stopped) {
           setProfile(identity);
           setView(challenges);
+          setFriends(friendState);
         }
       })
       .catch((reason: Error) => {
@@ -177,11 +295,15 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
         else socket = connected;
       })
       .catch(() => {});
+    const poll = window.setInterval(() => {
+      if (!stopped) void refreshFriends(true);
+    }, 6000);
     return () => {
       stopped = true;
       socket?.close();
+      window.clearInterval(poll);
     };
-  }, [user?.id]);
+  }, [refreshFriends, user?.id]);
 
   const pending = useMemo(
     () =>
@@ -191,15 +313,15 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
     [view],
   );
 
-  async function createChallenge() {
-    setBusy("create");
+  async function sendChallenge(username: string, selectedArena: Arena) {
+    setBusy("challenge-create");
     setError("");
     try {
       const challenge = await api<FriendChallenge>("/challenges", {
         method: "POST",
         body: JSON.stringify({
-          username: friendUsername,
-          arena,
+          username,
+          arena: selectedArena,
           requestId: crypto.randomUUID(),
         }),
       });
@@ -219,7 +341,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
     }
   }
 
-  async function respond(
+  async function respondToChallenge(
     challenge: FriendChallenge,
     action: "accept" | "decline" | "cancel",
   ) {
@@ -250,6 +372,45 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
     }
   }
 
+  async function sendFriendRequest() {
+    setBusy("friend-request-create");
+    setError("");
+    try {
+      await api<FriendRequest>("/friends/requests", {
+        method: "POST",
+        body: JSON.stringify({
+          username: requestUsername,
+          requestId: crypto.randomUUID(),
+        }),
+      });
+      setRequestUsername("");
+      await refreshFriends();
+    } catch (reason) {
+      setError((reason as Error).message);
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function respondToFriendRequest(
+    request: FriendRequest,
+    action: "accept" | "decline" | "cancel",
+  ) {
+    setBusy(request.id + action);
+    setError("");
+    try {
+      await api<FriendRequest>(
+        `/friends/requests/${request.id}${action === "cancel" ? "" : `/${action}`}`,
+        { method: action === "cancel" ? "DELETE" : "POST" },
+      );
+      await refreshFriends();
+    } catch (reason) {
+      setError((reason as Error).message);
+    } finally {
+      setBusy("");
+    }
+  }
+
   async function copyUsername() {
     if (!profile) return;
     try {
@@ -271,6 +432,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
         mx: "auto",
         px: { xs: 2.25, sm: 3.5, lg: 5.75 },
         pt: { xs: 2.5, lg: 3.75 },
+        pb: 7,
       }}
     >
       <Typography
@@ -281,7 +443,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           letterSpacing: ".08em",
         }}
       >
-        CLUBHOUSE / PLAY A FRIEND
+        DALGO / FRIENDS
       </Typography>
       <Stack
         component="header"
@@ -302,13 +464,12 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
               letterSpacing: "-.05em",
             }}
           >
-            Play a friend.
+            Play with friends
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 1.25 }}>
-            Enter a friend’s username, choose an arena, and send a private challenge.
+            Challenge any player by username, or save them to your friends list.
           </Typography>
         </Box>
-        <Chip label="RATED HUMAN MATCH" variant="outlined" />
       </Stack>
 
       {!user ? (
@@ -316,9 +477,9 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           variant="outlined"
           sx={{ p: { xs: 2.5, sm: 4 }, bgcolor: "#101010" }}
         >
-          <Typography variant="h5">Sign in and choose your username.</Typography>
+          <Typography variant="h5">Sign in to play with friends</Typography>
           <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
-            Your username is created once and stays with your account.
+            Choose a username so other players can find you.
           </Typography>
           <Button
             variant="contained"
@@ -333,6 +494,12 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
           {error && (
             <Alert severity="error" onClose={() => setError("")}>
               {error}
+            </Alert>
+          )}
+          {requestedUsername && (
+            <Alert severity="info" icon={<RefreshCw size={18} />}>
+              Rematch @{requestedUsername} · {ARENAS[arena].name}. Send a
+              challenge below.
             </Alert>
           )}
           {view.currentMatchId && (
@@ -356,6 +523,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
               </Stack>
             </Alert>
           )}
+
           <Box
             sx={{
               display: "grid",
@@ -404,8 +572,8 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                 color="text.secondary"
                 sx={{ mt: 2, lineHeight: 1.65 }}
               >
-                Friends use this username to challenge you. It is chosen when
-                your account is created and does not reveal sign-in details.
+                Share your username to receive friend requests and match
+                challenges.
               </Typography>
             </Paper>
 
@@ -414,7 +582,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
               sx={{ p: { xs: 2.25, sm: 3 }, bgcolor: "#101010" }}
             >
               <Typography component="h2" variant="h5">
-                Challenge a friend
+                Challenge a player
               </Typography>
               <TextField
                 fullWidth
@@ -431,6 +599,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                 row
                 value={arena}
                 onChange={(_, value) => setArena(value as Arena)}
+                aria-label="Challenge arena"
                 sx={{ mt: 1.5 }}
               >
                 {arenas.map((value) => (
@@ -451,10 +620,10 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                   Boolean(busy) ||
                   pending.length > 0
                 }
-                onClick={createChallenge}
+                onClick={() => void sendChallenge(friendUsername, arena)}
                 sx={{ mt: 1.5 }}
               >
-                {busy === "create" ? "Sending…" : "Send challenge"}
+                {busy === "challenge-create" ? "Sending…" : "Send challenge"}
               </Button>
               {!config.playEnabled && (
                 <Typography
@@ -473,6 +642,95 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
             sx={{ bgcolor: "#0d0d0d", overflow: "hidden" }}
           >
             <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={2}
+              sx={{
+                px: { xs: 2, sm: 2.5 },
+                py: 2.25,
+                justifyContent: "space-between",
+                alignItems: { sm: "center" },
+              }}
+            >
+              <Box>
+                <Typography component="h2" variant="h6">
+                  Add a friend
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5 }}
+                >
+                  Send a request by username.
+                </Typography>
+              </Box>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1}
+                sx={{ width: { xs: "100%", sm: "auto" } }}
+              >
+                <TextField
+                  size="small"
+                  label="Player username"
+                  value={requestUsername}
+                  onChange={(event) =>
+                    setRequestUsername(event.target.value.toLowerCase())
+                  }
+                  slotProps={{ htmlInput: { maxLength: 20 } }}
+                />
+                <Button
+                  variant="outlined"
+                  startIcon={<UserPlus size={16} />}
+                  disabled={!requestUsername.trim() || Boolean(busy)}
+                  onClick={() => void sendFriendRequest()}
+                >
+                  {busy === "friend-request-create"
+                    ? "Sending…"
+                    : "Send request"}
+                </Button>
+              </Stack>
+            </Stack>
+            {[...friends.incoming, ...friends.outgoing].length ? (
+              <>
+                {friends.incoming.map((request) => (
+                  <FriendRequestRow
+                    key={request.id}
+                    request={request}
+                    incoming
+                    busy={busy}
+                    onAction={respondToFriendRequest}
+                  />
+                ))}
+                {friends.outgoing.map((request) => (
+                  <FriendRequestRow
+                    key={request.id}
+                    request={request}
+                    incoming={false}
+                    busy={busy}
+                    onAction={respondToFriendRequest}
+                  />
+                ))}
+              </>
+            ) : (
+              <Box
+                sx={{
+                  px: { xs: 2, sm: 2.5 },
+                  py: 3,
+                  borderTop: 1,
+                  borderColor: "divider",
+                }}
+              >
+                <Typography color="text.secondary">
+                  No pending friend requests.
+                </Typography>
+              </Box>
+            )}
+          </Paper>
+
+          <Paper
+            variant="outlined"
+            sx={{ bgcolor: "#0d0d0d", overflow: "hidden" }}
+          >
+            <Stack
               direction="row"
               sx={{
                 px: { xs: 2, sm: 2.5 },
@@ -482,14 +740,103 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
               }}
             >
               <Typography component="h2" variant="h6">
-                Open challenges
+                Friends
               </Typography>
               <Typography
                 variant="caption"
                 color="text.secondary"
                 sx={{ fontFamily: '"JetBrains Mono", monospace' }}
               >
-                {pending.length} OPEN
+                {friends.friends.length}{" "}
+                {friends.friends.length === 1 ? "friend" : "friends"}
+              </Typography>
+            </Stack>
+            {friends.friends.length ? (
+              friends.friends.map(({ id, friend, friendsSince }) => (
+                <Box
+                  key={id}
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      sm: "minmax(0, 1fr) auto",
+                    },
+                    gap: 2,
+                    alignItems: "center",
+                    px: { xs: 2, sm: 2.5 },
+                    py: 2,
+                    borderTop: 1,
+                    borderColor: "divider",
+                  }}
+                >
+                  <Box>
+                    <Person person={friend} />
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block", mt: 1 }}
+                    >
+                      Friends since{" "}
+                      {new Date(friendsSince).toLocaleDateString()}
+                    </Typography>
+                  </Box>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Swords size={16} />}
+                    disabled={
+                      !config.playEnabled || Boolean(busy) || pending.length > 0
+                    }
+                    onClick={() => void sendChallenge(friend.username, arena)}
+                  >
+                    Challenge · {ARENAS[arena].name}
+                  </Button>
+                </Box>
+              ))
+            ) : (
+              <Box
+                sx={{
+                  px: { xs: 2, sm: 2.5 },
+                  py: 4,
+                  borderTop: 1,
+                  borderColor: "divider",
+                }}
+              >
+                <Stack
+                  direction="row"
+                  spacing={1.5}
+                  sx={{ alignItems: "center" }}
+                >
+                  <Users size={18} />
+                  <Typography color="text.secondary">
+                    No friends yet.
+                  </Typography>
+                </Stack>
+              </Box>
+            )}
+          </Paper>
+
+          <Paper
+            variant="outlined"
+            sx={{ bgcolor: "#0d0d0d", overflow: "hidden" }}
+          >
+            <Stack
+              direction="row"
+              sx={{
+                px: { xs: 2, sm: 2.5 },
+                py: 2.25,
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Typography component="h2" variant="h6">
+                Match challenges
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontFamily: '"JetBrains Mono", monospace' }}
+              >
+                {pending.length} pending
               </Typography>
             </Stack>
             {pending.length ? (
@@ -499,7 +846,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                   challenge={challenge}
                   userId={user.id}
                   busy={busy}
-                  onAction={respond}
+                  onAction={respondToChallenge}
                 />
               ))
             ) : (
@@ -512,8 +859,7 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
                 }}
               >
                 <Typography color="text.secondary">
-                  No open challenges. Share your username or invite a friend
-                  above.
+                  No pending match challenges.
                 </Typography>
               </Box>
             )}

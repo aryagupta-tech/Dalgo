@@ -1,1 +1,1559 @@
-[{"id":"checkpoint-climb","slug":"checkpoint-climb","title":"Checkpoint Climb","arena":"easy","topic":"Arrays","description":"A rover records the elevation at each checkpoint. A checkpoint earns a signal when its elevation is strictly higher than every earlier checkpoint. The first checkpoint earns a signal when the list is nonempty. Return the number of signals.","constraints":["0 <= heights.length <= 10000","-1000000 <= heights[i] <= 1000000"],"parameters":[{"name":"heights","type":"int[]"}],"returnType":"int","examples":[{"args":[[3,1,4,4,7]],"expected":3,"explanation":"The elevations 3, 4, and 7 set new records."}],"starter":{"javascript":"function solve(heights) {\n  // Write your solution here.\n}","python":"def solve(heights):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<int> heights) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[] heights) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"mirror-cargo","slug":"mirror-cargo","title":"Mirror Cargo","arena":"easy","topic":"Two pointers","description":"A cargo label contains lowercase English letters. A label is mirror-safe when reading it from either end gives the same sequence. Return 1 when the label is mirror-safe, otherwise return 0. The empty label is mirror-safe.","constraints":["0 <= label.length <= 10000","label contains only lowercase English letters"],"parameters":[{"name":"label","type":"string"}],"returnType":"int","examples":[{"args":["level"],"expected":1,"explanation":"The letters match from both ends."}],"starter":{"javascript":"function solve(label) {\n  // Write your solution here.\n}","python":"def solve(label):\n    # Write your solution here.\n    pass","cpp":"int solve(std::string label) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(String label) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"supply-pair","slug":"supply-pair","title":"Supply Pair","arena":"easy","topic":"Hash maps","description":"A station needs two distinct supply crates whose weights sum to target. Return their zero-based indices [i, j], where i < j. If several pairs work, choose the smallest j, then the smallest i. Return an empty array if no pair works.","constraints":["0 <= weights.length <= 10000","-1000000 <= weights[i], target <= 1000000"],"parameters":[{"name":"weights","type":"int[]"},{"name":"target","type":"int"}],"returnType":"int[]","examples":[{"args":[[4,7,2,5],9],"expected":[1,2],"explanation":"Indices 1 and 2 are the first pair completed while scanning left to right."}],"starter":{"javascript":"function solve(weights, target) {\n  // Write your solution here.\n}","python":"def solve(weights, target):\n    # Write your solution here.\n    pass","cpp":"std::vector<int> solve(std::vector<int> weights, int target) {\n    // Write your solution here.\n    return {};\n}","java":"public static int[] solve(int[] weights, int target) {\n    // Write your solution here.\n    return new int[0];\n}"},"version":1},{"id":"quiet-windows","slug":"quiet-windows","title":"Quiet Windows","arena":"easy","topic":"Arrays","description":"A sensor log contains 0 for a quiet minute and 1 for an active minute. Return the length of the longest uninterrupted quiet period.","constraints":["0 <= log.length <= 10000","Each log element is 0 or 1"],"parameters":[{"name":"log","type":"int[]"}],"returnType":"int","examples":[{"args":[[1,0,0,1,0]],"expected":2,"explanation":"The two middle quiet minutes form the longest period."}],"starter":{"javascript":"function solve(log) {\n  // Write your solution here.\n}","python":"def solve(log):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<int> log) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[] log) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"tile-rotation","slug":"tile-rotation","title":"Tile Rotation","arena":"easy","topic":"Arrays","description":"A circular display shifts each tile one position to the right per tick. Return the tile order after ticks ticks. A tile leaving the last position reappears at the first position. An empty display stays empty.","constraints":["0 <= tiles.length <= 10000","0 <= ticks <= 1000000000","-1000000 <= tiles[i] <= 1000000"],"parameters":[{"name":"tiles","type":"int[]"},{"name":"ticks","type":"int"}],"returnType":"int[]","examples":[{"args":[[2,4,6,8],1],"expected":[8,2,4,6],"explanation":"The last tile moves to the front."}],"starter":{"javascript":"function solve(tiles, ticks) {\n  // Write your solution here.\n}","python":"def solve(tiles, ticks):\n    # Write your solution here.\n    pass","cpp":"std::vector<int> solve(std::vector<int> tiles, int ticks) {\n    // Write your solution here.\n    return {};\n}","java":"public static int[] solve(int[] tiles, int ticks) {\n    // Write your solution here.\n    return new int[0];\n}"},"version":1},{"id":"trail-compression","slug":"trail-compression","title":"Trail Compression","arena":"easy","topic":"Strings","description":"A trail recorder stores lowercase movement labels. Compress each maximal run by writing its letter followed by the run length, including runs of length one. Return the compressed string; an empty trail returns an empty string.","constraints":["0 <= trail.length <= 10000","trail contains only lowercase English letters"],"parameters":[{"name":"trail","type":"string"}],"returnType":"string","examples":[{"args":["aaabbc"],"expected":"a3b2c1","explanation":"Three a labels, two b labels, and one c label form three runs."}],"starter":{"javascript":"function solve(trail) {\n  // Write your solution here.\n}","python":"def solve(trail):\n    # Write your solution here.\n    pass","cpp":"std::string solve(std::string trail) {\n    // Write your solution here.\n    return \"\";\n}","java":"public static String solve(String trail) {\n    // Write your solution here.\n    return \"\";\n}"},"version":1},{"id":"inventory-intersection","slug":"inventory-intersection","title":"Inventory Intersection","arena":"easy","topic":"Sets","description":"Two depots list item codes, possibly with duplicates. Return the distinct codes present in both depots, sorted in increasing order.","constraints":["0 <= first.length, second.length <= 10000","-1000000 <= item codes <= 1000000"],"parameters":[{"name":"first","type":"int[]"},{"name":"second","type":"int[]"}],"returnType":"int[]","examples":[{"args":[[8,3,3,1],[3,8,8,5]],"expected":[3,8],"explanation":"The shared codes are 3 and 8."}],"starter":{"javascript":"function solve(first, second) {\n  // Write your solution here.\n}","python":"def solve(first, second):\n    # Write your solution here.\n    pass","cpp":"std::vector<int> solve(std::vector<int> first, std::vector<int> second) {\n    // Write your solution here.\n    return {};\n}","java":"public static int[] solve(int[] first, int[] second) {\n    // Write your solution here.\n    return new int[0];\n}"},"version":1},{"id":"grid-fence","slug":"grid-fence","title":"Grid Fence","arena":"easy","topic":"Matrices","description":"A map uses 1 for a garden cell and 0 for empty ground. Each cell is a unit square. Return the total length of fencing around all garden cells, counting boundaries with empty ground and the outside of the map. Separate patches and holes all contribute.","constraints":["1 <= rows, columns <= 100","grid is rectangular and contains only 0 and 1"],"parameters":[{"name":"grid","type":"int[][]"}],"returnType":"int","examples":[{"args":[[[1,1],[1,0]]],"expected":8,"explanation":"Three connected squares have eight exposed unit edges."}],"starter":{"javascript":"function solve(grid) {\n  // Write your solution here.\n}","python":"def solve(grid):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<std::vector<int>> grid) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[][] grid) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"bracket-beacon","slug":"bracket-beacon","title":"Bracket Beacon","arena":"easy","topic":"Stacks","description":"A beacon command contains only parentheses, square brackets, and curly braces. Return 1 if every opening bracket is closed by the same bracket type in proper nesting order, otherwise return 0. An empty command is valid.","constraints":["0 <= command.length <= 10000","command contains only ()[]{}"],"parameters":[{"name":"command","type":"string"}],"returnType":"int","examples":[{"args":["([]){}"],"expected":1,"explanation":"Every pair closes in the required nesting order."}],"starter":{"javascript":"function solve(command) {\n  // Write your solution here.\n}","python":"def solve(command):\n    # Write your solution here.\n    pass","cpp":"int solve(std::string command) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(String command) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"missing-marker","slug":"missing-marker","title":"Missing Marker","arena":"easy","topic":"Bitwise","description":"A trail should contain every marker from 0 through n exactly once, but one marker is missing. You receive the other n distinct markers in arbitrary order. Return the missing marker.","constraints":["0 <= n = markers.length <= 10000","markers contains distinct integers from 0 through n"],"parameters":[{"name":"markers","type":"int[]"}],"returnType":"int","examples":[{"args":[[3,0,1]],"expected":2,"explanation":"Markers 0, 1, and 3 are present, so 2 is missing."}],"starter":{"javascript":"function solve(markers) {\n  // Write your solution here.\n}","python":"def solve(markers):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<int> markers) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[] markers) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"relay-segments","slug":"relay-segments","title":"Relay Segments","arena":"medium","topic":"Prefix sums","description":"A relay log records signed energy changes. Count the nonempty contiguous segments whose total energy change equals target. Segments are distinguished by their start and end indices.","constraints":["0 <= changes.length <= 10000","-1000 <= changes[i] <= 1000","-10000000 <= target <= 10000000"],"parameters":[{"name":"changes","type":"int[]"},{"name":"target","type":"int"}],"returnType":"int","examples":[{"args":[[2,-1,2,1],3],"expected":2,"explanation":"The segments [2,-1,2] and [2,1] each sum to 3."}],"starter":{"javascript":"function solve(changes, target) {\n  // Write your solution here.\n}","python":"def solve(changes, target):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<int> changes, int target) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[] changes, int target) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"cooling-strip","slug":"cooling-strip","title":"Cooling Strip","arena":"medium","topic":"Sliding window","description":"A cooling strip is labelled with lowercase English letters. A usable section is a contiguous substring containing no repeated letter. Return the maximum usable section length.","constraints":["0 <= strip.length <= 100000","strip contains only lowercase English letters"],"parameters":[{"name":"strip","type":"string"}],"returnType":"int","examples":[{"args":["abcaef"],"expected":5,"explanation":"The section bcaef has five different letters."}],"starter":{"javascript":"function solve(strip) {\n  // Write your solution here.\n}","python":"def solve(strip):\n    # Write your solution here.\n    pass","cpp":"int solve(std::string strip) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(String strip) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"beacon-coverage","slug":"beacon-coverage","title":"Beacon Coverage","arena":"medium","topic":"Intervals","description":"Each beacon covers a closed interval [start, end] on a road. Combine overlapping or touching intervals into maximal covered intervals. Return the combined intervals sorted by start. Intervals that only meet at an endpoint are combined.","constraints":["0 <= intervals.length <= 10000","Each interval has two integers with -1000000 <= start <= end <= 1000000"],"parameters":[{"name":"intervals","type":"int[][]"}],"returnType":"int[][]","examples":[{"args":[[[1,4],[3,7],[9,10]]],"expected":[[1,7],[9,10]],"explanation":"The first two intervals overlap and combine."}],"starter":{"javascript":"function solve(intervals) {\n  // Write your solution here.\n}","python":"def solve(intervals):\n    # Write your solution here.\n    pass","cpp":"std::vector<std::vector<int>> solve(std::vector<std::vector<int>> intervals) {\n    // Write your solution here.\n    return {};\n}","java":"public static int[][] solve(int[][] intervals) {\n    // Write your solution here.\n    return new int[0][0];\n}"},"version":1},{"id":"gateway-distance","slug":"gateway-distance","title":"Gateway Distance","arena":"medium","topic":"Breadth-first search","description":"There are n gateways numbered 0 through n-1. Each pair in links is an undirected connection that costs one hop. Return the fewest hops from start to goal, or -1 when goal cannot be reached. A gateway is zero hops from itself.","constraints":["1 <= n <= 10000","0 <= links.length <= 20000","Each link joins two distinct valid gateways; links are unique","0 <= start, goal < n"],"parameters":[{"name":"n","type":"int"},{"name":"links","type":"int[][]"},{"name":"start","type":"int"},{"name":"goal","type":"int"}],"returnType":"int","examples":[{"args":[5,[[0,1],[1,2],[0,3],[3,4],[4,2]],0,2],"expected":2,"explanation":"The route 0 \u2192 1 \u2192 2 uses two connections."}],"starter":{"javascript":"function solve(n, links, start, goal) {\n  // Write your solution here.\n}","python":"def solve(n, links, start, goal):\n    # Write your solution here.\n    pass","cpp":"int solve(int n, std::vector<std::vector<int>> links, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int n, int[][] links, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"battery-steps","slug":"battery-steps","title":"Battery Steps","arena":"medium","topic":"Greedy","description":"A rover begins at index 0 of a row of pads. From pad i it may jump forward by any positive distance up to reach[i]. Return the minimum number of jumps needed to reach the last pad, or -1 if impossible. A row with one pad needs zero jumps.","constraints":["1 <= reach.length <= 10000","0 <= reach[i] <= 10000"],"parameters":[{"name":"reach","type":"int[]"}],"returnType":"int","examples":[{"args":[[2,3,1,1,4]],"expected":2,"explanation":"Jump from 0 to 1, then from 1 to 4."}],"starter":{"javascript":"function solve(reach) {\n  // Write your solution here.\n}","python":"def solve(reach):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<int> reach) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[] reach) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"workshop-schedule","slug":"workshop-schedule","title":"Workshop Schedule","arena":"medium","topic":"Greedy","description":"One workshop can host one booking at a time. Each booking is [start, end], occupying the half-open interval from start through just before end. Choose as many bookings as possible without overlap and return their count. A booking may begin exactly when another ends.","constraints":["0 <= bookings.length <= 10000","Each booking has two integers with -1000000 <= start < end <= 1000000"],"parameters":[{"name":"bookings","type":"int[][]"}],"returnType":"int","examples":[{"args":[[[1,3],[2,4],[3,5],[5,8]]],"expected":3,"explanation":"Choose [1,3], [3,5], and [5,8]."}],"starter":{"javascript":"function solve(bookings) {\n  // Write your solution here.\n}","python":"def solve(bookings):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<std::vector<int>> bookings) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[][] bookings) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"reservoir-volume","slug":"reservoir-volume","title":"Reservoir Volume","arena":"medium","topic":"Two pointers","description":"A cross section of a reservoir consists of width-one columns with nonnegative heights. Water falls from above and escapes at either outer edge. Return the total units of water held between the columns after settling.","constraints":["0 <= heights.length <= 10000","0 <= heights[i] <= 10000"],"parameters":[{"name":"heights","type":"int[]"}],"returnType":"int","examples":[{"args":[[3,0,2,0,4]],"expected":7,"explanation":"The three interior columns hold 3, 1, and 3 units."}],"starter":{"javascript":"function solve(heights) {\n  // Write your solution here.\n}","python":"def solve(heights):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<int> heights) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[] heights) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"repair-budget","slug":"repair-budget","title":"Repair Budget","arena":"medium","topic":"Dynamic programming","description":"A maintenance team has unlimited vouchers of each listed positive denomination. Return the fewest vouchers whose values total amount exactly, or -1 if that total is impossible. Zero amount requires zero vouchers.","constraints":["0 <= vouchers.length <= 30","Vouchers are distinct integers from 1 through 10000","0 <= amount <= 10000"],"parameters":[{"name":"vouchers","type":"int[]"},{"name":"amount","type":"int"}],"returnType":"int","examples":[{"args":[[1,4,6],8],"expected":2,"explanation":"Two vouchers worth 4 each reach the total."}],"starter":{"javascript":"function solve(vouchers, amount) {\n  // Write your solution here.\n}","python":"def solve(vouchers, amount):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<int> vouchers, int amount) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[] vouchers, int amount) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"ancestor-broadcast","slug":"ancestor-broadcast","title":"Ancestor Broadcast","arena":"medium","topic":"Trees","description":"A connected tree contains n relay towers numbered 0 through n-1. Each pair in links is a bidirectional connection. A message takes one second per connection. Return the greatest shortest travel time between any pair of towers.","constraints":["1 <= n <= 10000","links contains exactly n-1 distinct edges and forms a connected tree"],"parameters":[{"name":"n","type":"int"},{"name":"links","type":"int[][]"}],"returnType":"int","examples":[{"args":[5,[[0,1],[1,2],[1,3],[3,4]]],"expected":3,"explanation":"A farthest pair is towers 2 and 4, three links apart."}],"starter":{"javascript":"function solve(n, links) {\n  // Write your solution here.\n}","python":"def solve(n, links):\n    # Write your solution here.\n    pass","cpp":"int solve(int n, std::vector<std::vector<int>> links) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int n, int[][] links) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"parcel-multiplication","slug":"parcel-multiplication","title":"Parcel Multiplication","arena":"medium","topic":"Prefix products","description":"Each parcel has an integer factor. For every index, return the product of all factors except the factor at that index. Do not use division. The product of no factors is 1.","constraints":["0 <= factors.length <= 12","-5 <= factors[i] <= 5"],"parameters":[{"name":"factors","type":"int[]"}],"returnType":"int[]","examples":[{"args":[[2,3,4]],"expected":[12,8,6],"explanation":"For the first parcel, multiply 3 by 4."}],"starter":{"javascript":"function solve(factors) {\n  // Write your solution here.\n}","python":"def solve(factors):\n    # Write your solution here.\n    pass","cpp":"std::vector<int> solve(std::vector<int> factors) {\n    // Write your solution here.\n    return {};\n}","java":"public static int[] solve(int[] factors) {\n    // Write your solution here.\n    return new int[0];\n}"},"version":1},{"id":"signal-reconstruction","slug":"signal-reconstruction","title":"Signal Reconstruction","arena":"hard","topic":"Dynamic programming","description":"A noisy transmission source contains lowercase letters. Delete any number of characters while preserving the order of those retained to reconstruct target. Count the distinct choices of retained source indices that produce target, modulo 1000000007. The empty target has exactly one reconstruction.","constraints":["0 <= source.length <= 2000","0 <= target.length <= 500","source and target contain only lowercase English letters"],"parameters":[{"name":"source","type":"string"},{"name":"target","type":"string"}],"returnType":"int","examples":[{"args":["ababc","abc"],"expected":3,"explanation":"Choose source indices [0,1,4], [0,3,4], or [2,3,4]."}],"starter":{"javascript":"function solve(source, target) {\n  // Write your solution here.\n}","python":"def solve(source, target):\n    # Write your solution here.\n    pass","cpp":"int solve(std::string source, std::string target) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(String source, String target) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"turbo-relays","slug":"turbo-relays","title":"Turbo Relays","arena":"hard","topic":"Shortest paths","description":"A directed relay network has n nodes and routes [from, to, cost]. Travel from start to goal at minimum total cost. You may use one turbo token on at most one route, replacing that route cost with floor(cost / 2). Return the minimum cost, or -1 when no route reaches goal.","constraints":["1 <= n <= 200","0 <= routes.length <= 10000","0 <= route costs <= 10000","Routes connect distinct valid nodes; directed pairs are unique","0 <= start, goal < n"],"parameters":[{"name":"n","type":"int"},{"name":"routes","type":"int[][]"},{"name":"start","type":"int"},{"name":"goal","type":"int"}],"returnType":"int","examples":[{"args":[3,[[0,1,8],[1,2,8],[0,2,30]],0,2],"expected":12,"explanation":"Take the two-edge route and reduce one cost from 8 to 4."}],"starter":{"javascript":"function solve(n, routes, start, goal) {\n  // Write your solution here.\n}","python":"def solve(n, routes, start, goal):\n    # Write your solution here.\n    pass","cpp":"int solve(int n, std::vector<std::vector<int>> routes, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int n, int[][] routes, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"lane-capacity","slug":"lane-capacity","title":"Lane Capacity","arena":"hard","topic":"Maximum flow","description":"A delivery network has n junctions and directed lanes [from, to, capacity]. Flow can split among lanes, but each lane carries at most its capacity and every intermediate junction must receive and send the same amount. Return the greatest total flow possible from source to sink.","constraints":["2 <= n <= 40","0 <= lanes.length <= 400","0 <= capacities <= 1000","0 <= source, sink < n and source != sink","Directed lane pairs are unique and connect distinct junctions"],"parameters":[{"name":"n","type":"int"},{"name":"lanes","type":"int[][]"},{"name":"source","type":"int"},{"name":"sink","type":"int"}],"returnType":"int","examples":[{"args":[4,[[0,1,3],[0,2,2],[1,2,1],[1,3,2],[2,3,4]],0,3],"expected":5,"explanation":"All five units leaving junction 0 can reach junction 3."}],"starter":{"javascript":"function solve(n, lanes, source, sink) {\n  // Write your solution here.\n}","python":"def solve(n, lanes, source, sink):\n    # Write your solution here.\n    pass","cpp":"int solve(int n, std::vector<std::vector<int>> lanes, int source, int sink) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int n, int[][] lanes, int source, int sink) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"partition-ledger","slug":"partition-ledger","title":"Partition Ledger","arena":"hard","topic":"Binary search","description":"A ledger contains nonnegative workloads in fixed order. Split it into exactly groups nonempty contiguous batches. The processing time is the largest batch sum. Return the smallest possible processing time.","constraints":["1 <= workloads.length <= 10000","0 <= workloads[i] <= 10000","1 <= groups <= workloads.length"],"parameters":[{"name":"workloads","type":"int[]"},{"name":"groups","type":"int"}],"returnType":"int","examples":[{"args":[[7,2,5,10,8],2],"expected":18,"explanation":"Split after the third entry to obtain sums 14 and 18."}],"starter":{"javascript":"function solve(workloads, groups) {\n  // Write your solution here.\n}","python":"def solve(workloads, groups):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<int> workloads, int groups) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[] workloads, int groups) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"rising-routes","slug":"rising-routes","title":"Rising Routes","arena":"hard","topic":"DAG dynamic programming","description":"A height map is a rectangular matrix. A route may start at any cell and move up, down, left, or right, but every next height must be strictly larger. Return the largest number of cells on one route.","constraints":["1 <= rows, columns <= 100","heights is rectangular","-1000000 <= heights[r][c] <= 1000000"],"parameters":[{"name":"heights","type":"int[][]"}],"returnType":"int","examples":[{"args":[[[9,9,4],[6,6,8],[2,1,1]]],"expected":4,"explanation":"One route follows heights 1 \u2192 2 \u2192 6 \u2192 9."}],"starter":{"javascript":"function solve(heights) {\n  // Write your solution here.\n}","python":"def solve(heights):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<std::vector<int>> heights) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[][] heights) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"wildcard-registry","slug":"wildcard-registry","title":"Wildcard Registry","arena":"hard","topic":"Dynamic programming","description":"A registry pattern contains lowercase letters, ? matching exactly one arbitrary letter, and * matching any sequence of letters including empty. Return 1 if the pattern matches the entire lowercase name, otherwise return 0.","constraints":["0 <= name.length, pattern.length <= 1000","name contains lowercase English letters; pattern additionally permits ? and *"],"parameters":[{"name":"name","type":"string"},{"name":"pattern","type":"string"}],"returnType":"int","examples":[{"args":["relay","r*l?y"],"expected":1,"explanation":"The star consumes e and the question mark consumes a."}],"starter":{"javascript":"function solve(name, pattern) {\n  // Write your solution here.\n}","python":"def solve(name, pattern):\n    # Write your solution here.\n    pass","cpp":"int solve(std::string name, std::string pattern) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(String name, String pattern) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"cut-network","slug":"cut-network","title":"Cut Network","arena":"hard","topic":"Graph bridges","description":"A communication network has n nodes and undirected links. A critical link is one whose removal increases the total number of connected components. Return all critical links as [smallerNode, largerNode], sorted first by smallerNode and then by largerNode. The initial network may be disconnected.","constraints":["1 <= n <= 400","0 <= links.length <= 10000","Links are unique unordered pairs of distinct valid nodes"],"parameters":[{"name":"n","type":"int"},{"name":"links","type":"int[][]"}],"returnType":"int[][]","examples":[{"args":[4,[[0,1],[1,2],[2,0],[1,3]]],"expected":[[1,3]],"explanation":"Only the branch to node 3 disconnects additional nodes when removed."}],"starter":{"javascript":"function solve(n, links) {\n  // Write your solution here.\n}","python":"def solve(n, links):\n    # Write your solution here.\n    pass","cpp":"std::vector<std::vector<int>> solve(int n, std::vector<std::vector<int>> links) {\n    // Write your solution here.\n    return {};\n}","java":"public static int[][] solve(int n, int[][] links) {\n    // Write your solution here.\n    return new int[0][0];\n}"},"version":1},{"id":"festival-packing","slug":"festival-packing","title":"Festival Packing","arena":"hard","topic":"Dynamic programming","description":"A festival receives an integer value for each time slot. Select exactly count nonoverlapping performances, each occupying exactly length consecutive slots. Unused gaps are allowed and adjacent performances are allowed. Return the largest total value of selected slots. If there is not enough room for all performances, return -1.","constraints":["0 <= values.length <= 2000","-1000 <= values[i] <= 1000","1 <= length <= 2000","0 <= count <= 50"],"parameters":[{"name":"values","type":"int[]"},{"name":"length","type":"int"},{"name":"count","type":"int"}],"returnType":"int","examples":[{"args":[[1,2,1,2,6,7,5,1],2,3],"expected":23,"explanation":"Choose slots [0,1], [3,4], and [5,6], with sums 3, 8, and 12."}],"starter":{"javascript":"function solve(values, length, count) {\n  // Write your solution here.\n}","python":"def solve(values, length, count):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<int> values, int length, int count) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[] values, int length, int count) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"detour-permits","slug":"detour-permits","title":"Detour Permits","arena":"hard","topic":"Multidimensional dynamic programming","description":"A rectangular grid marks ordinary cells with 0 and restricted cells with 1. Travel from the top-left cell to the bottom-right cell, moving only one cell right or down at each step. Visiting each restricted cell consumes one permit, including the start and destination. Count routes using at most permits permits, modulo 1000000007.","constraints":["1 <= rows, columns <= 50","grid is rectangular and contains only 0 and 1","0 <= permits <= 20"],"parameters":[{"name":"grid","type":"int[][]"},{"name":"permits","type":"int"}],"returnType":"int","examples":[{"args":[[[0,1,0],[0,1,0]],1],"expected":2,"explanation":"The paths right-right-down and down-right-right each use one permit."}],"starter":{"javascript":"function solve(grid, permits) {\n  // Write your solution here.\n}","python":"def solve(grid, permits):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<std::vector<int>> grid, int permits) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[][] grid, int permits) {\n    // Write your solution here.\n    return 0;\n}"},"version":1},{"id":"chain-bundles","slug":"chain-bundles","title":"Chain Bundles","arena":"hard","topic":"Dynamic programming","description":"A trader watches a sequence of daily unit prices. One transaction buys one unit on one day and sells it on a later day. Hold at most one unit at a time and complete at most limit transactions. Return the greatest total profit; skipping all trades is allowed.","constraints":["0 <= prices.length <= 2000","0 <= prices[i] <= 10000","0 <= limit <= 100"],"parameters":[{"name":"prices","type":"int[]"},{"name":"limit","type":"int"}],"returnType":"int","examples":[{"args":[[3,2,6,5,0,3],2],"expected":7,"explanation":"Buy at 2 and sell at 6, then buy at 0 and sell at 3."}],"starter":{"javascript":"function solve(prices, limit) {\n  // Write your solution here.\n}","python":"def solve(prices, limit):\n    # Write your solution here.\n    pass","cpp":"int solve(std::vector<int> prices, int limit) {\n    // Write your solution here.\n    return 0;\n}","java":"public static int solve(int[] prices, int limit) {\n    // Write your solution here.\n    return 0;\n}"},"version":1}]
+[
+  {
+    "id": "checkpoint-climb",
+    "slug": "checkpoint-climb",
+    "title": "Checkpoint Climb",
+    "arena": "easy",
+    "topic": "Arrays",
+    "description": "A rover records the elevation of each checkpoint in the order it visits them. A checkpoint earns a signal only when its elevation is strictly greater than every elevation recorded before it. The first checkpoint therefore earns a signal whenever the list is nonempty.\nReturn the total number of signal-earning checkpoints. Equal elevations do not set a new record: if the current highest elevation appears again, that later checkpoint earns no signal. Return 0 when there are no checkpoints.",
+    "constraints": [
+      "0 <= heights.length <= 10000",
+      "-1000000 <= heights[i] <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "heights",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [[3, 1, 4, 4, 7]],
+        "expected": 3,
+        "explanation": "The elevations 3, 4, and 7 set new records."
+      },
+      {
+        "args": [[1, 2, 3, 4]],
+        "expected": 4,
+        "explanation": "Every checkpoint is higher than all earlier checkpoints, so all four earn signals."
+      },
+      {
+        "args": [[2, 2, 2]],
+        "expected": 1,
+        "explanation": "Only the first 2 earns a signal; equal later values are not strictly higher."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(heights) {\n  // Write your solution here.\n}",
+      "python": "def solve(heights):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> heights) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] heights) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "mirror-cargo",
+    "slug": "mirror-cargo",
+    "title": "Mirror Cargo",
+    "arena": "easy",
+    "topic": "Two pointers",
+    "description": "A cargo label is a string of lowercase English letters. It is mirror-safe when its complete sequence of letters is identical whether read from left to right or from right to left.\nReturn 1 when the label is mirror-safe and 0 otherwise. Every character must participate in the comparison; do not remove or rearrange letters. A one-letter label and the empty label are both mirror-safe.",
+    "constraints": [
+      "0 <= label.length <= 10000",
+      "label contains only lowercase English letters"
+    ],
+    "parameters": [
+      {
+        "name": "label",
+        "type": "string"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": ["level"],
+        "expected": 1,
+        "explanation": "The letters match from both ends."
+      },
+      {
+        "args": [""],
+        "expected": 1,
+        "explanation": "The empty label reads the same in either direction."
+      },
+      {
+        "args": ["ab"],
+        "expected": 0,
+        "explanation": "Reading ab backward gives ba, so the two-letter label is not mirror-safe."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(label) {\n  // Write your solution here.\n}",
+      "python": "def solve(label):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::string label) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(String label) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "supply-pair",
+    "slug": "supply-pair",
+    "title": "Supply Pair",
+    "arena": "easy",
+    "topic": "Hash maps",
+    "description": "A station has a row of supply crates whose weights are given in their current order. Find two distinct crates whose weights add exactly to target, and return their zero-based indices as [i, j] with i < j.\nMore than one pair may reach the target. In that case, choose the pair with the smallest second index j; if multiple pairs share that j, choose the smallest first index i. A crate cannot be used twice. Return an empty array when no valid pair exists.",
+    "constraints": [
+      "0 <= weights.length <= 10000",
+      "-1000000 <= weights[i], target <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "weights",
+        "type": "int[]"
+      },
+      {
+        "name": "target",
+        "type": "int"
+      }
+    ],
+    "returnType": "int[]",
+    "examples": [
+      {
+        "args": [[4, 7, 2, 5], 9],
+        "expected": [1, 2],
+        "explanation": "Indices 1 and 2 are the first pair completed while scanning left to right."
+      },
+      {
+        "args": [[2, 2], 4],
+        "expected": [0, 1],
+        "explanation": "The two distinct crates at indices 0 and 1 both weigh 2 and sum to 4."
+      },
+      {
+        "args": [[], 0],
+        "expected": [],
+        "explanation": "There are no crates to pair, so the required result is empty."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(weights, target) {\n  // Write your solution here.\n}",
+      "python": "def solve(weights, target):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<int> solve(std::vector<int> weights, int target) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[] solve(int[] weights, int target) {\n    // Write your solution here.\n    return new int[0];\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "quiet-windows",
+    "slug": "quiet-windows",
+    "title": "Quiet Windows",
+    "arena": "easy",
+    "topic": "Arrays",
+    "description": "A sensor log records one value per minute: 0 means the sensor was quiet and 1 means it was active. A quiet period is a contiguous run of one or more zeroes.\nReturn the number of minutes in the longest uninterrupted quiet period. Activity ends the current period, and separate quiet periods cannot be joined across an active minute. Return 0 when the log is empty or contains no quiet minute.",
+    "constraints": ["0 <= log.length <= 10000", "Each log element is 0 or 1"],
+    "parameters": [
+      {
+        "name": "log",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [[1, 0, 0, 1, 0]],
+        "expected": 2,
+        "explanation": "The two middle quiet minutes form the longest period."
+      },
+      {
+        "args": [[0, 0, 0]],
+        "expected": 3,
+        "explanation": "All three recorded minutes are quiet, creating one period of length 3."
+      },
+      {
+        "args": [[1, 1, 1]],
+        "expected": 0,
+        "explanation": "Every minute is active, so there is no quiet period."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(log) {\n  // Write your solution here.\n}",
+      "python": "def solve(log):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> log) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] log) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "tile-rotation",
+    "slug": "tile-rotation",
+    "title": "Tile Rotation",
+    "arena": "easy",
+    "topic": "Arrays",
+    "description": "A circular display contains tiles in left-to-right order. During one tick, every tile shifts one position to the right, and the tile leaving the last position wraps around to the first position.\nReturn the tile order after exactly ticks ticks. The input order should be treated as the initial state. Ticks may be much larger than the number of tiles, so full rotations can return the display to an earlier order. An empty display stays empty.",
+    "constraints": [
+      "0 <= tiles.length <= 10000",
+      "0 <= ticks <= 1000000000",
+      "-1000000 <= tiles[i] <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "tiles",
+        "type": "int[]"
+      },
+      {
+        "name": "ticks",
+        "type": "int"
+      }
+    ],
+    "returnType": "int[]",
+    "examples": [
+      {
+        "args": [[2, 4, 6, 8], 1],
+        "expected": [8, 2, 4, 6],
+        "explanation": "The last tile moves to the front."
+      },
+      {
+        "args": [[1, 2, 3], 0],
+        "expected": [1, 2, 3],
+        "explanation": "Zero ticks leave every tile in its initial position."
+      },
+      {
+        "args": [[1, 2, 3], 4],
+        "expected": [3, 1, 2],
+        "explanation": "Four ticks on three tiles are equivalent to one right rotation."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(tiles, ticks) {\n  // Write your solution here.\n}",
+      "python": "def solve(tiles, ticks):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<int> solve(std::vector<int> tiles, int ticks) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[] solve(int[] tiles, int ticks) {\n    // Write your solution here.\n    return new int[0];\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "trail-compression",
+    "slug": "trail-compression",
+    "title": "Trail Compression",
+    "arena": "easy",
+    "topic": "Strings",
+    "description": "A trail recorder stores a sequence of lowercase movement labels. Split the sequence into maximal contiguous runs of equal letters, then encode each run as its letter followed immediately by the run's decimal length.\nReturn the concatenation of all encoded runs in their original order. Runs of length one must still include the number 1, and equal letters separated by another letter belong to different runs. Return an empty string for an empty trail.",
+    "constraints": [
+      "0 <= trail.length <= 10000",
+      "trail contains only lowercase English letters"
+    ],
+    "parameters": [
+      {
+        "name": "trail",
+        "type": "string"
+      }
+    ],
+    "returnType": "string",
+    "examples": [
+      {
+        "args": ["aaabbc"],
+        "expected": "a3b2c1",
+        "explanation": "Three a labels, two b labels, and one c label form three runs."
+      },
+      {
+        "args": ["abc"],
+        "expected": "a1b1c1",
+        "explanation": "Each letter forms a separate run of length one, and every run includes its count."
+      },
+      {
+        "args": ["aabbaa"],
+        "expected": "a2b2a2",
+        "explanation": "The two a runs stay separate because the b run lies between them."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(trail) {\n  // Write your solution here.\n}",
+      "python": "def solve(trail):\n    # Write your solution here.\n    pass",
+      "cpp": "std::string solve(std::string trail) {\n    // Write your solution here.\n    return \"\";\n}",
+      "java": "public static String solve(String trail) {\n    // Write your solution here.\n    return \"\";\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "inventory-intersection",
+    "slug": "inventory-intersection",
+    "title": "Inventory Intersection",
+    "arena": "easy",
+    "topic": "Sets",
+    "description": "Two depots each provide a list of integer item codes. Either list may contain the same code many times. A code belongs in the result when it appears at least once in both lists.\nReturn every shared code exactly once, sorted in increasing numeric order. Duplicate occurrences do not create duplicate output entries. If either list is empty, or the depots share no code, return an empty array.",
+    "constraints": [
+      "0 <= first.length, second.length <= 10000",
+      "-1000000 <= item codes <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "first",
+        "type": "int[]"
+      },
+      {
+        "name": "second",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int[]",
+    "examples": [
+      {
+        "args": [
+          [8, 3, 3, 1],
+          [3, 8, 8, 5]
+        ],
+        "expected": [3, 8],
+        "explanation": "The shared codes are 3 and 8."
+      },
+      {
+        "args": [
+          [1, 1, 1],
+          [1, 1]
+        ],
+        "expected": [1],
+        "explanation": "Although 1 is repeated, a shared item code appears only once in the result."
+      },
+      {
+        "args": [[1], []],
+        "expected": [],
+        "explanation": "The second depot is empty, so the depots have no shared code."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(first, second) {\n  // Write your solution here.\n}",
+      "python": "def solve(first, second):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<int> solve(std::vector<int> first, std::vector<int> second) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[] solve(int[] first, int[] second) {\n    // Write your solution here.\n    return new int[0];\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "grid-fence",
+    "slug": "grid-fence",
+    "title": "Grid Fence",
+    "arena": "easy",
+    "topic": "Matrices",
+    "description": "A rectangular map uses 1 for a unit-square garden cell and 0 for empty ground. A unit of fence is needed on each side of a garden cell that touches empty ground or lies along the outside boundary of the map.\nReturn the total fence length across the whole map. Sides shared by two garden cells are internal and add nothing. Count every exposed side of separate patches, and also count garden sides bordering holes of empty ground.",
+    "constraints": [
+      "1 <= rows, columns <= 100",
+      "grid is rectangular and contains only 0 and 1"
+    ],
+    "parameters": [
+      {
+        "name": "grid",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            [1, 1],
+            [1, 0]
+          ]
+        ],
+        "expected": 8,
+        "explanation": "Three connected squares have eight exposed unit edges."
+      },
+      {
+        "args": [[[1]]],
+        "expected": 4,
+        "explanation": "A single garden square has four sides exposed."
+      },
+      {
+        "args": [
+          [
+            [1, 0],
+            [0, 1]
+          ]
+        ],
+        "expected": 8,
+        "explanation": "The diagonal garden cells share no side, so each contributes four fence units."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(grid) {\n  // Write your solution here.\n}",
+      "python": "def solve(grid):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<std::vector<int>> grid) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[][] grid) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "bracket-beacon",
+    "slug": "bracket-beacon",
+    "title": "Bracket Beacon",
+    "arena": "easy",
+    "topic": "Stacks",
+    "description": "A beacon command contains only the bracket characters (), [], and {}. A command is valid when every opening bracket is closed by the same type of bracket and pairs are closed in proper nested order.\nReturn 1 for a valid command and 0 for an invalid one. A closing bracket cannot appear before its matching opening bracket, and no opening bracket may remain unmatched at the end. Adjacent pairs are allowed, and the empty command is valid.",
+    "constraints": [
+      "0 <= command.length <= 10000",
+      "command contains only ()[]{}"
+    ],
+    "parameters": [
+      {
+        "name": "command",
+        "type": "string"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": ["([]){}"],
+        "expected": 1,
+        "explanation": "Every pair closes in the required nesting order."
+      },
+      {
+        "args": ["([{}])"],
+        "expected": 1,
+        "explanation": "The pairs close from the inside outward in the reverse order they opened."
+      },
+      {
+        "args": ["([)]"],
+        "expected": 0,
+        "explanation": "The parenthesis tries to close while a square bracket is still open, breaking the nesting order."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(command) {\n  // Write your solution here.\n}",
+      "python": "def solve(command):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::string command) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(String command) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "missing-marker",
+    "slug": "missing-marker",
+    "title": "Missing Marker",
+    "arena": "easy",
+    "topic": "Bitwise",
+    "description": "A complete trail uses every integer marker from 0 through n exactly once. You receive an array containing n distinct markers from that range, which means exactly one of the n + 1 possible markers is missing.\nReturn the missing marker. The received markers may appear in any order, and the missing value may be 0 or n. When the array is empty, n is 0, so the only possible marker—and therefore the missing one—is 0.",
+    "constraints": [
+      "0 <= n = markers.length <= 10000",
+      "markers contains distinct integers from 0 through n"
+    ],
+    "parameters": [
+      {
+        "name": "markers",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [[3, 0, 1]],
+        "expected": 2,
+        "explanation": "Markers 0, 1, and 3 are present, so 2 is missing."
+      },
+      {
+        "args": [[]],
+        "expected": 0,
+        "explanation": "Here n is 0. The complete range would contain only marker 0, so 0 is missing."
+      },
+      {
+        "args": [[0, 1, 2]],
+        "expected": 3,
+        "explanation": "The received array contains 0 through 2, making the upper endpoint 3 the missing marker."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(markers) {\n  // Write your solution here.\n}",
+      "python": "def solve(markers):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> markers) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] markers) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "relay-segments",
+    "slug": "relay-segments",
+    "title": "Relay Segments",
+    "arena": "medium",
+    "topic": "Prefix sums",
+    "description": "A relay log records a signed energy change at each position. A segment is any nonempty contiguous range of the log, and its total is the sum of all changes inside that range.\nReturn the number of segments whose total equals target. Segments are identified by their start and end indices, so two ranges count separately even when they contain the same values. Changes may be negative or zero, and overlapping segments are allowed.",
+    "constraints": [
+      "0 <= changes.length <= 10000",
+      "-1000 <= changes[i] <= 1000",
+      "-10000000 <= target <= 10000000"
+    ],
+    "parameters": [
+      {
+        "name": "changes",
+        "type": "int[]"
+      },
+      {
+        "name": "target",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [[2, -1, 2, 1], 3],
+        "expected": 2,
+        "explanation": "The segments [2,-1,2] and [2,1] each sum to 3."
+      },
+      {
+        "args": [[0, 0, 0], 0],
+        "expected": 6,
+        "explanation": "The three one-zero segments, two two-zero segments, and one three-zero segment all total 0."
+      },
+      {
+        "args": [[1, 2, 3], 3],
+        "expected": 2,
+        "explanation": "The segments [1,2] and [3] both total 3, so they count separately."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(changes, target) {\n  // Write your solution here.\n}",
+      "python": "def solve(changes, target):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> changes, int target) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] changes, int target) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "cooling-strip",
+    "slug": "cooling-strip",
+    "title": "Cooling Strip",
+    "arena": "medium",
+    "topic": "Sliding window",
+    "description": "A cooling strip is labelled with lowercase English letters. A usable section is a contiguous substring in which every letter appears at most once.\nReturn the maximum length of any usable section. You may choose a section starting and ending anywhere, but you cannot skip letters inside it. When a letter repeats, a valid section cannot contain both occurrences. Return 0 for an empty strip.",
+    "constraints": [
+      "0 <= strip.length <= 100000",
+      "strip contains only lowercase English letters"
+    ],
+    "parameters": [
+      {
+        "name": "strip",
+        "type": "string"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": ["abcaef"],
+        "expected": 5,
+        "explanation": "The section bcaef has five different letters."
+      },
+      {
+        "args": ["aaaa"],
+        "expected": 1,
+        "explanation": "Every longer substring repeats a, so the best usable section contains one character."
+      },
+      {
+        "args": ["abba"],
+        "expected": 2,
+        "explanation": "The longest usable sections are ab and ba, each with length 2."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(strip) {\n  // Write your solution here.\n}",
+      "python": "def solve(strip):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::string strip) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(String strip) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "beacon-coverage",
+    "slug": "beacon-coverage",
+    "title": "Beacon Coverage",
+    "arena": "medium",
+    "topic": "Intervals",
+    "description": "Each beacon covers a closed road interval [start, end]. Combine all intervals that overlap or touch into maximal covered intervals, then return those combined intervals sorted by increasing start.\nBecause intervals are closed, [1, 2] and [2, 3] touch at position 2 and must become [1, 3]. Intervals may arrive in any order, and one may be fully contained in another. Do not combine intervals separated by a positive gap. Return an empty array for no beacons.",
+    "constraints": [
+      "0 <= intervals.length <= 10000",
+      "Each interval has two integers with -1000000 <= start <= end <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "intervals",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int[][]",
+    "examples": [
+      {
+        "args": [
+          [
+            [1, 4],
+            [3, 7],
+            [9, 10]
+          ]
+        ],
+        "expected": [
+          [1, 7],
+          [9, 10]
+        ],
+        "explanation": "The first two intervals overlap and combine."
+      },
+      {
+        "args": [
+          [
+            [1, 2],
+            [2, 3]
+          ]
+        ],
+        "expected": [[1, 3]],
+        "explanation": "The closed intervals meet at endpoint 2, so together they cover [1,3]."
+      },
+      {
+        "args": [
+          [
+            [5, 7],
+            [1, 2]
+          ]
+        ],
+        "expected": [
+          [1, 2],
+          [5, 7]
+        ],
+        "explanation": "The intervals are separated by a gap and remain sorted as two distinct ranges."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(intervals) {\n  // Write your solution here.\n}",
+      "python": "def solve(intervals):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<std::vector<int>> solve(std::vector<std::vector<int>> intervals) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[][] solve(int[][] intervals) {\n    // Write your solution here.\n    return new int[0][0];\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "gateway-distance",
+    "slug": "gateway-distance",
+    "title": "Gateway Distance",
+    "arena": "medium",
+    "topic": "Breadth-first search",
+    "description": "There are n gateways numbered 0 through n - 1. Each pair [a, b] in links is a bidirectional connection, and travelling across any connection costs exactly one hop.\nReturn the minimum number of hops needed to travel from start to goal. Routes may pass through any gateways and must follow the supplied links. Return 0 when start and goal are the same, and return -1 when no route connects them.",
+    "constraints": [
+      "1 <= n <= 10000",
+      "0 <= links.length <= 20000",
+      "Each link joins two distinct valid gateways; links are unique",
+      "0 <= start, goal < n"
+    ],
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "links",
+        "type": "int[][]"
+      },
+      {
+        "name": "start",
+        "type": "int"
+      },
+      {
+        "name": "goal",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          5,
+          [
+            [0, 1],
+            [1, 2],
+            [0, 3],
+            [3, 4],
+            [4, 2]
+          ],
+          0,
+          2
+        ],
+        "expected": 2,
+        "explanation": "The route 0 → 1 → 2 uses two connections."
+      },
+      {
+        "args": [1, [], 0, 0],
+        "expected": 0,
+        "explanation": "The start and goal are gateway 0, so no connection needs to be crossed."
+      },
+      {
+        "args": [
+          4,
+          [
+            [0, 1],
+            [2, 3]
+          ],
+          0,
+          3
+        ],
+        "expected": -1,
+        "explanation": "The start and goal belong to different connected components, so no route exists."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(n, links, start, goal) {\n  // Write your solution here.\n}",
+      "python": "def solve(n, links, start, goal):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> links, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int n, int[][] links, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "battery-steps",
+    "slug": "battery-steps",
+    "title": "Battery Steps",
+    "arena": "medium",
+    "topic": "Greedy",
+    "description": "A rover starts on pad 0 in a row of pads. From pad i, it may jump forward by any positive number of positions up to reach[i]. It may never jump backward or beyond the last pad.\nReturn the minimum number of jumps required to reach the last pad. If no sequence of valid jumps reaches it, return -1. A row containing only the starting pad is already complete and requires 0 jumps, regardless of that pad's reach.",
+    "constraints": ["1 <= reach.length <= 10000", "0 <= reach[i] <= 10000"],
+    "parameters": [
+      {
+        "name": "reach",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [[2, 3, 1, 1, 4]],
+        "expected": 2,
+        "explanation": "Jump from 0 to 1, then from 1 to 4."
+      },
+      {
+        "args": [[0]],
+        "expected": 0,
+        "explanation": "The rover begins on the only pad, which is already the destination."
+      },
+      {
+        "args": [[0, 1]],
+        "expected": -1,
+        "explanation": "Pad 0 has reach 0, so the rover cannot move to the last pad."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(reach) {\n  // Write your solution here.\n}",
+      "python": "def solve(reach):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> reach) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] reach) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "workshop-schedule",
+    "slug": "workshop-schedule",
+    "title": "Workshop Schedule",
+    "arena": "medium",
+    "topic": "Greedy",
+    "description": "One workshop can host only one booking at a time. Each booking [start, end] occupies the half-open interval from start up to, but not including, end.\nChoose a subset containing as many nonoverlapping bookings as possible and return its size. You may reorder the input while making the choice. A booking may start exactly when another ends, but intervals whose occupied time overlaps cannot both be selected.",
+    "constraints": [
+      "0 <= bookings.length <= 10000",
+      "Each booking has two integers with -1000000 <= start < end <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "bookings",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            [1, 3],
+            [2, 4],
+            [3, 5],
+            [5, 8]
+          ]
+        ],
+        "expected": 3,
+        "explanation": "Choose [1,3], [3,5], and [5,8]."
+      },
+      {
+        "args": [
+          [
+            [1, 2],
+            [2, 3],
+            [3, 4]
+          ]
+        ],
+        "expected": 3,
+        "explanation": "Each booking starts exactly when the previous one ends, so all three fit."
+      },
+      {
+        "args": [
+          [
+            [0, 10],
+            [1, 2],
+            [2, 3],
+            [3, 4]
+          ]
+        ],
+        "expected": 3,
+        "explanation": "Skipping [0,10] allows the three short bookings to be scheduled back to back."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(bookings) {\n  // Write your solution here.\n}",
+      "python": "def solve(bookings):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<std::vector<int>> bookings) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[][] bookings) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "reservoir-volume",
+    "slug": "reservoir-volume",
+    "title": "Reservoir Volume",
+    "arena": "medium",
+    "topic": "Two pointers",
+    "description": "A reservoir cross section is represented by width-one columns with nonnegative heights. After rain falls, water rests above shorter columns when taller boundaries prevent it from escaping; water can always escape past either outer edge.\nReturn the total number of unit squares of water held after settling. A column itself occupies space and cannot hold water. Water at each position is limited by the shorter of the highest boundary on its left and right. Fewer than three columns cannot trap water.",
+    "constraints": ["0 <= heights.length <= 10000", "0 <= heights[i] <= 10000"],
+    "parameters": [
+      {
+        "name": "heights",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [[3, 0, 2, 0, 4]],
+        "expected": 7,
+        "explanation": "The three interior columns hold 3, 1, and 3 units."
+      },
+      {
+        "args": [[1, 0, 1]],
+        "expected": 1,
+        "explanation": "The middle column is one unit below both boundaries, so it holds one unit of water."
+      },
+      {
+        "args": [[3, 0, 0, 3]],
+        "expected": 6,
+        "explanation": "Each of the two zero-height interior columns holds three units, for a total of 6."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(heights) {\n  // Write your solution here.\n}",
+      "python": "def solve(heights):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> heights) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] heights) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "repair-budget",
+    "slug": "repair-budget",
+    "title": "Repair Budget",
+    "arena": "medium",
+    "topic": "Dynamic programming",
+    "description": "A maintenance team has an unlimited supply of vouchers for each listed positive denomination. Select vouchers whose values add exactly to amount.\nReturn the smallest number of vouchers needed to reach that total, or -1 when no exact combination exists. A denomination may be used any number of times, and the order of selected vouchers does not matter. An amount of 0 requires 0 vouchers, even when the list is empty.",
+    "constraints": [
+      "0 <= vouchers.length <= 30",
+      "Vouchers are distinct integers from 1 through 10000",
+      "0 <= amount <= 10000"
+    ],
+    "parameters": [
+      {
+        "name": "vouchers",
+        "type": "int[]"
+      },
+      {
+        "name": "amount",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [[1, 4, 6], 8],
+        "expected": 2,
+        "explanation": "Two vouchers worth 4 each reach the total."
+      },
+      {
+        "args": [[2], 3],
+        "expected": -1,
+        "explanation": "Repeated vouchers of value 2 can produce only even totals, so 3 is impossible."
+      },
+      {
+        "args": [[2, 5], 10],
+        "expected": 2,
+        "explanation": "Two vouchers worth 5 reach 10, and no single listed voucher does."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(vouchers, amount) {\n  // Write your solution here.\n}",
+      "python": "def solve(vouchers, amount):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> vouchers, int amount) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] vouchers, int amount) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "ancestor-broadcast",
+    "slug": "ancestor-broadcast",
+    "title": "Ancestor Broadcast",
+    "arena": "medium",
+    "topic": "Trees",
+    "description": "A connected tree has n relay towers numbered 0 through n - 1 and exactly n - 1 bidirectional links. A message takes one second to cross one link, so the travel time between two towers is the number of links on their unique path.\nReturn the greatest shortest travel time over every pair of towers—the tree's diameter measured in links. Either endpoint may be any tower. A tree with one tower has no links and therefore has diameter 0.",
+    "constraints": [
+      "1 <= n <= 10000",
+      "links contains exactly n-1 distinct edges and forms a connected tree"
+    ],
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "links",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          5,
+          [
+            [0, 1],
+            [1, 2],
+            [1, 3],
+            [3, 4]
+          ]
+        ],
+        "expected": 3,
+        "explanation": "A farthest pair is towers 2 and 4, three links apart."
+      },
+      {
+        "args": [1, []],
+        "expected": 0,
+        "explanation": "With one tower there is no pair connected by an edge, so the greatest distance is 0."
+      },
+      {
+        "args": [
+          5,
+          [
+            [0, 1],
+            [0, 2],
+            [0, 3],
+            [0, 4]
+          ]
+        ],
+        "expected": 2,
+        "explanation": "Any two leaves communicate through tower 0 in two seconds, which is the maximum distance."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(n, links) {\n  // Write your solution here.\n}",
+      "python": "def solve(n, links):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> links) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int n, int[][] links) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "parcel-multiplication",
+    "slug": "parcel-multiplication",
+    "title": "Parcel Multiplication",
+    "arena": "medium",
+    "topic": "Prefix products",
+    "description": "Each parcel has an integer factor. Build an output array of the same length where output[i] is the product of every input factor except factors[i].\nReturn the complete output array without using division. Preserve the original index order. Zero and negative factors follow ordinary integer multiplication, so one or more zeroes can make some products zero. For a one-element array, the product of all other factors is the empty product, defined as 1.",
+    "constraints": ["0 <= factors.length <= 12", "-5 <= factors[i] <= 5"],
+    "parameters": [
+      {
+        "name": "factors",
+        "type": "int[]"
+      }
+    ],
+    "returnType": "int[]",
+    "examples": [
+      {
+        "args": [[2, 3, 4]],
+        "expected": [12, 8, 6],
+        "explanation": "For the first parcel, multiply 3 by 4."
+      },
+      {
+        "args": [[5]],
+        "expected": [1],
+        "explanation": "There are no other factors, so the product for the only index is the empty product 1."
+      },
+      {
+        "args": [[0, 2, 3]],
+        "expected": [6, 0, 0],
+        "explanation": "Excluding the zero gives 2×3 = 6; every other product still includes the zero."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(factors) {\n  // Write your solution here.\n}",
+      "python": "def solve(factors):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<int> solve(std::vector<int> factors) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[] solve(int[] factors) {\n    // Write your solution here.\n    return new int[0];\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "signal-reconstruction",
+    "slug": "signal-reconstruction",
+    "title": "Signal Reconstruction",
+    "arena": "hard",
+    "topic": "Dynamic programming",
+    "description": "A source transmission and a target contain lowercase English letters. Reconstruct target by deleting zero or more source characters while preserving the relative order of every character you keep.\nCount the distinct choices of source indices that spell target, and return the count modulo 1,000,000,007. Equal letters chosen from different positions form different reconstructions. The empty target has exactly one reconstruction, while a nonempty target cannot be made from an empty source.",
+    "constraints": [
+      "0 <= source.length <= 2000",
+      "0 <= target.length <= 500",
+      "source and target contain only lowercase English letters"
+    ],
+    "parameters": [
+      {
+        "name": "source",
+        "type": "string"
+      },
+      {
+        "name": "target",
+        "type": "string"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": ["ababc", "abc"],
+        "expected": 3,
+        "explanation": "Choose source indices [0,1,4], [0,3,4], or [2,3,4]."
+      },
+      {
+        "args": ["abc", ""],
+        "expected": 1,
+        "explanation": "Deleting all source characters is the single way to form an empty target."
+      },
+      {
+        "args": ["aaaa", "aa"],
+        "expected": 6,
+        "explanation": "Choose any two of the four source positions; there are 4 choose 2 = 6 reconstructions."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(source, target) {\n  // Write your solution here.\n}",
+      "python": "def solve(source, target):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::string source, std::string target) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(String source, String target) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "turbo-relays",
+    "slug": "turbo-relays",
+    "title": "Turbo Relays",
+    "arena": "hard",
+    "topic": "Shortest paths",
+    "description": "A directed relay network has n nodes and routes [from, to, cost]. Travel from start to goal with minimum total cost. You own one turbo token that may be used on at most one traversed route, changing that route's cost to floor(cost / 2).\nReturn the lowest possible route cost after choosing whether and where to use the token. Route directions must be respected, and nodes or routes may be revisited if useful. Return 0 when start equals goal and -1 when goal is unreachable.",
+    "constraints": [
+      "1 <= n <= 200",
+      "0 <= routes.length <= 10000",
+      "0 <= route costs <= 10000",
+      "Routes connect distinct valid nodes; directed pairs are unique",
+      "0 <= start, goal < n"
+    ],
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "routes",
+        "type": "int[][]"
+      },
+      {
+        "name": "start",
+        "type": "int"
+      },
+      {
+        "name": "goal",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          3,
+          [
+            [0, 1, 8],
+            [1, 2, 8],
+            [0, 2, 30]
+          ],
+          0,
+          2
+        ],
+        "expected": 12,
+        "explanation": "Take the two-edge route and reduce one cost from 8 to 4."
+      },
+      {
+        "args": [2, [[0, 1, 9]], 0, 1],
+        "expected": 4,
+        "explanation": "Using the token on the only route changes cost 9 to floor(9/2) = 4."
+      },
+      {
+        "args": [2, [], 0, 1],
+        "expected": -1,
+        "explanation": "There is no directed route from node 0 to node 1, so the goal is unreachable."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(n, routes, start, goal) {\n  // Write your solution here.\n}",
+      "python": "def solve(n, routes, start, goal):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> routes, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int n, int[][] routes, int start, int goal) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "lane-capacity",
+    "slug": "lane-capacity",
+    "title": "Lane Capacity",
+    "arena": "hard",
+    "topic": "Maximum flow",
+    "description": "A delivery network has n junctions and directed lanes [from, to, capacity]. A shipment may split across multiple routes, but the amount carried by a lane cannot exceed its capacity.\nReturn the maximum total flow that can travel from source to sink. At every other junction, total incoming flow must equal total outgoing flow; junctions neither create nor consume shipments. Lane directions matter, and a network with no usable source-to-sink route has maximum flow 0.",
+    "constraints": [
+      "2 <= n <= 40",
+      "0 <= lanes.length <= 400",
+      "0 <= capacities <= 1000",
+      "0 <= source, sink < n and source != sink",
+      "Directed lane pairs are unique and connect distinct junctions"
+    ],
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "lanes",
+        "type": "int[][]"
+      },
+      {
+        "name": "source",
+        "type": "int"
+      },
+      {
+        "name": "sink",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          4,
+          [
+            [0, 1, 3],
+            [0, 2, 2],
+            [1, 2, 1],
+            [1, 3, 2],
+            [2, 3, 4]
+          ],
+          0,
+          3
+        ],
+        "expected": 5,
+        "explanation": "All five units leaving junction 0 can reach junction 3."
+      },
+      {
+        "args": [2, [[0, 1, 5]], 0, 1],
+        "expected": 5,
+        "explanation": "The only lane carries at most 5 units, and all 5 can travel directly to the sink."
+      },
+      {
+        "args": [
+          3,
+          [
+            [0, 1, 7],
+            [1, 2, 3]
+          ],
+          0,
+          2
+        ],
+        "expected": 3,
+        "explanation": "The second lane limits the only source-to-sink route to 3 units, despite the first lane's capacity of 7."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(n, lanes, source, sink) {\n  // Write your solution here.\n}",
+      "python": "def solve(n, lanes, source, sink):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(int n, std::vector<std::vector<int>> lanes, int source, int sink) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int n, int[][] lanes, int source, int sink) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "partition-ledger",
+    "slug": "partition-ledger",
+    "title": "Partition Ledger",
+    "arena": "hard",
+    "topic": "Binary search",
+    "description": "A ledger lists nonnegative workloads in a fixed order. Split the entire list into exactly groups nonempty contiguous batches, without reordering or omitting any workload.\nThe processing time of a split is the largest sum among its batches. Return the minimum processing time achievable over all valid splits. Adjacent workloads must remain together unless a split is placed between them; when groups is 1 there is one total batch, and when it equals the list length each entry is its own batch.",
+    "constraints": [
+      "1 <= workloads.length <= 10000",
+      "0 <= workloads[i] <= 10000",
+      "1 <= groups <= workloads.length"
+    ],
+    "parameters": [
+      {
+        "name": "workloads",
+        "type": "int[]"
+      },
+      {
+        "name": "groups",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [[7, 2, 5, 10, 8], 2],
+        "expected": 18,
+        "explanation": "Split after the third entry to obtain sums 14 and 18."
+      },
+      {
+        "args": [[1, 2, 3], 1],
+        "expected": 6,
+        "explanation": "With one group, all workloads must stay together and sum to 6."
+      },
+      {
+        "args": [[1, 2, 3], 3],
+        "expected": 3,
+        "explanation": "With three groups, each workload stands alone; the largest batch is 3."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(workloads, groups) {\n  // Write your solution here.\n}",
+      "python": "def solve(workloads, groups):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> workloads, int groups) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] workloads, int groups) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "rising-routes",
+    "slug": "rising-routes",
+    "title": "Rising Routes",
+    "arena": "hard",
+    "topic": "DAG dynamic programming",
+    "description": "A rectangular height map assigns an integer height to every cell. A route may begin at any cell and move one step up, down, left, or right. Each visited cell after the first must have a strictly greater height than the previous cell.\nReturn the largest number of cells on a valid route. Diagonal moves and moves to an equal height are forbidden, and a cell cannot be revisited on a strictly rising route. A single cell is itself a route of length 1.",
+    "constraints": [
+      "1 <= rows, columns <= 100",
+      "heights is rectangular",
+      "-1000000 <= heights[r][c] <= 1000000"
+    ],
+    "parameters": [
+      {
+        "name": "heights",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            [9, 9, 4],
+            [6, 6, 8],
+            [2, 1, 1]
+          ]
+        ],
+        "expected": 4,
+        "explanation": "One route follows heights 1 → 2 → 6 → 9."
+      },
+      {
+        "args": [[[7]]],
+        "expected": 1,
+        "explanation": "The only possible route visits the single cell, giving length 1."
+      },
+      {
+        "args": [
+          [
+            [1, 2],
+            [4, 3]
+          ]
+        ],
+        "expected": 4,
+        "explanation": "A valid route follows 1 → 2 → 3 → 4 through orthogonally adjacent cells."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(heights) {\n  // Write your solution here.\n}",
+      "python": "def solve(heights):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<std::vector<int>> heights) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[][] heights) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "wildcard-registry",
+    "slug": "wildcard-registry",
+    "title": "Wildcard Registry",
+    "arena": "hard",
+    "topic": "Dynamic programming",
+    "description": "Match a lowercase registry name against a pattern. A lowercase pattern letter matches only itself, ? matches exactly one arbitrary letter, and * matches any sequence of letters, including an empty sequence.\nReturn 1 only when the pattern matches the entire name, and return 0 otherwise. Matching a prefix or substring is insufficient. Each ? consumes one character, while each * may consume a different number of characters; consecutive stars are allowed.",
+    "constraints": [
+      "0 <= name.length, pattern.length <= 1000",
+      "name contains lowercase English letters; pattern additionally permits ? and *"
+    ],
+    "parameters": [
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "pattern",
+        "type": "string"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": ["relay", "r*l?y"],
+        "expected": 1,
+        "explanation": "The star consumes e and the question mark consumes a."
+      },
+      {
+        "args": ["", "*"],
+        "expected": 1,
+        "explanation": "A star may consume an empty sequence, so it matches the empty name."
+      },
+      {
+        "args": ["abc", "a?c"],
+        "expected": 1,
+        "explanation": "The question mark consumes b, while the literal a and c match themselves."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(name, pattern) {\n  // Write your solution here.\n}",
+      "python": "def solve(name, pattern):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::string name, std::string pattern) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(String name, String pattern) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "cut-network",
+    "slug": "cut-network",
+    "title": "Cut Network",
+    "arena": "hard",
+    "topic": "Graph bridges",
+    "description": "A communication network has n nodes and unique undirected links. A critical link is one whose removal increases the total number of connected components in the whole network.\nReturn every critical link as [smallerNode, largerNode], sorted first by the smaller endpoint and then by the larger endpoint. The input network may already be disconnected, so evaluate a link relative to its own component. Links that belong to a cycle are not critical because another route still connects their endpoints.",
+    "constraints": [
+      "1 <= n <= 400",
+      "0 <= links.length <= 10000",
+      "Links are unique unordered pairs of distinct valid nodes"
+    ],
+    "parameters": [
+      {
+        "name": "n",
+        "type": "int"
+      },
+      {
+        "name": "links",
+        "type": "int[][]"
+      }
+    ],
+    "returnType": "int[][]",
+    "examples": [
+      {
+        "args": [
+          4,
+          [
+            [0, 1],
+            [1, 2],
+            [2, 0],
+            [1, 3]
+          ]
+        ],
+        "expected": [[1, 3]],
+        "explanation": "Only the branch to node 3 disconnects additional nodes when removed."
+      },
+      {
+        "args": [
+          3,
+          [
+            [0, 1],
+            [1, 2],
+            [2, 0]
+          ]
+        ],
+        "expected": [],
+        "explanation": "Every link lies on the three-node cycle, so removing any one still leaves its endpoints connected."
+      },
+      {
+        "args": [
+          4,
+          [
+            [0, 1],
+            [2, 3]
+          ]
+        ],
+        "expected": [
+          [0, 1],
+          [2, 3]
+        ],
+        "explanation": "The graph has two components, and removing either component's only link increases the component count."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(n, links) {\n  // Write your solution here.\n}",
+      "python": "def solve(n, links):\n    # Write your solution here.\n    pass",
+      "cpp": "std::vector<std::vector<int>> solve(int n, std::vector<std::vector<int>> links) {\n    // Write your solution here.\n    return {};\n}",
+      "java": "public static int[][] solve(int n, int[][] links) {\n    // Write your solution here.\n    return new int[0][0];\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "festival-packing",
+    "slug": "festival-packing",
+    "title": "Festival Packing",
+    "arena": "hard",
+    "topic": "Dynamic programming",
+    "description": "A festival assigns an integer value to each consecutive time slot. Select exactly count nonoverlapping performances, where every performance occupies exactly length consecutive slots.\nReturn the largest possible sum of all selected slot values. Performances may be adjacent and unused gaps are allowed, but no slot may belong to two performances. Values may be negative, so you must still select the required count. Return 0 when count is 0 and -1 when the schedule is too short to fit all performances.",
+    "constraints": [
+      "0 <= values.length <= 2000",
+      "-1000 <= values[i] <= 1000",
+      "1 <= length <= 2000",
+      "0 <= count <= 50"
+    ],
+    "parameters": [
+      {
+        "name": "values",
+        "type": "int[]"
+      },
+      {
+        "name": "length",
+        "type": "int"
+      },
+      {
+        "name": "count",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [[1, 2, 1, 2, 6, 7, 5, 1], 2, 3],
+        "expected": 23,
+        "explanation": "Choose slots [0,1], [3,4], and [5,6], with sums 3, 8, and 12."
+      },
+      {
+        "args": [[1, 2, 3], 1, 2],
+        "expected": 5,
+        "explanation": "With length 1, choose the two largest nonoverlapping slots: values 3 and 2."
+      },
+      {
+        "args": [[-5, -1, -3], 1, 2],
+        "expected": -4,
+        "explanation": "Exactly two slots must be selected even though all values are negative; -1 and -3 give the best total, -4."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(values, length, count) {\n  // Write your solution here.\n}",
+      "python": "def solve(values, length, count):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> values, int length, int count) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] values, int length, int count) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "detour-permits",
+    "slug": "detour-permits",
+    "title": "Detour Permits",
+    "arena": "hard",
+    "topic": "Multidimensional dynamic programming",
+    "description": "A rectangular grid marks ordinary cells with 0 and restricted cells with 1. Travel from the top-left cell to the bottom-right cell, moving exactly one cell right or down at each step.\nVisiting a restricted cell consumes one permit, including when the restricted cell is the start or destination. Count all distinct routes that use at most permits permits, and return the count modulo 1,000,000,007. You may not leave the grid or move up or left.",
+    "constraints": [
+      "1 <= rows, columns <= 50",
+      "grid is rectangular and contains only 0 and 1",
+      "0 <= permits <= 20"
+    ],
+    "parameters": [
+      {
+        "name": "grid",
+        "type": "int[][]"
+      },
+      {
+        "name": "permits",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [
+          [
+            [0, 1, 0],
+            [0, 1, 0]
+          ],
+          1
+        ],
+        "expected": 2,
+        "explanation": "The paths right-right-down and down-right-right each use one permit."
+      },
+      {
+        "args": [[[1]], 0],
+        "expected": 0,
+        "explanation": "The only cell is restricted and visiting it needs one permit, but none are available."
+      },
+      {
+        "args": [
+          [
+            [0, 0],
+            [0, 0]
+          ],
+          0
+        ],
+        "expected": 2,
+        "explanation": "The two routes—right then down, or down then right—visit only ordinary cells."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(grid, permits) {\n  // Write your solution here.\n}",
+      "python": "def solve(grid, permits):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<std::vector<int>> grid, int permits) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[][] grid, int permits) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  },
+  {
+    "id": "chain-bundles",
+    "slug": "chain-bundles",
+    "title": "Chain Bundles",
+    "arena": "hard",
+    "topic": "Dynamic programming",
+    "description": "A trader observes one unit price for each day. One transaction consists of buying one unit on a day and selling that unit on a strictly later day.\nReturn the greatest total profit possible using at most limit completed transactions. The trader may hold at most one unit at a time, so a new purchase can happen only after the previous unit is sold. Transactions may be skipped, and choosing no trades gives profit 0; a loss is never required.",
+    "constraints": [
+      "0 <= prices.length <= 2000",
+      "0 <= prices[i] <= 10000",
+      "0 <= limit <= 100"
+    ],
+    "parameters": [
+      {
+        "name": "prices",
+        "type": "int[]"
+      },
+      {
+        "name": "limit",
+        "type": "int"
+      }
+    ],
+    "returnType": "int",
+    "examples": [
+      {
+        "args": [[3, 2, 6, 5, 0, 3], 2],
+        "expected": 7,
+        "explanation": "Buy at 2 and sell at 6, then buy at 0 and sell at 3."
+      },
+      {
+        "args": [[2, 4, 1], 2],
+        "expected": 2,
+        "explanation": "Buy at 2 and sell at 4 for profit 2; the later price 1 cannot be sold afterward."
+      },
+      {
+        "args": [[9, 7, 5, 3], 3],
+        "expected": 0,
+        "explanation": "Prices decrease every day, so every possible transaction loses money and the best choice is no trade."
+      }
+    ],
+    "starter": {
+      "javascript": "function solve(prices, limit) {\n  // Write your solution here.\n}",
+      "python": "def solve(prices, limit):\n    # Write your solution here.\n    pass",
+      "cpp": "int solve(std::vector<int> prices, int limit) {\n    // Write your solution here.\n    return 0;\n}",
+      "java": "public static int solve(int[] prices, int limit) {\n    // Write your solution here.\n    return 0;\n}"
+    },
+    "version": 2
+  }
+]

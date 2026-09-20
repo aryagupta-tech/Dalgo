@@ -19,6 +19,7 @@ const AuthContext = createContext<{
   client: SupabaseClient | null;
   profile: FriendIdentity | null;
   profileLoading: boolean;
+  profileError: string;
   refreshProfile: () => void;
   refreshAdmission: () => void;
 }>({
@@ -28,6 +29,7 @@ const AuthContext = createContext<{
   client: null,
   profile: null,
   profileLoading: false,
+  profileError: "",
   refreshProfile: () => {},
   refreshAdmission: () => {},
 });
@@ -40,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const [profile, setProfile] = useState<FriendIdentity | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState("");
   const [profileVersion, setProfileVersion] = useState(0);
   const [eligibilityVersion, setEligibilityVersion] = useState(0);
   useEffect(() => {
@@ -90,20 +93,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!state.user) {
       setProfile(null);
       setProfileLoading(false);
+      setProfileError("");
       return;
     }
+    setProfile(null);
     setProfileLoading(true);
+    setProfileError("");
     api<FriendIdentity>("/profile")
       .then((value) => {
-        if (!stopped)
-          setProfile(
-            value && typeof value.usernameConfigured === "boolean"
-              ? value
-              : null,
-          );
+        if (stopped) return;
+        if (value && typeof value.usernameConfigured === "boolean")
+          setProfile(value);
+        else {
+          setProfile(null);
+          setProfileError("Your profile could not be loaded.");
+        }
       })
-      .catch(() => {
-        if (!stopped) setProfile(null);
+      .catch((reason) => {
+        if (!stopped) {
+          setProfile(null);
+          setProfileError(
+            reason instanceof Error
+              ? reason.message
+              : "Your profile could not be loaded.",
+          );
+        }
       })
       .finally(() => {
         if (!stopped) setProfileLoading(false);
@@ -158,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           admission?.reason ||
           (state.user
             ? "Checking match availability…"
-            : "Live staging matches are limited to invited testers."),
+            : "Live matches are limited to invited players."),
       }
     : state.config;
   return (
@@ -168,9 +182,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         config,
         profile,
         profileLoading,
+        profileError,
         refreshProfile: () => setProfileVersion((value) => value + 1),
-        refreshAdmission: () =>
-          setEligibilityVersion((value) => value + 1),
+        refreshAdmission: () => setEligibilityVersion((value) => value + 1),
       }}
     >
       {children}

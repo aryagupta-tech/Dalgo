@@ -135,7 +135,14 @@ export function chooseProblem(
   recent: Record<string, number>,
   random = Math.random,
 ) {
-  const pool = problems.filter((p) => p.arena === arena);
+  const latest = new Map<string, Problem>();
+  for (const problem of problems) {
+    if (problem.arena !== arena) continue;
+    const current = latest.get(problem.id);
+    if (!current || problem.version > current.version)
+      latest.set(problem.id, problem);
+  }
+  const pool = [...latest.values()];
   const unseen = pool.filter((p) => !recent[p.id]);
   if (unseen.length)
     return unseen[

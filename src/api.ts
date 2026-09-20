@@ -50,8 +50,7 @@ export const fallbackConfig: Config = {
     "",
   playEnabled: false,
   admissionMode: "disabled",
-  reason:
-    "The beta is being prepared. Explore an arena while online play gets ready.",
+  reason: "Live matches are temporarily unavailable. Please try again later.",
   dailyCapacity: null,
 };
 export async function connectEvents(path: string, onMessage: (v: any) => void) {

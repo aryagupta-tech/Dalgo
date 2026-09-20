@@ -109,7 +109,7 @@ function LiveSession({
   if (!userId)
     return (
       <ScreenMessage
-        title="Sign in to your match."
+        title="Sign in to your match"
         action={
           <Button variant="contained" onClick={onSignIn}>
             Sign in
@@ -123,7 +123,7 @@ function LiveSession({
     return (
       <ScreenMessage
         title={
-          session.error ? "Match unavailable." : "Reconnecting to your match…"
+          session.error ? "Match unavailable" : "Reconnecting to your match…"
         }
         action={
           session.error ? (
@@ -293,15 +293,18 @@ function QueueStage({
       </Typography>
       <Typography variant="h1" sx={{ fontSize: { xs: 30, sm: 40 }, my: 1.75 }}>
         {phase === "capacity"
-          ? "All matches are busy."
+          ? "All matches are busy"
           : paused
-            ? "Search paused."
-            : "Finding an opponent."}
+            ? "Search paused"
+            : "Finding an opponent"}
       </Typography>
       <Typography color="text.secondary" sx={{ maxWidth: 500 }}>
         {message ||
-          (paused ? error || "This search is no longer active." : undefined) ||
-          "Searching near your rating. An eligible human takes priority over a simulated bot."}
+          (paused
+            ? error || "This search is no longer active."
+            : phase === "capacity"
+              ? "The match server is full. Try again shortly."
+              : "Searching near your rating. A player takes priority; a bot joins after 15 seconds if none is available.")}
       </Typography>
       <Stack
         direction="row"
@@ -340,74 +343,6 @@ function QueueStage({
           },
         }}
       />
-      <Stack
-        direction="row"
-        sx={{ mb: 3, justifyContent: "space-between", gap: 1.5 }}
-      >
-        <Typography variant="caption" color="text.primary">
-          01 / Human-first search
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          02 / Bot fallback
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          03 / Match starts
-        </Typography>
-      </Stack>
-      <Stack
-        divider={<Divider />}
-        sx={{ borderTop: 1, borderBottom: 1, borderColor: "divider", my: 3 }}
-      >
-        <Stack direction="row" sx={{ py: 2.5, alignItems: "center", gap: 1.5 }}>
-          <Avatar
-            variant="rounded"
-            sx={{
-              bgcolor: "#242424",
-              color: "text.primary",
-              width: 40,
-              height: 40,
-            }}
-          >
-            Y
-          </Avatar>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontWeight: 500 }}>You</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {paused ? "Search stopped" : "Waiting for assignment"}
-            </Typography>
-          </Box>
-        </Stack>
-        <Stack direction="row" sx={{ py: 2.5, alignItems: "center", gap: 1.5 }}>
-          <Avatar
-            variant="rounded"
-            sx={{
-              bgcolor: "#191919",
-              color: "text.secondary",
-              width: 40,
-              height: 40,
-            }}
-          >
-            <Swords size={20} />
-          </Avatar>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontWeight: 500 }}>
-              {paused ? "Search stopped" : "Searching for a human"}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {paused
-                ? "No new opponent will be assigned"
-                : "Rating window expands while you wait"}
-            </Typography>
-          </Box>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ ml: "auto", fontFamily: MONO }}
-          >
-            —
-          </Typography>
-        </Stack>
-      </Stack>
       {error && (
         <Alert severity="error" sx={{ my: 2 }}>
           {error}
@@ -420,16 +355,6 @@ function QueueStage({
             ? "Back to lobby"
             : "Cancel search"}
       </Button>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        component="p"
-        sx={{ mt: 2.5 }}
-      >
-        {paused
-          ? "Start another search from the lobby when matches are available."
-          : "If no suitable human is found after 15 seconds, a clearly labelled bot is assigned."}
-      </Typography>
     </Box>
   );
 }
@@ -1386,7 +1311,7 @@ function MatchWorkspace({
           >
             {!compact && (
               <Typography variant="overline" sx={{ mr: "auto", fontSize: 11 }}>
-                SAMPLE / HIDDEN TESTS
+                RUN / SUBMIT
               </Typography>
             )}
             <Button
@@ -1722,8 +1647,8 @@ function MatchWorkspace({
                 </>
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  Run the samples to check your code. Submit to judge every
-                  hidden test.
+                  Run checks the examples. Submit checks all tests and can win
+                  the match.
                 </Typography>
               )}
             </Box>
@@ -1882,16 +1807,16 @@ function ResultSheet({
       </Typography>
       <Typography variant="h2" sx={{ fontSize: { xs: 32, sm: 40 }, my: 1.75 }}>
         {isVoid
-          ? "Match voided."
+          ? "Match voided"
           : draw
-            ? "A draw."
+            ? "Draw"
             : won
-              ? "You win."
-              : "Opponent wins."}
+              ? "You win"
+              : "Opponent wins"}
       </Typography>
       <Typography color="text.secondary">
         {isVoid
-          ? "The judge could not produce a reliable result. Both ratings remain unchanged."
+          ? "Dalgo couldn’t verify the result. Ratings remain unchanged."
           : result.reason === "resigned"
             ? won
               ? "Your opponent resigned. You win this match."
@@ -2001,8 +1926,7 @@ function ResultSheet({
           component="p"
           sx={{ mt: 1.5 }}
         >
-          Your result is being saved. A new ranked match will become available
-          when settlement completes.
+          Saving your result. You can start another match when this completes.
         </Typography>
       )}
       <Stack

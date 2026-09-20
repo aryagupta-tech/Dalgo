@@ -170,7 +170,7 @@ export function SignIn({ onClose }: { onClose: () => void }) {
         Sign in to Dalgo
       </Typography>
       <Typography color="text.secondary">
-        Continue with Google or GitHub, then choose your unique username.
+        Continue with Google or GitHub. New players choose a username next.
       </Typography>
       {client ? (
         <Stack spacing={1.25} sx={{ mt: 3 }}>
@@ -233,7 +233,6 @@ export function SignIn({ onClose }: { onClose: () => void }) {
         color="text.secondary"
         sx={{ display: "block", mt: 3 }}
       >
-        Each arena starts at 1,200. Human and bot ratings are separate.{" "}
         <Box
           component={Link}
           to="/privacy"

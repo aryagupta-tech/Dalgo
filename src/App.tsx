@@ -7,6 +7,7 @@ import {
   Clock3,
   LogOut,
   Play,
+  RefreshCw,
   Swords,
   Trophy,
   UserRound,
@@ -51,6 +52,7 @@ import { LiveMatchPage, LiveQueue } from "./components/MatchPage";
 import { FriendPlay } from "./components/FriendPlay";
 import { UsernameOnboarding } from "./components/UsernameOnboarding";
 import { PrivacyPage } from "./components/PrivacyPage";
+import { ProfilePage } from "./components/ProfilePage";
 const arenaDetails = {
   easy: { topics: "Arrays, strings, hash maps" },
   medium: { topics: "Trees, graphs, dynamic programming" },
@@ -58,9 +60,9 @@ const arenaDetails = {
 };
 const navigation = [
   { to: "/", label: "Play", icon: Swords },
-  { to: "/friends", label: "Play a friend", icon: UserRound },
+  { to: "/friends", label: "Friends", icon: UserRound },
   { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { to: "/history", label: "Match history", icon: Clock3 },
+  { to: "/history", label: "History", icon: Clock3 },
   { to: "/profile", label: "Your profile", icon: UserRound },
 ];
 export default function App() {
@@ -189,6 +191,8 @@ export default function App() {
                   }}
                 >
                   <Avatar
+                    src={profile?.avatar}
+                    slotProps={{ img: { alt: "" } }}
                     variant="rounded"
                     sx={{
                       width: 29,
@@ -269,7 +273,7 @@ export default function App() {
           />
           <Route
             path="/profile"
-            element={<Profile onSignIn={() => setSignIn(true)} />}
+            element={<ProfilePage onSignIn={() => setSignIn(true)} />}
           />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route
@@ -484,8 +488,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
             setRecovery((prior) => ({
               userId,
               value: prior?.userId === userId ? prior.value : null,
-              error:
-                "Your current match could not be checked. Retry to reconnect.",
+              error: "We couldn’t check your active match. Try again.",
             }));
         });
     };
@@ -507,8 +510,8 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
     <Page>
       <PageTop section="PLAY" />
       <PageHeading
-        title="Choose an arena"
-        subtitle="Play a rated 1v1 match on the same problem and server clock."
+        title="Choose your arena"
+        subtitle="Select a difficulty and find an opponent."
       />
       {user &&
         (currentQueue?.matchId || currentQueue?.status === "waiting") && (
@@ -528,13 +531,13 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
               }}
             >
               {currentQueue.matchId
-                ? "You have a match to return to."
+                ? "Your match is still active."
                 : "Your opponent search is still active."}
             </Typography>
             <Typography variant="body2" sx={{ mt: 1, mb: 2 }}>
               {currentQueue.matchId
-                ? "Reconnect to the server clock, your drafts, and the latest result. Existing matches remain available while new admissions are paused."
-                : "Reopen your existing search. This will not create a new queue entry."}
+                ? "Return to your draft and the shared clock."
+                : "Return to your active search."}
             </Typography>
             {currentQueue.matchId ? (
               <Button
@@ -571,7 +574,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
             variant="outlined"
             onClick={() => setRecoveryVersion((version) => version + 1)}
           >
-            Retry current match
+            Check again
           </Button>
         </Alert>
       )}
@@ -589,7 +592,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
           <Paper
             component="section"
             variant="outlined"
-            aria-label="Choose your match"
+            aria-label="Arena selection"
             sx={{
               borderRadius: "6px",
               backgroundColor: "#111111",
@@ -597,7 +600,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
             }}
           >
             <Box sx={{ px: { xs: 2.25, sm: 3 }, pt: 2.75 }}>
-              <SectionHeading title="Choose your match" />
+              <SectionHeading title="Arena" />
             </Box>
             <RadioGroup
               name="arena"
@@ -722,7 +725,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                   sx={{ display: "block", mt: 0.6, maxWidth: { sm: 240 } }}
                 >
                   {config.playEnabled
-                    ? "Nearby human ratings are matched first. A bot is assigned after 15 seconds."
+                    ? "Players are matched first. If none is available after 15 seconds, you’ll face a bot."
                     : "Live matches are temporarily unavailable. Please try again later."}
                 </Typography>
               </Box>
@@ -852,9 +855,9 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
               sx={{ listStyle: "none", p: 0, mt: 2.75, mb: 0 }}
             >
               {[
-                "Both players receive the same problem and server clock.",
-                "The first submission to pass every test wins.",
-                "Bot matches use a separate rating.",
+                "Same problem. Shared clock.",
+                "The first accepted submission wins.",
+                "Human and bot ratings are separate.",
               ].map((rule) => (
                 <Stack component="li" key={rule} direction="row" spacing={1.75}>
                   <Typography
@@ -917,8 +920,8 @@ function RecentHistory() {
         >
           {error ||
             (user
-              ? "Your completed matches and rating changes will appear here."
-              : "Sign in to see your completed matches and rating changes.")}
+              ? "Results and rating changes appear here."
+              : "Sign in to see your matches.")}
         </EmptyState>
       )}
     </Box>
@@ -985,7 +988,7 @@ function Leaderboard() {
       <PageTop section="LEADERBOARD" />
       <PageHeading
         title="Leaderboard"
-        subtitle="Rankings by arena. Human and bot results are kept separate."
+        subtitle="Top ratings by arena and opponent type."
       />
       <Stack
         direction={{ xs: "column", sm: "row" }}
@@ -1110,7 +1113,7 @@ function Leaderboard() {
                   >
                     <EmptyState
                       title={
-                        loading ? "Loading rankings…" : "The board is empty."
+                        loading ? "Loading rankings…" : "No ranked players yet."
                       }
                     >
                       {error ||
@@ -1126,10 +1129,7 @@ function Leaderboard() {
         </TableContainer>
       </Paper>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2.5 }}>
-        {mode === "human"
-          ? "Human matches only."
-          : "Simulated bot matches only."}{" "}
-        Every new rating starts at 1,200.
+        New ratings start at 1,200.
       </Typography>
       <Footer />
     </Page>
@@ -1142,7 +1142,15 @@ function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
         const win = r.result.winnerId === userId;
         const delta = r.result.deltas[userId] ?? 0;
         return (
-          <ListItem key={r.id} disablePadding>
+          <ListItem
+            key={r.id}
+            disablePadding
+            sx={{
+              borderBottom: 1,
+              borderColor: "divider",
+              gap: { xs: 1, sm: 2 },
+            }}
+          >
             <ListItemButton
               component={Link}
               to={"/match/" + r.id}
@@ -1156,8 +1164,7 @@ function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
                 gap: { xs: 1, sm: 1.9 },
                 px: 0,
                 py: 2.5,
-                borderBottom: 1,
-                borderColor: "divider",
+                minWidth: 0,
                 "&:hover": { backgroundColor: "#191919" },
               }}
             >
@@ -1190,8 +1197,12 @@ function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
                   color="text.secondary"
                   sx={{ display: "block", mt: 0.75 }}
                 >
-                  {r.mode === "bot" ? "Simulated bot" : "Human opponent"} ·{" "}
-                  {new Date(r.ended_at).toLocaleDateString()}
+                  {r.mode === "bot"
+                    ? "Simulated bot"
+                    : r.opponent?.username
+                      ? `@${r.opponent.username}`
+                      : "Human opponent"}{" "}
+                  · {new Date(r.ended_at).toLocaleDateString()}
                 </Typography>
               </Box>
               <Typography
@@ -1207,6 +1218,31 @@ function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
               </Typography>
               <ChevronRight size={15} aria-hidden="true" />
             </ListItemButton>
+            {r.mode === "human" && r.opponent?.usernameConfigured && (
+              <Button
+                component={Link}
+                to={{
+                  pathname: "/friends",
+                  search: new URLSearchParams({
+                    challenge: r.opponent.username,
+                    arena: r.arena,
+                  }).toString(),
+                }}
+                variant="text"
+                color="inherit"
+                size="small"
+                startIcon={<RefreshCw size={14} />}
+                aria-label={`Rematch @${r.opponent.username} in ${ARENAS[r.arena].name}`}
+                sx={{ mr: { xs: 0.5, sm: 1 }, flexShrink: 0 }}
+              >
+                <Box
+                  component="span"
+                  sx={{ display: { xs: "none", sm: "inline" } }}
+                >
+                  Rematch
+                </Box>
+              </Button>
+            )}
           </ListItem>
         );
       })}
@@ -1221,7 +1257,7 @@ function History({ onSignIn }: { onSignIn: () => void }) {
       <PageTop section="MATCH HISTORY" />
       <PageHeading
         title="Match history"
-        subtitle="Completed matches, verdicts, and rating changes."
+        subtitle="Results, opponents, and rating changes."
       />
       <Paper
         component="section"
@@ -1254,8 +1290,8 @@ function History({ onSignIn }: { onSignIn: () => void }) {
           >
             {error ||
               (user
-                ? "Your completed matches will be recorded here."
-                : "Sign in to see completed matches and rating changes.")}
+                ? "Finished matches appear here."
+                : "Sign in to see your match history.")}
           </EmptyState>
         )}
       </Paper>
@@ -1286,132 +1322,6 @@ function History({ onSignIn }: { onSignIn: () => void }) {
           Back to the lobby
         </Button>
       </Stack>
-      <Footer />
-    </Page>
-  );
-}
-function Profile({ onSignIn }: { onSignIn: () => void }) {
-  const { user, profile } = useAuth();
-  const { ratings, error } = useRatings();
-  return (
-    <Page>
-      <PageTop section="YOUR PROFILE" />
-      <PageHeading
-        title={user?.user_metadata?.full_name || "Your profile"}
-        subtitle={
-          profile?.usernameConfigured
-            ? `@${profile.username} · Three arenas. Six independent ratings.`
-            : "Three arenas. Six independent ratings."
-        }
-      />
-      <Paper
-        component="section"
-        variant="outlined"
-        square
-        sx={{
-          backgroundColor: "#0d0d0d",
-          borderLeft: 0,
-          borderRight: 0,
-          p: { xs: 2, sm: 3 },
-        }}
-      >
-        {user ? (
-          <>
-            <TableContainer>
-              <Table
-                size="small"
-                aria-label="Your arena ratings"
-                sx={{ tableLayout: "fixed" }}
-              >
-                <TableHead>
-                  <TableRow>
-                    {["ARENA", "HUMAN RATING", "BOT RATING"].map((label) => (
-                      <TableCell
-                        key={label}
-                        sx={{
-                          px: { xs: 0.5, sm: 1 },
-                          py: 2,
-                          fontFamily: '"JetBrains Mono", monospace',
-                          fontSize: { xs: ".65rem", sm: ".75rem" },
-                          color: "text.secondary",
-                        }}
-                      >
-                        {label}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {arenaKeys.map((a) => (
-                    <TableRow key={a}>
-                      <TableCell
-                        component="th"
-                        scope="row"
-                        sx={{
-                          px: { xs: 0.5, sm: 1 },
-                          py: 2.75,
-                          fontWeight: 500,
-                        }}
-                      >
-                        {ARENAS[a].name}
-                      </TableCell>
-                      {(["human", "bot"] as Mode[]).map((m) => {
-                        const r = ratings.find(
-                          (r) => r.arena === a && r.mode === m,
-                        );
-                        return (
-                          <TableCell
-                            key={m}
-                            sx={{ px: { xs: 0.5, sm: 1 }, py: 2.75 }}
-                          >
-                            <Typography
-                              sx={{
-                                fontFamily: '"JetBrains Mono", monospace',
-                                fontSize: { xs: "1.15rem", sm: "1.5rem" },
-                              }}
-                            >
-                              {r?.rating ?? "—"}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{
-                                mt: 1,
-                                fontSize: { xs: ".75rem", sm: ".875rem" },
-                              }}
-                            >
-                              {r ? `${r.matches} played` : "Loading…"}
-                            </Typography>
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            {error && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                {error}
-              </Alert>
-            )}
-          </>
-        ) : (
-          <>
-            <EmptyState title="Sign in to view your ratings.">
-              Every arena starts at 1,200, with separate ratings for human and
-              bot matches.
-            </EmptyState>
-            <Button
-              variant="contained"
-              onClick={onSignIn}
-              endIcon={<ArrowUpRight size={16} />}
-            >
-              Sign in
-            </Button>
-          </>
-        )}
-      </Paper>
       <Footer />
     </Page>
   );

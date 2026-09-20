@@ -66,6 +66,8 @@ function config(path: string) {
   if (path === "/api/admission")
     return { mode: "public", canJoin: true, reason: "" };
   if (path === "/api/profile") return myIdentity;
+  if (path === "/api/friends")
+    return { friends: [], incoming: [], outgoing: [] };
   return null;
 }
 
@@ -132,14 +134,15 @@ test("a signed-in player shares a username and sends then cancels a friend chall
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/friends");
   await expect(
-    page.getByRole("heading", { name: "Play a friend." }),
+    page.getByRole("heading", { name: "Play with friends", exact: true }),
   ).toBeVisible();
+  await expect(page.getByText(/CLUBHOUSE|RATED HUMAN MATCH/)).toHaveCount(0);
   await expect(
-    page.getByRole("main").getByText(`@${myIdentity.username}`, { exact: true }),
+    page
+      .getByRole("main")
+      .getByText(`@${myIdentity.username}`, { exact: true }),
   ).toBeVisible();
-  await page
-    .getByLabel("Friend's username")
-    .fill(friendIdentity.username);
+  await page.getByLabel("Friend's username").fill(friendIdentity.username);
   await page.getByRole("radio", { name: "Medium" }).check();
   await page.getByRole("button", { name: "Send challenge" }).click();
   await expect(page.getByText("Friend account", { exact: true })).toBeVisible();
@@ -151,7 +154,7 @@ test("a signed-in player shares a username and sends then cancels a friend chall
     .toBe(true);
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(
-    page.getByText("No open challenges.", { exact: false }),
+    page.getByText("No pending match challenges.", { exact: false }),
   ).toBeVisible();
   expect(authorized).toEqual(
     expect.arrayContaining(["/api/profile", "/api/challenges"]),
@@ -240,10 +243,7 @@ test("a new OAuth account must choose a username before using Dalgo", async ({
               reason: "Choose your username to enter live matches.",
             },
       });
-    if (
-      url.pathname === "/api/profile" &&
-      route.request().method() === "GET"
-    )
+    if (url.pathname === "/api/profile" && route.request().method() === "GET")
       return route.fulfill({ json: profile });
     if (
       url.pathname === "/api/profile/username" &&
@@ -257,8 +257,7 @@ test("a new OAuth account must choose a username before using Dalgo", async ({
       };
       return route.fulfill({ json: profile });
     }
-    if (url.pathname === "/api/ratings")
-      return route.fulfill({ json: [] });
+    if (url.pathname === "/api/ratings") return route.fulfill({ json: [] });
     return route.fulfill({
       status: 404,
       json: { error: "Unhandled test route." },
@@ -272,10 +271,161 @@ test("a new OAuth account must choose a username before using Dalgo", async ({
   await page
     .getByRole("textbox", { name: "Username", exact: true })
     .fill("New_Player");
-  await expect(page.getByText("Your public username: @new_player")).toBeVisible();
-  await page.getByRole("button", { name: "Create username" }).click();
+  await expect(
+    page.getByText("Your public username: @new_player"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Save username" }).click();
   await expect(
     page.getByRole("heading", { name: "Choose your username" }),
   ).toBeHidden();
   expect(claimed).toBe("new_player");
+});
+
+test("a player accepts a friend request and challenges the saved friend", async ({
+  page,
+}) => {
+  await authenticate(page);
+  const friendRequestId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  let friendState: any = {
+    friends: [],
+    incoming: [
+      {
+        id: friendRequestId,
+        status: "pending",
+        sender: friendIdentity,
+        receiver: myIdentity,
+        createdAt: Date.now(),
+      },
+    ],
+    outgoing: [],
+  };
+  let challengedUsername = "";
+  await page.route("**/api/**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/friends")
+      return route.fulfill({ json: friendState });
+    const fixed = config(url.pathname);
+    if (fixed) return route.fulfill({ json: fixed });
+    if (url.pathname === "/api/socket-ticket")
+      return route.fulfill({ status: 503, json: { error: "Use HTTP state." } });
+    if (
+      url.pathname === "/api/challenges" &&
+      route.request().method() === "GET"
+    )
+      return route.fulfill({
+        json: { serverNow: Date.now(), incoming: [], outgoing: [], recent: [] },
+      });
+    if (url.pathname === `/api/friends/requests/${friendRequestId}/accept`) {
+      friendState = {
+        friends: [
+          {
+            id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+            friend: friendIdentity,
+            friendsSince: Date.now(),
+          },
+        ],
+        incoming: [],
+        outgoing: [],
+      };
+      return route.fulfill({
+        json: {
+          id: friendRequestId,
+          status: "accepted",
+          sender: friendIdentity,
+          receiver: myIdentity,
+          createdAt: Date.now() - 1000,
+          respondedAt: Date.now(),
+        },
+      });
+    }
+    if (
+      url.pathname === "/api/challenges" &&
+      route.request().method() === "POST"
+    ) {
+      const request = route.request().postDataJSON();
+      challengedUsername = request.username;
+      return route.fulfill({
+        status: 201,
+        json: {
+          id: request.requestId,
+          arena: request.arena,
+          status: "open",
+          challenger: myIdentity,
+          challenged: friendIdentity,
+          createdAt: Date.now(),
+          expiresAt: Date.now() + 600_000,
+        },
+      });
+    }
+    return route.fulfill({
+      status: 404,
+      json: { error: "Unhandled test route." },
+    });
+  });
+
+  await page.goto("/friends");
+  await expect(
+    page.getByRole("button", { name: "Accept friend" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Accept friend" }).click();
+  await expect(page.getByText("1 friend", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Challenge · Easy" }).click();
+  await expect.poll(() => challengedUsername).toBe(friendIdentity.username);
+  await expect(page.getByText(/EASY · INVITE SENT/)).toBeVisible();
+});
+
+test("match history prefills the prior human opponent and arena for a rematch", async ({
+  page,
+}) => {
+  await authenticate(page);
+  await page.route("**/api/**", async (route) => {
+    const url = new URL(route.request().url());
+    const fixed = config(url.pathname);
+    if (fixed) return route.fulfill({ json: fixed });
+    if (url.pathname === "/api/history")
+      return route.fulfill({
+        json: [
+          {
+            id: matchId,
+            arena: "medium",
+            mode: "human",
+            started_at: "2026-09-20T00:00:00Z",
+            ended_at: "2026-09-20T00:10:00Z",
+            result: { winnerId: me, reason: "solved", deltas: { [me]: 16 } },
+            opponent: friendIdentity,
+            problem_title: "Two Sum",
+          },
+        ],
+      });
+    if (
+      url.pathname === "/api/challenges" &&
+      route.request().method() === "GET"
+    )
+      return route.fulfill({
+        json: { serverNow: Date.now(), incoming: [], outgoing: [], recent: [] },
+      });
+    if (url.pathname === "/api/socket-ticket")
+      return route.fulfill({ status: 503, json: { error: "Use HTTP state." } });
+    return route.fulfill({
+      status: 404,
+      json: { error: "Unhandled test route." },
+    });
+  });
+
+  await page.goto("/history");
+  await page
+    .getByRole("link", {
+      name: `Rematch @${friendIdentity.username} in Medium`,
+    })
+    .click();
+  await expect(page).toHaveURL(
+    /\/friends\?challenge=friend_account&arena=medium$/,
+  );
+  await expect(
+    page.getByText(/Rematch @friend_account · Medium/),
+  ).toBeVisible();
+  await expect(page.getByLabel("Friend's username")).toHaveValue(
+    friendIdentity.username,
+  );
+  await expect(page.getByRole("radio", { name: "Medium" })).toBeChecked();
 });
