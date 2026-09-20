@@ -1,0 +1,23 @@
+# Hosted Auth URL configuration. Push only after reviewing `supabase config diff`.
+project_id = "gtdofekbolymsrrullpb"
+
+[auth]
+site_url = "https://dalgo.site"
+additional_redirect_urls = [
+  "https://dalgo.site/",
+  "https://dalgo.site/friends",
+  "https://dalgo.site/history",
+  "https://dalgo.site/profile",
+  "https://dalgo.site/leaderboard",
+  "https://dalgo.site/privacy",
+  "https://dalgo.site/match/*",
+  "https://staging.dalgo.site/",
+  "https://staging.dalgo.site/friends",
+  "https://staging.dalgo.site/history",
+  "https://staging.dalgo.site/profile",
+  "https://staging.dalgo.site/leaderboard",
+  "https://staging.dalgo.site/privacy",
+  "https://staging.dalgo.site/match/*",
+  "http://127.0.0.1:5173/**",
+  "http://localhost:5173/**",
+]
