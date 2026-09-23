@@ -141,14 +141,14 @@ export function PrivacyPage() {
           <PrivacySection title="Code execution and service providers">
             <Typography>
               Live Run and Submit actions send source code and test inputs from
-              Cloudflare to dalgo's private Codebox service on Google Cloud
-              (production) or AWS (staging). Expected hidden answers and service
-              credentials are excluded from execution payloads.
+              Cloudflare to dalgo's private Codebox service on AWS. Expected
+              hidden answers and service credentials are excluded from
+              execution payloads.
             </Typography>
             <Typography>
               Dalgo uses Supabase for authentication and stored application
               data, Cloudflare for the website and live match coordination, and
-              Google Cloud and AWS for private code execution. These services
+              AWS for private code execution. These services
               process data only as needed to provide dalgo.
             </Typography>
           </PrivacySection>
