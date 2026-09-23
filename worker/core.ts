@@ -9,6 +9,7 @@ import {
   type Result,
 } from "../shared/types";
 export const MAX_JUDGE_MS = 150_000;
+export const BOT_RD = 100;
 export interface BotPlan {
   rating: number;
   solves: boolean;
@@ -34,9 +35,6 @@ export interface MatchRecord {
   createdAt: number;
   // Old persisted matches lack this launch flag and remain private.
   codeRevealAllowed?: boolean;
-}
-export function eloDelta(winner: number, loser: number) {
-  return Math.round(32 * (1 - 1 / (1 + 10 ** ((loser - winner) / 400))));
 }
 export function ratingWindow(waitMs: number) {
   return waitMs < 5000 ? 100 : waitMs < 10000 ? 200 : 300;
@@ -85,13 +83,8 @@ export function makeResult(
 ): Result {
   const deltas: Record<string, number> = {};
   for (const p of m.players) if (!p.isBot) deltas[p.id] = 0;
-  if (winnerId) {
-    const winner = m.players.find((p) => p.id === winnerId)!,
-      loser = m.players.find((p) => p.id !== winnerId)!;
-    const delta = eloDelta(winner.rating, loser.rating);
-    if (!winner.isBot) deltas[winner.id] = delta;
-    if (!loser.isBot) deltas[loser.id] = -delta;
-  }
+  // SQL settlement computes Glicko changes from locked pre-match ratings and RD.
+  // Until then, never show a guessed or zero-sum rating award.
   return { winnerId, reason, deltas, settled: false };
 }
 export function adjudicate(m: MatchRecord, now: number): Result | null {

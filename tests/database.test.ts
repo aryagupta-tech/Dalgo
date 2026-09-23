@@ -17,15 +17,22 @@ const migrationRoot = resolve(
   process.env.DALGO_PROJECT_ROOT ?? process.cwd(),
   "supabase/migrations",
 );
-const migration = readdirSync(migrationRoot)
+const migrationFiles = readdirSync(migrationRoot)
   .filter((name) => name.endsWith(".sql"))
-  .sort()
+  .sort();
+const glickoMigrationName = "20260924010000_glicko_ratings.sql";
+const migrationBeforeGlicko = migrationFiles
+  .filter((name) => name < glickoMigrationName)
   .map((name) => readFileSync(resolve(migrationRoot, name), "utf8"))
   .join("\n");
+const glickoMigration = readFileSync(resolve(migrationRoot, glickoMigrationName), "utf8");
 const A = "11111111-1111-4111-8111-111111111111";
 const B = "11111111-1111-4111-8111-222222222222";
 const C = "33333333-3333-4333-8333-333333333333";
 const EXISTING = "44444444-4444-4444-8444-444444444444";
+const LEGACY_A = "55555555-5555-4555-8555-555555555555";
+const LEGACY_B = "66666666-6666-4666-8666-666666666666";
+const LEGACY_MATCH = "77777777-7777-4777-8777-777777777777";
 type Arena = "easy" | "medium" | "hard";
 type Mode = "human" | "bot";
 type Outcome = "win" | "draw" | "void";
@@ -42,6 +49,7 @@ interface MatchInput {
   participants: {
     user_id: string | null;
     pre_rating: number;
+    pre_rd: number;
     bot_rating?: number;
   }[];
 }
@@ -55,6 +63,8 @@ interface Settlement {
     after: number;
     delta: number;
     outcome: string;
+    before_rd: number | null;
+    after_rd: number | null;
   }[];
 }
 
@@ -84,7 +94,28 @@ describe("Supabase migration and trusted settlement contract", () => {
       insert into auth.users(id, raw_user_meta_data)
       values('${EXISTING}', '{"full_name":"Existing Coder"}');
     `);
-    await pg.exec(migration);
+    await pg.exec(migrationBeforeGlicko);
+    // A real Elo result exists before cutover. The migration must shift only
+    // current ratings, never rewrite past match and ledger records.
+    await pg.query("insert into auth.users(id) values($1),($2)", [LEGACY_A, LEGACY_B]);
+    await pg.query(
+      "insert into public.problems(id,version,arena,public,private) values('legacy-easy',1,'easy','{}','{}')",
+    );
+    await pg.query("select public.settle_match($1::jsonb)", [JSON.stringify({
+      id: LEGACY_MATCH,
+      arena: "easy",
+      mode: "human",
+      problem_id: "legacy-easy",
+      problem_version: 1,
+      started_at: new Date(Date.now() - 60_000).toISOString(),
+      ended_at: new Date(Date.now() - 30_000).toISOString(),
+      result: { outcome: "win", winner_id: LEGACY_A, reason: "solved" },
+      participants: [
+        { user_id: LEGACY_A, pre_rating: 1200 },
+        { user_id: LEGACY_B, pre_rating: 1200 },
+      ],
+    })]);
+    await pg.exec(glickoMigration);
   }, 30_000);
 
   beforeEach(async () => {
@@ -137,8 +168,8 @@ describe("Supabase migration and trusted settlement contract", () => {
       ended_at: new Date(Date.now() - 1000).toISOString(),
       result: { outcome: "win", winner_id: A, reason: "solved" },
       participants: [
-        { user_id: A, pre_rating: 1200 },
-        { user_id: B, pre_rating: 1200 },
+        { user_id: A, pre_rating: 800, pre_rd: 350 },
+        { user_id: B, pre_rating: 800, pre_rd: 350 },
       ],
       ...options,
     };
@@ -303,7 +334,39 @@ describe("Supabase migration and trusted settlement contract", () => {
     });
   });
 
-  it("creates safe unique OAuth profiles and exactly six independent 1200 ratings", async () => {
+  it("shifts existing ratings by exactly 400 without rewriting history or statistics", async () => {
+    const current = await pg.query<{ user_id: string; rating: number; matches: number; wins: number; losses: number; rd: string }>(
+      "select user_id,rating,matches,wins,losses,rd from public.arena_ratings where user_id=any($1::uuid[]) and arena='easy' and mode='human' order by user_id",
+      [[LEGACY_A, LEGACY_B]],
+    );
+    expect(current.rows).toEqual([
+      { user_id: LEGACY_A, rating: 816, matches: 1, wins: 1, losses: 0, rd: "350.000" },
+      { user_id: LEGACY_B, rating: 784, matches: 1, wins: 0, losses: 1, rd: "350.000" },
+    ]);
+    const history = await pg.query<{ before_rating: number; after_rating: number; delta: number; before_rd: string | null }>(
+      "select before_rating,after_rating,delta,before_rd from public.rating_ledger where match_id=$1 order by user_id",
+      [LEGACY_MATCH],
+    );
+    expect(history.rows).toEqual([
+      { before_rating: 1200, after_rating: 1216, delta: 16, before_rd: null },
+      { before_rating: 1200, after_rating: 1184, delta: -16, before_rd: null },
+    ]);
+  });
+
+  it("keeps legacy settlement retries idempotent after the migration", async () => {
+    const stored = await pg.query<{ settlement_payload: unknown }>(
+      "select settlement_payload from public.matches where id=$1", [LEGACY_MATCH],
+    );
+    const result = await pg.query<{ value: Settlement }>(
+      "select public.settle_match($1::jsonb) as value",
+      [JSON.stringify(stored.rows[0].settlement_payload)],
+    );
+    expect(result.rows[0].value.already_settled).toBe(true);
+    expect((await rating(LEGACY_A)).rating).toBe(816);
+    expect((await rating(LEGACY_B)).rating).toBe(784);
+  });
+
+  it("creates safe unique OAuth profiles and exactly six independent 800 ratings", async () => {
     const profiles = await pg.query<{
       id: string;
       username: string;
@@ -337,7 +400,7 @@ describe("Supabase migration and trusted settlement contract", () => {
       6,
     );
     expect(
-      ratings.rows.every((r) => r.rating === 1200 && r.matches === 0),
+      ratings.rows.every((r) => r.rating === 800 && r.matches === 0),
     ).toBe(true);
   });
 
@@ -391,7 +454,7 @@ describe("Supabase migration and trusted settlement contract", () => {
     expect(
       (
         await pg.query(
-          "select rating from public.arena_ratings where user_id=$1 and rating=1200",
+          "select rating from public.arena_ratings where user_id=$1 and rating=800",
           [EXISTING],
         )
       ).rows,
@@ -573,7 +636,7 @@ describe("Supabase migration and trusted settlement contract", () => {
     await pg.exec("reset role");
   });
 
-  it("settles equal-rated humans atomically with zero-sum +16/-16", async () => {
+  it("settles equal-rated humans atomically with Glicko-1 RD updates", async () => {
     const input = match();
     const result = await settle(input);
     expect(result).toMatchObject({
@@ -583,20 +646,20 @@ describe("Supabase migration and trusted settlement contract", () => {
     });
     expect(result.rating_changes).toEqual(
       expect.arrayContaining([
-        { user_id: A, before: 1200, after: 1216, delta: 16, outcome: "win" },
-        { user_id: B, before: 1200, after: 1184, delta: -16, outcome: "loss" },
+        expect.objectContaining({ user_id: A, before: 800, after: 962, delta: 162, before_rd: 350, after_rd: 290.231, outcome: "win" }),
+        expect.objectContaining({ user_id: B, before: 800, after: 638, delta: -162, before_rd: 350, after_rd: 290.231, outcome: "loss" }),
       ]),
     );
     expect(result.rating_changes.reduce((sum, c) => sum + c.delta, 0)).toBe(0);
     expect(await rating(A)).toEqual({
-      rating: 1216,
+      rating: 962,
       matches: 1,
       wins: 1,
       losses: 0,
       draws: 0,
     });
     expect(await rating(B)).toEqual({
-      rating: 1184,
+      rating: 638,
       matches: 1,
       wins: 0,
       losses: 1,
@@ -618,21 +681,105 @@ describe("Supabase migration and trusted settlement contract", () => {
     ).toHaveLength(2);
   });
 
-  it("draws change no rating and count one draw per participant", async () => {
+  it("keeps equal-rated draw scores equal while reducing both RDs", async () => {
     const result = await settle(
       match({ result: { outcome: "draw", winner_id: null, reason: "draw" } }),
     );
     expect(
       result.rating_changes.every((c) => c.delta === 0 && c.outcome === "draw"),
     ).toBe(true);
-    for (const id of [A, B])
+    for (const id of [A, B]) {
       expect(await rating(id)).toEqual({
-        rating: 1200,
+        rating: 800,
         matches: 1,
         wins: 0,
         losses: 0,
         draws: 1,
       });
+      const rd = await pg.query<{ rd: string }>(
+        "select rd from public.arena_ratings where user_id=$1 and arena='easy' and mode='human'",
+        [id],
+      );
+      expect(Number(rd.rows[0].rd)).toBe(290.231);
+    }
+  });
+
+  it("awards a large upset change to 800 versus 1200 using both pre-match RDs", async () => {
+    await pg.query(
+      "update public.arena_ratings set rating=1200 where user_id=$1 and arena='easy' and mode='human'",
+      [B],
+    );
+    const result = await settle(match({
+      participants: [
+        { user_id: A, pre_rating: 800, pre_rd: 350 },
+        { user_id: B, pre_rating: 1200, pre_rd: 350 },
+      ],
+    }));
+    expect(result.rating_changes).toEqual(expect.arrayContaining([
+      expect.objectContaining({ user_id: A, before: 800, delta: 307, after: 1107, after_rd: 311.304 }),
+      expect.objectContaining({ user_id: B, before: 1200, delta: -307, after: 893, after_rd: 311.304 }),
+    ]));
+  });
+
+  it("updates each human independently when their rating deviations differ", async () => {
+    await pg.query(
+      "update public.arena_ratings set rd=50 where user_id=$1 and arena='easy' and mode='human'",
+      [B],
+    );
+    const result = await settle(match({ participants: [
+      { user_id: A, pre_rating: 800, pre_rd: 350 },
+      { user_id: B, pre_rating: 800, pre_rd: 50 },
+    ] }));
+    const winner = result.rating_changes.find((change) => change.user_id === A)!;
+    const loser = result.rating_changes.find((change) => change.user_id === B)!;
+    expect(winner.delta).toBeGreaterThan(0);
+    expect(loser.delta).toBeLessThan(0);
+    expect(winner.delta).toBeGreaterThan(-loser.delta);
+    expect(winner.after_rd).toBeLessThan(350);
+    expect(loser.after_rd).toBeGreaterThanOrEqual(30);
+  });
+
+  it("uses a 0.5 score for unequal draws and lowers both rating deviations", async () => {
+    await pg.query(
+      "update public.arena_ratings set rating=1200 where user_id=$1 and arena='easy' and mode='human'",
+      [A],
+    );
+    const result = await settle(match({
+      result: { outcome: "draw", winner_id: null, reason: "draw" },
+      participants: [
+        { user_id: A, pre_rating: 1200, pre_rd: 350 },
+        { user_id: B, pre_rating: 800, pre_rd: 350 },
+      ],
+    }));
+    expect(result.rating_changes).toEqual(expect.arrayContaining([
+      expect.objectContaining({ user_id: A, delta: -121, after: 1079, after_rd: 311.304, outcome: "draw" }),
+      expect.objectContaining({ user_id: B, delta: 121, after: 921, after_rd: 311.304, outcome: "draw" }),
+    ]));
+  });
+
+  it("increases uncertainty after inactivity but never beyond the new-player RD", async () => {
+    const now = new Date();
+    const yearAgo = new Date(now.getTime() - 365 * 86_400_000);
+    const values = await pg.query<{ after_year: string; after_day: string }>(
+      "select public.glicko_rd_at(50,$1,$2) as after_year, public.glicko_rd_at(50,$3,$2) as after_day",
+      [yearAgo.toISOString(), now.toISOString(), new Date(now.getTime() - 86_400_000).toISOString()],
+    );
+    expect(Number(values.rows[0].after_year)).toBe(350);
+    expect(Number(values.rows[0].after_day)).toBeGreaterThan(50);
+    expect(Number(values.rows[0].after_day)).toBeLessThan(350);
+  });
+
+  it("rejects a stale RD snapshot without partial settlement", async () => {
+    const input = match({ participants: [
+      { user_id: A, pre_rating: 800, pre_rd: 300 },
+      { user_id: B, pre_rating: 800, pre_rd: 350 },
+    ] });
+    await expectSqlError(
+      "select public.settle_match($1::jsonb)", [JSON.stringify(input)], "40001",
+    );
+    expect((await pg.query("select id from public.matches where id=$1", [input.id])).rows).toHaveLength(0);
+    expect((await pg.query("select match_id from public.rating_ledger where match_id=$1", [input.id])).rows).toHaveLength(0);
+    expect((await rating(A)).rating).toBe(800);
   });
 
   it("voids change neither ratings nor match counters", async () => {
@@ -645,7 +792,7 @@ describe("Supabase migration and trusted settlement contract", () => {
     ).toBe(true);
     for (const id of [A, B])
       expect(await rating(id)).toEqual({
-        rating: 1200,
+        rating: 800,
         matches: 0,
         wins: 0,
         losses: 0,
@@ -654,8 +801,8 @@ describe("Supabase migration and trusted settlement contract", () => {
   });
 
   it.each([
-    { winner: A, delta: 16 },
-    { winner: "bot", delta: -16 },
+    { winner: A, delta: 175 },
+    { winner: "bot", delta: -175 },
   ])(
     "bot match winner $winner changes only the human bot rating by $delta",
     async ({ winner, delta }) => {
@@ -664,8 +811,8 @@ describe("Supabase migration and trusted settlement contract", () => {
           mode: "bot",
           result: { outcome: "win", winner_id: winner, reason: "solved" },
           participants: [
-            { user_id: A, pre_rating: 1200 },
-            { user_id: null, bot_rating: 1200, pre_rating: 1200 },
+            { user_id: A, pre_rating: 800, pre_rd: 350 },
+            { user_id: null, bot_rating: 800, pre_rating: 800, pre_rd: 100 },
           ],
         }),
       );
@@ -673,14 +820,14 @@ describe("Supabase migration and trusted settlement contract", () => {
       expect(result.rating_changes[0]).toMatchObject({
         user_id: A,
         delta,
-        after: 1200 + delta,
+        after: 800 + delta,
       });
-      expect((await rating(A, "easy", "bot")).rating).toBe(1200 + delta);
-      expect((await rating(A, "easy", "human")).rating).toBe(1200);
+      expect((await rating(A, "easy", "bot")).rating).toBe(800 + delta);
+      expect((await rating(A, "easy", "human")).rating).toBe(800);
       expect(
         (
           await pg.query(
-            "select * from public.arena_ratings where user_id=$1 and rating<>1200",
+            "select * from public.arena_ratings where user_id=$1 and rating<>800",
             [A],
           )
         ).rows,
@@ -695,7 +842,7 @@ describe("Supabase migration and trusted settlement contract", () => {
     expect(again.already_settled).toBe(true);
     expect(again.rating_changes).toEqual(first.rating_changes);
     expect((await rating(A)).matches).toBe(1);
-    expect((await rating(A)).rating).toBe(1216);
+    expect((await rating(A)).rating).toBe(962);
     expect(
       (await pg.query("select * from public.matches where id=$1", [input.id]))
         .rows,
@@ -718,8 +865,8 @@ describe("Supabase migration and trusted settlement contract", () => {
       [JSON.stringify(conflicting)],
       "22023",
     );
-    expect((await rating(A)).rating).toBe(1216);
-    expect((await rating(B)).rating).toBe(1184);
+    expect((await rating(A)).rating).toBe(962);
+    expect((await rating(B)).rating).toBe(638);
     const stored = await pg.query<{ result: { winner_id: string } }>(
       "select result from public.matches where id=$1",
       [input.id],
@@ -730,8 +877,8 @@ describe("Supabase migration and trusted settlement contract", () => {
   it("rolls back the whole settlement when a pre-match rating no longer agrees", async () => {
     const input = match({
       participants: [
-        { user_id: A, pre_rating: 1200 },
-        { user_id: B, pre_rating: 1199 },
+        { user_id: A, pre_rating: 800, pre_rd: 350 },
+        { user_id: B, pre_rating: 799, pre_rd: 350 },
       ],
     });
     await expectSqlError(
@@ -740,13 +887,14 @@ describe("Supabase migration and trusted settlement contract", () => {
       "40001",
     );
     for (const table of ["matches", "participants", "rating_ledger"]) {
+      const column = table === "matches" ? "id" : "match_id";
       expect(
-        (await pg.query(`select * from public.${table}`)).rows,
+        (await pg.query(`select * from public.${table} where ${column}=$1`, [input.id])).rows,
       ).toHaveLength(0);
     }
     for (const id of [A, B])
       expect(await rating(id)).toEqual({
-        rating: 1200,
+        rating: 800,
         matches: 0,
         wins: 0,
         losses: 0,
@@ -794,6 +942,16 @@ describe("Supabase migration and trusted settlement contract", () => {
           [],
           "42501",
         );
+        await expectSqlError(
+          "select * from public.glicko_after(800,350,1200,100,1)",
+          [],
+          "42501",
+        );
+        await expectSqlError(
+          "select public.glicko_rd_at(50,now(),now())",
+          [],
+          "42501",
+        );
       });
     }
   });
@@ -805,9 +963,11 @@ describe("Supabase migration and trusted settlement contract", () => {
     const other = match({
       result: { outcome: "draw", winner_id: null, reason: "draw" },
       participants: [
-        { user_id: B, pre_rating: 1200 },
-        { user_id: C, pre_rating: 1200 },
+        { user_id: B, pre_rating: 800, pre_rd: 350 },
+        { user_id: C, pre_rating: 800, pre_rd: 350 },
       ],
+      arena: "medium",
+      problem_id: "test-medium",
     });
     await settle(own);
     await settle(other);
@@ -845,6 +1005,8 @@ describe("Supabase migration and trusted settlement contract", () => {
       result: { outcome: "draw", winner_id: null, reason: "draw" },
     });
     const fresh = match({
+      arena: "medium",
+      problem_id: "test-medium",
       result: { outcome: "draw", winner_id: null, reason: "draw" },
     });
     await settle(old);
@@ -870,11 +1032,11 @@ describe("Supabase migration and trusted settlement contract", () => {
       "return 42;",
     );
     expect((await pg.query("select id from public.matches")).rows).toHaveLength(
-      2,
+      3,
     );
     expect(
       (await pg.query("select match_id from public.rating_ledger")).rows,
-    ).toHaveLength(4);
+    ).toHaveLength(6);
     expect(
       Number(
         (

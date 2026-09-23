@@ -1825,16 +1825,14 @@ function ResultSheet({
   const draw = !result.winnerId && !isVoid;
   const delta = result.deltas[userId] ?? 0;
   const before =
-    match.players.find((player) => player.id === userId)?.rating ?? 1200;
+    match.players.find((player) => player.id === userId)?.rating ?? 800;
   const detail = isVoid
     ? "Result couldn’t be verified. Ratings unchanged."
     : result.reason === "resigned"
       ? won
         ? "Opponent resigned."
         : "You resigned."
-      : draw
-        ? "No rating change."
-        : "";
+      : "";
   return (
     <Box component="section">
       <Typography variant="overline" sx={{ fontSize: 11 }}>
@@ -1879,8 +1877,7 @@ function ResultSheet({
                     : "text.primary",
             }}
           >
-            {delta > 0 ? "+" : ""}
-            {delta}
+            {result.settled ? `${delta > 0 ? "+" : ""}${delta}` : "…"}
           </Typography>
           <Typography
             variant="caption"
@@ -1888,12 +1885,12 @@ function ResultSheet({
             component="span"
             sx={{ display: "block", mt: 1 }}
           >
-            Elo change
+            Rating change
           </Typography>
         </Box>
         <Box sx={{ textAlign: "right" }}>
           <Typography sx={{ fontFamily: MONO, fontSize: { xs: 15, sm: 18 } }}>
-            {before.toLocaleString()} → {(before + delta).toLocaleString()}
+            {before.toLocaleString()} → {result.settled ? (before + delta).toLocaleString() : "…"}
           </Typography>
           <Typography
             variant="caption"

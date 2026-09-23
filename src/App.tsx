@@ -814,7 +814,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                 variant="body2"
                 sx={{ fontFamily: '"JetBrains Mono", monospace' }}
               >
-                {rating ? `${rating.wins} wins` : "1,200"}
+                {rating ? `${rating.wins} wins` : "800"}
               </Typography>
             </Stack>
             {error && (
@@ -1133,7 +1133,7 @@ function Leaderboard() {
         </TableContainer>
       </Paper>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2.5 }}>
-        New ratings start at 1,200.
+        New ratings start at 800.
       </Typography>
       <Footer />
     </Page>
