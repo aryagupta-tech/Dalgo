@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Github, X } from "lucide-react";
 import {
@@ -14,6 +14,8 @@ import {
   Typography,
 } from "@mui/material";
 import { useAuth } from "../auth";
+import { createGoogleNonce, loadGoogleIdentity } from "../google-identity";
+import type { SupabaseClient } from "@supabase/supabase-js";
 export function Brand({
   compactAtMedium = false,
 }: {
@@ -155,17 +157,136 @@ export function oauthReturnUrl(
     : "https://dalgo.site";
   return new URL(allowed ? path : "/", origin).href;
 }
+function GoogleSignInButton({
+  client,
+  clientId,
+  busy,
+  onBusy,
+  onSuccess,
+  onError,
+}: {
+  client: SupabaseClient;
+  clientId: string;
+  busy: boolean;
+  onBusy: () => void;
+  onSuccess: () => void;
+  onError: (message: string) => void;
+}) {
+  const container = useRef<HTMLDivElement>(null);
+  const callbacks = useRef({ onBusy, onSuccess, onError });
+  const [loading, setLoading] = useState(true);
+  callbacks.current = { onBusy, onSuccess, onError };
+
+  useEffect(() => {
+    const parent = container.current;
+    if (!parent) return;
+    let active = true;
+    let observer: ResizeObserver | null = null;
+    let renderedWidth = 0;
+
+    void (async () => {
+      try {
+        const [{ nonce, hashedNonce }, google] = await Promise.all([
+          createGoogleNonce(),
+          loadGoogleIdentity(),
+        ]);
+        if (!active) return;
+        google.initialize({
+          client_id: clientId,
+          nonce: hashedNonce,
+          use_fedcm_for_prompt: true,
+          callback: (response) => {
+            if (!response.credential || !active) {
+              if (active)
+                callbacks.current.onError(
+                  "Google sign-in did not return an identity.",
+                );
+              return;
+            }
+            callbacks.current.onBusy();
+            void client.auth
+              .signInWithIdToken({
+                provider: "google",
+                token: response.credential,
+                nonce,
+              })
+              .then(({ error }) => {
+                if (error) throw error;
+                if (active) callbacks.current.onSuccess();
+              })
+              .catch((reason: unknown) => {
+                if (active)
+                  callbacks.current.onError((reason as Error).message);
+              });
+          },
+        });
+
+        const render = () => {
+          if (!active || !parent.isConnected) return;
+          const width = Math.max(
+            200,
+            Math.min(400, Math.floor(parent.getBoundingClientRect().width)),
+          );
+          if (width === renderedWidth) return;
+          renderedWidth = width;
+          parent.replaceChildren();
+          google.renderButton(parent, {
+            type: "standard",
+            theme: "filled_black",
+            size: "large",
+            text: "continue_with",
+            shape: "rectangular",
+            logo_alignment: "left",
+            width,
+          });
+        };
+        render();
+        observer = new ResizeObserver(render);
+        observer.observe(parent);
+        setLoading(false);
+      } catch (reason) {
+        if (active) {
+          setLoading(false);
+          callbacks.current.onError((reason as Error).message);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+      observer?.disconnect();
+    };
+  }, [client, clientId]);
+
+  return (
+    <Box
+      ref={container}
+      data-testid="google-signin"
+      aria-label="Continue with Google"
+      aria-busy={loading || busy}
+      sx={{
+        width: "100%",
+        minHeight: 44,
+        opacity: busy ? 0.55 : 1,
+        pointerEvents: busy ? "none" : "auto",
+        "& > div": { mx: "auto" },
+      }}
+    />
+  );
+}
+
 export function SignIn({ onClose }: { onClose: () => void }) {
-  const { client } = useAuth();
+  const { client, config } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  async function login(provider: "google" | "github") {
+
+  async function loginWithGithub() {
     if (!client) return;
     setBusy(true);
     setError("");
     try {
       const r = await client.auth.signInWithOAuth({
-        provider,
+        provider: "github",
         options: { redirectTo: oauthReturnUrl(window.location) },
       });
       if (r.error) throw r.error;
@@ -185,30 +306,30 @@ export function SignIn({ onClose }: { onClose: () => void }) {
       </Typography>
       {client ? (
         <Stack spacing={1.25} sx={{ mt: 1 }}>
+          {config.googleClientId ? (
+            <GoogleSignInButton
+              client={client}
+              clientId={config.googleClientId}
+              busy={busy}
+              onBusy={() => {
+                setBusy(true);
+                setError("");
+              }}
+              onSuccess={onClose}
+              onError={(message) => {
+                setError(message);
+                setBusy(false);
+              }}
+            />
+          ) : (
+            <Alert severity="warning" icon={false}>
+              Google sign-in is temporarily unavailable.
+            </Alert>
+          )}
           <Button
             variant="outlined"
             disabled={busy}
-            onClick={() => login("google")}
-            endIcon={<ArrowUpRight size={17} />}
-            sx={{
-              minHeight: 48,
-              justifyContent: "flex-start",
-              "& .MuiButton-endIcon": { ml: "auto" },
-            }}
-          >
-            <Typography
-              component="span"
-              aria-hidden="true"
-              sx={{ mr: 1.5, fontSize: "1.2rem", fontWeight: 700 }}
-            >
-              G
-            </Typography>
-            Continue with Google
-          </Button>
-          <Button
-            variant="outlined"
-            disabled={busy}
-            onClick={() => login("github")}
+            onClick={loginWithGithub}
             startIcon={<Github size={19} />}
             endIcon={<ArrowUpRight size={17} />}
             sx={{

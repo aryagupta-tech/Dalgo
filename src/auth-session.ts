@@ -30,7 +30,11 @@ export function readCachedAuthConfig(storage: StorageLike) {
   try {
     const value = JSON.parse(
       storage.getItem(AUTH_CONFIG_STORAGE_KEY) ?? "null",
-    ) as { supabaseUrl?: unknown; supabaseKey?: unknown } | null;
+    ) as {
+      supabaseUrl?: unknown;
+      supabaseKey?: unknown;
+      googleClientId?: unknown;
+    } | null;
     if (
       typeof value?.supabaseUrl === "string" &&
       /^https:\/\/[^/]+$/.test(value.supabaseUrl) &&
@@ -40,6 +44,8 @@ export function readCachedAuthConfig(storage: StorageLike) {
       return {
         supabaseUrl: value.supabaseUrl,
         supabaseKey: value.supabaseKey,
+        googleClientId:
+          typeof value.googleClientId === "string" ? value.googleClientId : "",
       };
   } catch {}
   return null;
@@ -53,6 +59,7 @@ export function cacheAuthConfig(storage: StorageLike, config: Config) {
       JSON.stringify({
         supabaseUrl: config.supabaseUrl,
         supabaseKey: config.supabaseKey,
+        googleClientId: config.googleClientId ?? "",
       }),
     );
   } catch {}

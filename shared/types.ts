@@ -137,6 +137,7 @@ export interface Config {
   attemptLimits?: AttemptLimits;
   supabaseUrl: string;
   supabaseKey: string;
+  googleClientId?: string;
   playEnabled: boolean;
   reason: string;
   dailyCapacity: number | null;
