@@ -63,10 +63,12 @@ export function Modal({
   title,
   onClose,
   children,
+  maxWidth = 520,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  maxWidth?: number;
 }) {
   const titleId = useId();
   return (
@@ -81,7 +83,7 @@ export function Modal({
         paper: {
           sx: {
             width: "calc(100% - 32px)",
-            maxWidth: 520,
+            maxWidth,
             m: 2,
             maxHeight: "calc(100dvh - 32px)",
             border: "1px solid #505050",
@@ -267,9 +269,15 @@ function GoogleSignInButton({
       sx={{
         width: "100%",
         minHeight: 44,
+        overflow: "hidden",
+        borderRadius: "8px",
         opacity: busy ? 0.55 : 1,
         pointerEvents: busy ? "none" : "auto",
         "& > div": { mx: "auto" },
+        "&:focus-within": {
+          outline: "2px solid #7AA2FF",
+          outlineOffset: 2,
+        },
       }}
     />
   );
@@ -296,7 +304,7 @@ export function SignIn({ onClose }: { onClose: () => void }) {
     }
   }
   return (
-    <Modal title="Sign in" onClose={onClose}>
+    <Modal title="Sign in" onClose={onClose} maxWidth={448}>
       <Typography
         component="h2"
         variant="h4"
