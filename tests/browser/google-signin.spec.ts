@@ -149,6 +149,7 @@ test("Google signs in on the Dalgo origin without a Supabase OAuth redirect", as
 
   await page.goto("/");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.getByRole("button", { name: /GitHub/i })).toHaveCount(0);
   await page.getByTestId("google-signin").locator("button").click();
 
   await expect(
