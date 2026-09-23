@@ -75,7 +75,7 @@
       "vars": {
         "ADMISSION_MODE": "staging",
         "LIVE_MATCHES_ENABLED": "true",
-        "JUDGE_VERIFIED_AT": "2026-09-23T16:27:08.231Z",
+        "JUDGE_VERIFIED_AT": "2026-09-23T18:08:21.000Z",
         "JUDGE_DAILY_QUOTA": "0",
         "JUDGE_CREDIT_COST": "0",
         "JUDGE_PROVIDER": "codebox",
@@ -91,7 +91,7 @@
       "vpc_services": [
         {
           "binding": "CODEBOX",
-          "service_id": "01a0cf03-f4bc-7ae3-9537-12639b2fa2cb",
+          "service_id": "01a0cf64-b8d7-7760-8099-4bffab088b05",
         },
       ],
     },

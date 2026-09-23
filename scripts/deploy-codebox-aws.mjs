@@ -5,14 +5,21 @@ import { access } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const [host, keyPath = join(homedir(), ".ssh", "dalgo-codebox-aws-2026")] =
-  process.argv.slice(2);
-if (!/^(?:\d{1,3}\.){3}\d{1,3}$/.test(host ?? ""))
+const [
+  host,
+  keyPath = join(homedir(), ".ssh", "dalgo-codebox-aws-2026"),
+  profile = "small",
+] = process.argv.slice(2);
+if (
+  !/^(?:\d{1,3}\.){3}\d{1,3}$/.test(host ?? "") ||
+  !["default", "small"].includes(profile)
+)
   throw new Error(
-    "Usage: node scripts/deploy-codebox-aws.mjs PUBLIC_IPV4 [SSH_KEY]",
+    "Usage: node scripts/deploy-codebox-aws.mjs PUBLIC_IPV4 [SSH_KEY] [default|small]",
   );
 await access(keyPath);
 await access("services/codebox/.env");
+if (profile === "small") await access("services/codebox/compose.small.yaml");
 
 function run(command, args, input) {
   const result = spawnSync(command, args, {
@@ -48,7 +55,9 @@ run(
   "ssh",
   [
     ...ssh,
-    "sudo tar -xzf - -C /opt/dalgo-codebox && sudo chmod 600 /opt/dalgo-codebox/.env && sudo docker compose -f /opt/dalgo-codebox/compose.yaml up -d --build --quiet-build",
+    "sudo tar -xzf - -C /opt/dalgo-codebox && sudo chmod 600 /opt/dalgo-codebox/.env && sudo docker compose -f /opt/dalgo-codebox/compose.yaml" +
+      (profile === "small" ? " -f /opt/dalgo-codebox/compose.small.yaml" : "") +
+      " up -d --build --quiet-build",
   ],
   archive.stdout,
 );

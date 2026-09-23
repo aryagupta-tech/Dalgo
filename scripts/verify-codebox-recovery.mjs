@@ -11,6 +11,7 @@ if (!headers["X-Auth-Token"]) throw new Error("Codebox token required");
 const base = process.env.CODEBOX_LOCAL_URL || "http://127.0.0.1:3000";
 const awsHost = process.env.CODEBOX_RECOVERY_AWS_HOST;
 const awsKey = process.env.CODEBOX_RECOVERY_AWS_KEY;
+const awsSmall = process.env.CODEBOX_RECOVERY_AWS_SMALL !== "0";
 const gcpInstance = process.env.CODEBOX_RECOVERY_GCP_INSTANCE;
 const gcpZone = process.env.CODEBOX_RECOVERY_GCP_ZONE || "asia-southeast1-b";
 const gcpProject = process.env.CODEBOX_RECOVERY_GCP_PROJECT || "dalgo-508410";
@@ -47,6 +48,7 @@ const compose = (...args) => {
       "compose",
       "-f",
       "/opt/dalgo-codebox/compose.yaml",
+      ...(awsSmall ? ["-f", "/opt/dalgo-codebox/compose.small.yaml"] : []),
       ...args,
     ]
       .map(quote)
