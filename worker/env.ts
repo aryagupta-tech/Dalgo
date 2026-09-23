@@ -10,6 +10,7 @@ export interface Env {
   /** Legacy JWT keys remain supported for existing deployments. */
   SUPABASE_ANON_KEY?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
+  GOOGLE_CLIENT_ID?: string;
   WEBSOCKET_SIGNING_SECRET: string;
   /** Legacy JDoodle requires explicit selection; new deployments use Codebox. */
   JUDGE_PROVIDER?: "codebox" | "jdoodle";

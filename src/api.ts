@@ -48,6 +48,7 @@ export const fallbackConfig: Config = {
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() ||
     import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ||
     "",
+  googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() || "",
   playEnabled: false,
   admissionMode: "disabled",
   reason: "Live matches are temporarily unavailable. Please try again later.",
