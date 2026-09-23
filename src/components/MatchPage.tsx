@@ -35,6 +35,7 @@ import {
   type QueueView,
 } from "../../shared/types";
 import { Brand, Modal } from "./Chrome";
+import { MatchChat } from "./MatchChat";
 import { api, connectEvents } from "../api";
 import { useAuth } from "../auth";
 import { formatClock } from "../data";
@@ -659,25 +660,31 @@ function MatchWorkspace({
     >
       <MatchTopbar arena={match.arena}>
         {!match.result ? (
-          <Button
-            variant="text"
-            size="small"
-            startIcon={<Flag size={14} />}
-            onClick={() => setResigning(true)}
-            disabled={ready}
-          >
-            Resign
-          </Button>
+          <Stack direction="row" spacing={0.5}>
+            <MatchChat match={match} userId={userId} />
+            <Button
+              variant="text"
+              size="small"
+              startIcon={<Flag size={14} />}
+              onClick={() => setResigning(true)}
+              disabled={ready}
+            >
+              Resign
+            </Button>
+          </Stack>
         ) : (
-          <Button
-            component={Link}
-            to="/"
-            variant="text"
-            size="small"
-            startIcon={<ArrowLeft size={14} />}
-          >
-            Lobby
-          </Button>
+          <Stack direction="row" spacing={0.5}>
+            <MatchChat match={match} userId={userId} />
+            <Button
+              component={Link}
+              to="/"
+              variant="text"
+              size="small"
+              startIcon={<ArrowLeft size={14} />}
+            >
+              Lobby
+            </Button>
+          </Stack>
         )}
       </MatchTopbar>
       <Box
@@ -840,16 +847,34 @@ function MatchWorkspace({
                 gap: 1,
               }}
             >
-              <Typography
-                sx={{
-                  fontFamily: '"Space Grotesk", sans-serif',
-                  fontSize: narrow ? 14 : 16,
-                  fontWeight: 500,
-                  overflowWrap: "anywhere",
-                }}
-              >
-                {opponent?.name ?? "Connecting"}
-              </Typography>
+              {opponent && !opponent.isBot ? (
+                <Typography
+                  component={Link}
+                  to={`/players/${opponent.id}`}
+                  sx={{
+                    fontFamily: '"Space Grotesk", sans-serif',
+                    fontSize: narrow ? 14 : 16,
+                    fontWeight: 500,
+                    overflowWrap: "anywhere",
+                    color: "inherit",
+                    textDecoration: "none",
+                    "&:hover": { textDecoration: "underline" },
+                  }}
+                >
+                  {opponent.name}
+                </Typography>
+              ) : (
+                <Typography
+                  sx={{
+                    fontFamily: '"Space Grotesk", sans-serif',
+                    fontSize: narrow ? 14 : 16,
+                    fontWeight: 500,
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {opponent?.name ?? "Connecting"}
+                </Typography>
+              )}
               {opponent?.isBot && !narrow && (
                 <Chip
                   size="small"
@@ -1803,16 +1828,14 @@ function ResultSheet({
   const draw = !result.winnerId && !isVoid;
   const delta = result.deltas[userId] ?? 0;
   const before =
-    match.players.find((player) => player.id === userId)?.rating ?? 1200;
+    match.players.find((player) => player.id === userId)?.rating ?? 800;
   const detail = isVoid
     ? "Result couldn’t be verified. Ratings unchanged."
     : result.reason === "resigned"
       ? won
         ? "Opponent resigned."
         : "You resigned."
-      : draw
-        ? "No rating change."
-        : "";
+      : "";
   return (
     <Box component="section">
       <Typography variant="overline" sx={{ fontSize: 11 }}>
@@ -1857,8 +1880,7 @@ function ResultSheet({
                     : "text.primary",
             }}
           >
-            {delta > 0 ? "+" : ""}
-            {delta}
+            {result.settled ? `${delta > 0 ? "+" : ""}${delta}` : "…"}
           </Typography>
           <Typography
             variant="caption"
@@ -1866,12 +1888,12 @@ function ResultSheet({
             component="span"
             sx={{ display: "block", mt: 1 }}
           >
-            Elo change
+            Rating change
           </Typography>
         </Box>
         <Box sx={{ textAlign: "right" }}>
           <Typography sx={{ fontFamily: MONO, fontSize: { xs: 15, sm: 18 } }}>
-            {before.toLocaleString()} → {(before + delta).toLocaleString()}
+            {before.toLocaleString()} → {result.settled ? (before + delta).toLocaleString() : "…"}
           </Typography>
           <Typography
             variant="caption"
@@ -1924,9 +1946,21 @@ function ResultSheet({
         direction="row"
         sx={{ mt: 3, justifyContent: "space-between", gap: 1.5 }}
       >
-        <Button variant="outlined" onClick={onReview}>
-          Review workspace
-        </Button>
+        <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
+          <Button variant="outlined" onClick={onReview}>
+            Review workspace
+          </Button>
+          <MatchChat match={match} userId={userId} />
+          {result.settled && (
+            <Button
+              variant="outlined"
+              component={Link}
+              to={`/matches/${match.id}/review`}
+            >
+              Review submissions
+            </Button>
+          )}
+        </Stack>
         <Button
           component={Link}
           to="/"
