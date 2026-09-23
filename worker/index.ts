@@ -11,6 +11,7 @@ import { configuredAttemptLimits } from "./limits";
 import { DEFAULT_ATTEMPT_LIMITS } from "../shared/types";
 import { AppError, json, parseArena } from "./core";
 import { updateProfileAvatar, validateAvatar } from "./avatar";
+import { publicPlayerResponse } from "./public-players";
 import {
   claimUsername,
   createFriendRequest,
@@ -139,6 +140,12 @@ async function api(request: Request, env: Env) {
       env.MATCHES.get(env.MATCHES.idFromName(publicReview[1])),
       "/review",
     );
+  }
+  if (path.startsWith("/players/")) {
+    if (request.method !== "GET")
+      throw new AppError("Method not allowed.", 405);
+    const response = await publicPlayerResponse(path, url, env);
+    if (response) return response;
   }
   let id: string;
   if (path.endsWith("/events")) {
