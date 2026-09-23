@@ -18,6 +18,9 @@ import {
   db,
   getFriendIdentity,
   getFriendsView,
+  getFriendChat,
+  sendFriendMessage,
+  removeFriendship,
   respondFriendRequest,
 } from "./db";
 export { Coordinator } from "./coordinator";
@@ -216,6 +219,49 @@ async function api(request: Request, env: Env) {
   }
   if (path === "/friends" && request.method === "GET")
     return json(await getFriendsView(env, id));
+  const friendMessages = path.match(/^\/friends\/([a-f0-9-]{36})\/messages$/);
+  if (friendMessages) {
+    if (!uuid.test(friendMessages[1]))
+      throw new AppError("Invalid friendship.");
+    if (request.method === "GET")
+      return json(await getFriendChat(env, id, friendMessages[1]));
+    if (request.method === "POST") {
+      const body = (await request.json()) as {
+        requestId?: unknown;
+        text?: unknown;
+      };
+      if (typeof body.requestId !== "string" || !uuid.test(body.requestId))
+        throw new AppError("A valid request identifier is required.");
+      if (
+        typeof body.text !== "string" ||
+        body.text !== body.text.trim() ||
+        body.text.length < 1 ||
+        body.text.length > 500 ||
+        new TextEncoder().encode(body.text).length > 2000 ||
+        /[\u0000-\u001f\u007f]/.test(body.text)
+      )
+        throw new AppError("Write a single-line message under 500 characters.");
+      return json(
+        await sendFriendMessage(
+          env,
+          id,
+          friendMessages[1],
+          body.requestId,
+          body.text,
+        ),
+        201,
+      );
+    }
+    throw new AppError("Method not allowed.", 405);
+  }
+  const removeFriend = path.match(/^\/friends\/([a-f0-9-]{36})$/);
+  if (removeFriend) {
+    if (request.method !== "DELETE")
+      throw new AppError("Method not allowed.", 405);
+    if (!uuid.test(removeFriend[1])) throw new AppError("Invalid friendship.");
+    await removeFriendship(env, id, removeFriend[1]);
+    return json({ removed: true });
+  }
   if (path === "/friends/requests" && request.method === "POST") {
     const body = (await request.json()) as {
       username?: unknown;
@@ -402,13 +448,13 @@ async function api(request: Request, env: Env) {
       });
   }
   const match = path.match(
-    /^\/matches\/([a-f0-9-]{36})(?:\/(run|submit|resign|events))?$/,
+    /^\/matches\/([a-f0-9-]{36})(?:\/(run|submit|resign|events|chat))?$/,
   );
   if (match) {
     if (!uuid.test(match[1])) throw new AppError("Invalid match.", 400);
     const action = match[2] ?? "view";
     if (
-      (["run", "submit", "resign"].includes(action) &&
+      (["run", "submit", "resign", "chat"].includes(action) &&
         request.method !== "POST") ||
       (["view", "events"].includes(action) && request.method !== "GET")
     )
@@ -418,7 +464,7 @@ async function api(request: Request, env: Env) {
       stub,
       "/" + action,
       id,
-      ["run", "submit"].includes(action)
+      ["run", "submit", "chat"].includes(action)
         ? await request.json()
         : action === "resign"
           ? {}

@@ -35,6 +35,7 @@ import {
   type QueueView,
 } from "../../shared/types";
 import { Brand, Modal } from "./Chrome";
+import { MatchChat } from "./MatchChat";
 import { api, connectEvents } from "../api";
 import { useAuth } from "../auth";
 import { formatClock } from "../data";
@@ -659,15 +660,18 @@ function MatchWorkspace({
     >
       <MatchTopbar arena={match.arena}>
         {!match.result ? (
-          <Button
-            variant="text"
-            size="small"
-            startIcon={<Flag size={14} />}
-            onClick={() => setResigning(true)}
-            disabled={ready}
-          >
-            Resign
-          </Button>
+          <Stack direction="row" spacing={0.5}>
+            <MatchChat match={match} userId={userId} />
+            <Button
+              variant="text"
+              size="small"
+              startIcon={<Flag size={14} />}
+              onClick={() => setResigning(true)}
+              disabled={ready}
+            >
+              Resign
+            </Button>
+          </Stack>
         ) : (
           <Button
             component={Link}
@@ -840,16 +844,34 @@ function MatchWorkspace({
                 gap: 1,
               }}
             >
-              <Typography
-                sx={{
-                  fontFamily: '"Space Grotesk", sans-serif',
-                  fontSize: narrow ? 14 : 16,
-                  fontWeight: 500,
-                  overflowWrap: "anywhere",
-                }}
-              >
-                {opponent?.name ?? "Connecting"}
-              </Typography>
+              {opponent && !opponent.isBot ? (
+                <Typography
+                  component={Link}
+                  to={`/players/${opponent.id}`}
+                  sx={{
+                    fontFamily: '"Space Grotesk", sans-serif',
+                    fontSize: narrow ? 14 : 16,
+                    fontWeight: 500,
+                    overflowWrap: "anywhere",
+                    color: "inherit",
+                    textDecoration: "none",
+                    "&:hover": { textDecoration: "underline" },
+                  }}
+                >
+                  {opponent.name}
+                </Typography>
+              ) : (
+                <Typography
+                  sx={{
+                    fontFamily: '"Space Grotesk", sans-serif',
+                    fontSize: narrow ? 14 : 16,
+                    fontWeight: 500,
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {opponent?.name ?? "Connecting"}
+                </Typography>
+              )}
               {opponent?.isBot && !narrow && (
                 <Chip
                   size="small"
@@ -1924,9 +1946,20 @@ function ResultSheet({
         direction="row"
         sx={{ mt: 3, justifyContent: "space-between", gap: 1.5 }}
       >
-        <Button variant="outlined" onClick={onReview}>
-          Review workspace
-        </Button>
+        <Stack direction="row" sx={{ gap: 1, flexWrap: "wrap" }}>
+          <Button variant="outlined" onClick={onReview}>
+            Review workspace
+          </Button>
+          {result.settled && (
+            <Button
+              variant="outlined"
+              component={Link}
+              to={`/matches/${match.id}/review`}
+            >
+              Review submissions
+            </Button>
+          )}
+        </Stack>
         <Button
           component={Link}
           to="/"

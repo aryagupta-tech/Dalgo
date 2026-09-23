@@ -114,7 +114,8 @@ export function PrivacyPage() {
               display name, email address, and avatar. Dalgo also stores your
               chosen username, six arena ratings, friend requests, accepted
               friendships, match challenges, match participation, verdicts,
-              rating changes, and submission records.
+              rating changes, submission records, and messages you send to
+              players.
             </Typography>
             <Typography>
               Usernames, display names, profile pictures, ratings, and match
@@ -124,6 +125,16 @@ export function PrivacyPage() {
               after public code reviews launch, anyone can view both players’
               scored Submit code after the result is saved. Sample Run code,
               hidden tests, and live code are never shown to opponents.
+            </Typography>
+          </PrivacySection>
+
+          <PrivacySection title="Messages">
+            <Typography>
+              Match chat is visible only to the two human players while their
+              match is in progress. Its messages are removed when the match
+              ends. Messages in the Friends area remain available across
+              sessions only while both players are friends. Removing a friend
+              deletes that conversation. Bots cannot receive messages.
             </Typography>
           </PrivacySection>
 

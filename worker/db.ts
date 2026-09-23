@@ -5,6 +5,8 @@ import type {
   FriendIdentity,
   FriendRequest,
   FriendsView,
+  FriendChatView,
+  FriendMessage,
   Mode,
   Player,
 } from "../shared/types";
@@ -63,6 +65,22 @@ export async function db<T>(
         throw new AppError("Friend request not found.", 404);
       if (detail?.code === "22023")
         throw new AppError(detail.message || "Invalid friend request.", 400);
+    }
+    if (path === "rpc/send_friend_message") {
+      if (detail?.code === "42501")
+        throw new AppError("This friendship is no longer available.", 403);
+      if (detail?.code === "23505")
+        throw new AppError("That message identifier is already in use.", 409);
+      if (detail?.code === "P0001")
+        throw new AppError(
+          "Wait a moment before sending another message.",
+          429,
+        );
+      if (detail?.code === "22023")
+        throw new AppError(
+          "Write a single-line message under 500 characters.",
+          400,
+        );
     }
     if (path === "rpc/claim_username") {
       if (r.status === 409 || detail?.code === "23505")
@@ -277,6 +295,76 @@ export async function getFriendsView(
       .filter((row) => row.sender_id === userId)
       .map((row) => friendRequestFromRow(row, identities)),
   };
+}
+
+type FriendMessageRow = {
+  id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+};
+function friendMessage(row: FriendMessageRow): FriendMessage {
+  return {
+    id: row.id,
+    senderId: row.sender_id,
+    text: row.body,
+    sentAt: Date.parse(row.created_at),
+  };
+}
+async function requireFriendship(
+  env: Env,
+  userId: string,
+  friendshipId: string,
+) {
+  const rows = await db<{ id: string }[]>(
+    env,
+    `friendships?id=eq.${friendshipId}&or=(user_low.eq.${userId},user_high.eq.${userId})&select=id&limit=1`,
+  );
+  if (!rows.length)
+    throw new AppError("This friendship is no longer available.", 403);
+}
+export async function getFriendChat(
+  env: Env,
+  userId: string,
+  friendshipId: string,
+): Promise<FriendChatView> {
+  await requireFriendship(env, userId, friendshipId);
+  const rows = await db<FriendMessageRow[]>(
+    env,
+    `friend_messages?friendship_id=eq.${friendshipId}&select=id,sender_id,body,created_at&order=created_at.desc,id.desc&limit=100`,
+  );
+  return { friendshipId, messages: rows.reverse().map(friendMessage) };
+}
+export async function sendFriendMessage(
+  env: Env,
+  userId: string,
+  friendshipId: string,
+  messageId: string,
+  text: string,
+): Promise<FriendMessage> {
+  const rows = await db<FriendMessageRow[]>(env, "rpc/send_friend_message", {
+    method: "POST",
+    body: JSON.stringify({
+      p_friendship_id: friendshipId,
+      p_user_id: userId,
+      p_message_id: messageId,
+      p_body: text,
+    }),
+  });
+  if (!rows[0]) throw new AppError("Message could not be sent.", 503);
+  return friendMessage(rows[0]);
+}
+export async function removeFriendship(
+  env: Env,
+  userId: string,
+  friendshipId: string,
+): Promise<void> {
+  await requireFriendship(env, userId, friendshipId);
+  await db(
+    env,
+    `friendships?id=eq.${friendshipId}&or=(user_low.eq.${userId},user_high.eq.${userId})`,
+    { method: "DELETE", headers: { Prefer: "return=minimal" } },
+  );
 }
 
 export async function createFriendRequest(

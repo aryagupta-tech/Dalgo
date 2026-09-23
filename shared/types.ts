@@ -117,6 +117,14 @@ export interface MatchView {
   attempts: { runs: number; submits: number };
   attemptLimits?: AttemptLimits;
   result: Result | null;
+  /** Human-only messages; omitted as soon as the match ends. */
+  chat?: MatchChatMessage[];
+}
+export interface MatchChatMessage {
+  id: string;
+  senderId: string;
+  text: string;
+  sentAt: number;
 }
 export interface Rating {
   arena: Arena;
@@ -203,6 +211,16 @@ export interface FriendsView {
   friends: Friendship[];
   incoming: FriendRequest[];
   outgoing: FriendRequest[];
+}
+export interface FriendMessage {
+  id: string;
+  senderId: string;
+  text: string;
+  sentAt: number;
+}
+export interface FriendChatView {
+  friendshipId: string;
+  messages: FriendMessage[];
 }
 export interface HistoryRow {
   id: string;

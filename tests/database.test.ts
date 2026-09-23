@@ -516,6 +516,63 @@ describe("Supabase migration and trusted settlement contract", () => {
     });
   });
 
+  it("keeps friend messages private, idempotent, and deletes them with the friendship", async () => {
+    const friendshipId = crypto.randomUUID();
+    const messageId = crypto.randomUUID();
+    await pg.exec("set local role service_role");
+    await pg.query(
+      "insert into public.friendships(id,user_low,user_high,requested_by) values($1,$2,$3,$2)",
+      [friendshipId, A, B],
+    );
+    const first = await pg.query<{ id: string; body: string }>(
+      "select id,body from public.send_friend_message($1,$2,$3,$4)",
+      [friendshipId, A, messageId, "Good game"],
+    );
+    expect(first.rows).toEqual([{ id: messageId, body: "Good game" }]);
+    const retry = await pg.query<{ id: string }>(
+      "select id from public.send_friend_message($1,$2,$3,$4)",
+      [friendshipId, A, messageId, "Good game"],
+    );
+    expect(retry.rows).toEqual([{ id: messageId }]);
+    await expectSqlError(
+      "select * from public.send_friend_message($1,$2,$3,$4)",
+      [friendshipId, C, crypto.randomUUID(), "Intrusion"],
+      "42501",
+    );
+    await expectSqlError(
+      "select * from public.send_friend_message($1,$2,$3,$4)",
+      [friendshipId, A, messageId, "Changed"],
+      "23505",
+    );
+    await expectSqlError(
+      "select * from public.send_friend_message($1,$2,$3,$4)",
+      [friendshipId, A, crypto.randomUUID(), "bad\nline"],
+      "22023",
+    );
+    await pg.exec("reset role");
+    await asBrowser("authenticated", A, async () => {
+      await expectSqlError("select * from public.friend_messages", [], "42501");
+      await expectSqlError(
+        "select * from public.send_friend_message($1,$2,$3,$4)",
+        [friendshipId, A, crypto.randomUUID(), "Attempt"],
+        "42501",
+      );
+    });
+    await pg.exec("set local role service_role");
+    await pg.query("delete from public.friendships where id=$1", [
+      friendshipId,
+    ]);
+    expect(
+      (await pg.query("select id from public.friend_messages")).rows,
+    ).toEqual([]);
+    await expectSqlError(
+      "select * from public.send_friend_message($1,$2,$3,$4)",
+      [friendshipId, A, crypto.randomUUID(), "After removal"],
+      "42501",
+    );
+    await pg.exec("reset role");
+  });
+
   it("settles equal-rated humans atomically with zero-sum +16/-16", async () => {
     const input = match();
     const result = await settle(input);

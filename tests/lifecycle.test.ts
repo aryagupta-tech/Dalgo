@@ -24,12 +24,7 @@ vi.mock("../worker/db.ts", () => ({
   })),
   getFriendIdentity: vi.fn(async (_env: any, id: string) => ({
     id,
-    username:
-      id === A
-        ? "alice"
-        : id === B
-          ? "bob"
-          : "carol",
+    username: id === A ? "alice" : id === B ? "bob" : "carol",
     usernameConfigured: true,
     name: id,
   })),
@@ -42,9 +37,7 @@ vi.mock("../worker/db.ts", () => ({
           : username === "carol"
             ? C
             : null;
-    return id
-      ? { id, username, usernameConfigured: true, name: id }
-      : null;
+    return id ? { id, username, usernameConfigured: true, name: id } : null;
   }),
   persistFriendChallenge: vi.fn(async () => null),
   recentProblems: vi.fn(async () => ({})),
@@ -88,6 +81,9 @@ class MemoryStorage {
   }
   async put(key: string, value: any) {
     this.data.set(key, structuredClone(value));
+  }
+  async delete(key: string) {
+    return this.data.delete(key);
   }
   async setAlarm(value: number | Date) {
     this.alarm = Number(value);
@@ -482,6 +478,91 @@ describe("authoritative match lifecycle", () => {
       expect(execute).not.toHaveBeenCalled();
     },
   );
+});
+
+describe("human match chat", () => {
+  it("accepts participant messages, deduplicates retries, and refuses outsiders", async () => {
+    const { room, ctx } = await newRoom();
+    const body = {
+      requestId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      text: "Good luck!",
+    };
+    expect((await room.fetch(request("/chat", body, C))).status).toBe(403);
+    expect((await room.fetch(request("/chat", body))).status).toBe(201);
+    expect((await room.fetch(request("/chat", body))).status).toBe(200);
+    const view = (await (
+      await room.fetch(request("/view", undefined, B))
+    ).json()) as any;
+    expect(view.chat).toEqual([
+      { id: body.requestId, senderId: A, text: body.text, sentAt: T0 },
+    ]);
+    expect((await ctx.storage.get("chat")).length).toBe(1);
+    expect(
+      (await room.fetch(request("/chat", { ...body, text: "Changed" }))).status,
+    ).toBe(409);
+  });
+
+  it("limits message frequency and hides all messages after resignation", async () => {
+    const { room, ctx } = await newRoom();
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: crypto.randomUUID(), text: "hello" }),
+        )
+      ).status,
+    ).toBe(201);
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: crypto.randomUUID(), text: "again" }),
+        )
+      ).status,
+    ).toBe(429);
+    expect(
+      (
+        await room.fetch(
+          request("/chat", {
+            requestId: crypto.randomUUID(),
+            text: "bad\nline",
+          }),
+        )
+      ).status,
+    ).toBe(400);
+    const result = await room.fetch(request("/resign", {}));
+    expect(result.status).toBe(200);
+    const view = (await result.json()) as any;
+    expect(view.chat).toBeUndefined();
+    expect(await ctx.storage.get("chat")).toBeUndefined();
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: crypto.randomUUID(), text: "late" }),
+        )
+      ).status,
+    ).toBe(409);
+  });
+
+  it("disables bot chat", async () => {
+    const { room } = await newRoom(
+      record({
+        mode: "bot",
+        players: [
+          { id: A, name: "Ada", rating: 1200 },
+          { id: "bot", name: "Vector", rating: 800, isBot: true },
+        ],
+        bot: { rating: 800, solves: false, completesAt: null },
+      }),
+    );
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: crypto.randomUUID(), text: "hello" }),
+        )
+      ).status,
+    ).toBe(409);
+    const view = (await (await room.fetch(request("/view"))).json()) as any;
+    expect(view.chat).toBeUndefined();
+  });
 });
 
 describe("direct friend challenges", () => {
