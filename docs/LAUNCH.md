@@ -11,7 +11,7 @@
 - Codebox reports isolate 2.7, Python 3.12.3, GCC 13.3.0 with C++17, OpenJDK 17.0.20, and Node 24.21.0.
 - The Cloudflare edge → Workers VPC → named tunnel → Google VM → Codebox route passed a private health request. No execution port or hostname is public.
 - Supabase has five applied migrations, eight RLS-protected public tables, 30 distinct problem versions, and no database/RLS security findings. Hidden tests and reference solutions are denied to browser roles. The Auth advisor retains the Free plan’s generic leaked-password warning, but dalgo exposes no password login surface.
-- Supabase Auth exposes Google/GitHub only. Email sign-in is disabled, the production Worker is the Site URL, and production, staging, and local development origins are allowlisted redirects.
+- Dalgo presents Google sign-in only. Email sign-in is disabled; disable the legacy GitHub provider in hosted Supabase Auth settings during rollout. The production Worker is the Site URL, and production, staging, and local development origins are allowlisted redirects.
 - The initial cap is one match and one execution at a time. Codebox uses server capacity instead of daily execution credits.
 - One-time unique username onboarding and participant-only friend challenge storage are migrated. Direct challenge acceptance reuses the authoritative human MatchRoom, Codebox, Elo, and settlement path.
 
@@ -21,7 +21,7 @@ The detailed executor record is in [CODEBOX-VERIFICATION.md](CODEBOX-VERIFICATIO
 
 Two Google identities were stored in the server-only `TESTER_USER_IDS` list for this acceptance run. The live acceptance created one human match and one labelled bot match and verified the complete Worker → Codebox → settlement path. One tester account was later hard-deleted at the owner's request; a fresh second account is required before repeating two-player staging checks.
 
-- Verify Google and GitHub sign-in, six ratings, sign-out, expired tokens, and redirect URLs.
+- Verify Google sign-in, six ratings, sign-out, expired tokens, and redirect URLs.
 - Queue both testers in the same arena. Confirm identical problem versions and clocks, widening rating windows, human priority, 15-second bot fallback, and permanently fixed opponents.
 - Repeat join/cancel from two tabs and reconnect around assignment. Confirm one queue or active match per account and no duplicate match.
 - Verify WebSocket upgrades, hibernation, alarms, reconnects, and polling recovery. Disconnecting must not pause the clock.

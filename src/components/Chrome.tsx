@@ -1,11 +1,10 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Github, X } from "lucide-react";
+import { X } from "lucide-react";
 import {
   Alert,
   Avatar,
   Box,
-  Button,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -139,26 +138,6 @@ export function Modal({
     </Dialog>
   );
 }
-/** Preserve known application routes without accepting arbitrary redirect input. */
-export function oauthReturnUrl(
-  location: Pick<Location, "origin" | "pathname">,
-) {
-  const allowedOrigins = new Set([
-    "https://dalgo.site",
-    "https://staging.dalgo.site",
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-  ]);
-  const path = location.pathname;
-  const allowed =
-    /^\/(?:match\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|friends|history|profile|leaderboard|privacy)?$/i.test(
-      path,
-    );
-  const origin = allowedOrigins.has(location.origin)
-    ? location.origin
-    : "https://dalgo.site";
-  return new URL(allowed ? path : "/", origin).href;
-}
 function GoogleSignInButton({
   client,
   clientId,
@@ -288,21 +267,6 @@ export function SignIn({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  async function loginWithGithub() {
-    if (!client) return;
-    setBusy(true);
-    setError("");
-    try {
-      const r = await client.auth.signInWithOAuth({
-        provider: "github",
-        options: { redirectTo: oauthReturnUrl(window.location) },
-      });
-      if (r.error) throw r.error;
-    } catch (e) {
-      setError((e as Error).message);
-      setBusy(false);
-    }
-  }
   return (
     <Modal title="Sign in" onClose={onClose} maxWidth={448}>
       <Typography
@@ -334,20 +298,6 @@ export function SignIn({ onClose }: { onClose: () => void }) {
               Google sign-in is temporarily unavailable.
             </Alert>
           )}
-          <Button
-            variant="outlined"
-            disabled={busy}
-            onClick={loginWithGithub}
-            startIcon={<Github size={19} />}
-            endIcon={<ArrowUpRight size={17} />}
-            sx={{
-              minHeight: 48,
-              justifyContent: "flex-start",
-              "& .MuiButton-endIcon": { ml: "auto" },
-            }}
-          >
-            Continue with GitHub
-          </Button>
         </Stack>
       ) : (
         <Alert severity="info" icon={false} sx={{ mt: 3 }}>

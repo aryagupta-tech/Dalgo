@@ -52,7 +52,7 @@ The offline tests exercise rating conservation, queue windows, bots, receipt ord
 ## Connect Supabase
 
 1. Create a Supabase project on the free plan. Apply every file in `supabase/migrations/` in filename order using a version-controlled Supabase CLI migration workflow.
-2. Enable Google and GitHub in Authentication → Providers. Create provider OAuth applications using the callback URL shown by Supabase. Set the Supabase site URL and allowed redirect URLs to your frontend origin; include `http://127.0.0.1:5173` for local development. The frontend redirects OAuth back to its own origin.
+2. Enable Google in Authentication → Providers. Configure the Google OAuth client for Dalgo and use the Supabase callback URL. Set the Supabase site URL and allowed redirect URLs to the frontend origins, including `http://127.0.0.1:5173` for local development. The browser receives the Google identity token and exchanges it with Supabase.
 3. Copy `.env.example` to an ignored `.env` for setup scripts. Copy the Worker variables to ignored `.dev.vars` for local Workers development. The URL and publishable key can reach the frontend. **The service role and Codebox credentials must never have a `VITE_` prefix.**
 4. Seed all immutable problem versions after applying the migration:
 
