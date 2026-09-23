@@ -103,6 +103,7 @@ async function api(request: Request, env: Env) {
     return json({
       supabaseUrl: env.SUPABASE_URL ?? "",
       supabaseKey: supabasePublicKey(env),
+      googleClientId: env.GOOGLE_CLIENT_ID?.trim() ?? "",
       admissionMode: admissionMode(env),
       attemptLimits: configuredAttemptLimits(env) ?? DEFAULT_ATTEMPT_LIMITS,
       playEnabled: launchReady(env),

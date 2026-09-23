@@ -84,6 +84,7 @@ describe("persistent auth sessions", () => {
     cacheAuthConfig(storage, {
       supabaseUrl: "https://project.supabase.co",
       supabaseKey: "sb_publishable_public",
+      googleClientId: "google-client.apps.googleusercontent.com",
       admissionMode: "public",
       playEnabled: true,
       reason: "",
@@ -95,10 +96,12 @@ describe("persistent auth sessions", () => {
     expect(JSON.parse(values.get(AUTH_CONFIG_STORAGE_KEY)!)).toEqual({
       supabaseUrl: "https://project.supabase.co",
       supabaseKey: "sb_publishable_public",
+      googleClientId: "google-client.apps.googleusercontent.com",
     });
     expect(readCachedAuthConfig(storage)).toEqual({
       supabaseUrl: "https://project.supabase.co",
       supabaseKey: "sb_publishable_public",
+      googleClientId: "google-client.apps.googleusercontent.com",
     });
   });
 });
