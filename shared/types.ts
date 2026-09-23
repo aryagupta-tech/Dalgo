@@ -62,7 +62,6 @@ export interface Player {
   name: string;
   avatar?: string;
   rating: number;
-  rd?: number;
   isBot?: boolean;
 }
 export type Verdict =
@@ -132,7 +131,6 @@ export interface Rating {
   arena: Arena;
   mode: Mode;
   rating: number;
-  rd: number;
   matches: number;
   wins: number;
   losses: number;

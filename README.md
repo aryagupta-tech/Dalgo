@@ -105,7 +105,7 @@ Production has a separate `npm run deploy:production` command. Configure Supabas
 | `worker/codebox.ts`, `worker/harness.ts` | Private asynchronous Codebox adapter and language wrappers                    |
 | `worker/problems.json`                   | Thirty original versioned problems, references, hidden tests; backend only    |
 | `public/problems.json`                   | Public statements, examples, and starters only                                |
-| `supabase/migrations/`                   | Schema, RLS, atomic Glicko-1 settlement, retention                                 |
+| `supabase/migrations/`                   | Schema, RLS, atomic Elo settlement, retention                                 |
 | `tests/`                                 | Offline application and PostgreSQL regression tests                           |
 
 When changing a problem, add a new version and preserve old versions for active matches. Update the public projection and seed the new version before deploying it. Do not remove versions referenced by match history. The Worker bank is the authoritative source for active problem selection; the database retains the same versions for settlement and auditing.

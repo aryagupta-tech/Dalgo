@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   adjudicate,
   chooseBot,
+  eloDelta,
   ratingWindow,
   canPair,
   chooseProblem,
@@ -48,6 +49,11 @@ function s(
   };
 }
 describe("rating and matchmaking", () => {
+  it("exchanges16 at equal rating; underdogs gain more", () => {
+    expect(eloDelta(1200, 1200)).toBe(16);
+    expect(eloDelta(1000, 1200)).toBe(24);
+    expect(eloDelta(1400, 1200)).toBe(8);
+  });
   it("widens only within the same arena and both player windows", () => {
     expect([ratingWindow(0), ratingWindow(5000), ratingWindow(10000)]).toEqual([
       100, 200, 300,
@@ -155,7 +161,7 @@ describe("authoritative results", () => {
     m.submissions[0].verdict = "wrong_answer";
     expect(adjudicate(m, 6000)).toMatchObject({
       winnerId: "bot",
-      deltas: { a: 0 },
+      deltas: { a: -16 },
     });
   });
   it("never changes a persisted result", () => {
