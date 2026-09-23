@@ -222,7 +222,7 @@ export function evaluateSetup(env, now = Date.now()) {
       "Dedicated Supabase project, applied migration, seeded problems, and verified access policies",
       "Google and GitHub OAuth apps connected with verified redirects",
       codebox
-        ? "Hosted Codebox runtime and sandbox verification, Google Cloud trial server, private tunnel"
+        ? "Hosted Codebox runtime and sandbox verification, AWS server, private tunnel"
         : "Account-specific JDoodle runtimes, quota, concurrency, and sandbox evidence",
       "One real bot match and two-account hosted staging acceptance",
       "Operator name, support contact, published privacy information, and data-request process",

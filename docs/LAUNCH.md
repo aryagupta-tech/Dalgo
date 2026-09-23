@@ -1,6 +1,6 @@
 # Capped beta launch record
 
-This is the original Google Cloud launch record. Staging moved to AWS on 23 September 2026; see [CODEBOX.md](CODEBOX.md) for the current split deployment and production migration.
+This is the original launch record. Codebox moved fully to AWS on 24 September 2026; see [CODEBOX.md](CODEBOX.md) for the current production setup. The Google Cloud references below describe historical verification only.
 
 **Current decision: capped public play enabled.** Staging at https://staging.dalgo.site is protected by Cloudflare Access and remains limited to approved tester emails plus the server-side tester allowlist. Production at https://dalgo.site uses `ADMISSION_MODE=public` with `playEnabled=true`. The `workers.dev` routes are disabled. The one-match and one-execution capacity caps remain enforced.
 
@@ -41,9 +41,9 @@ The automated live checks passed. Keep staging tester-only during the owner’s 
 Public admission was enabled after the automated, hosted, and two-account acceptance checks above passed. During the beta:
 
 1. Keep the published [privacy and data-request notice](PRIVACY.md) current. Dalgo is operated by Arya Gupta and uses `aryaguptaa.vns@gmail.com` for public support and data requests.
-2. Confirm remaining Google Cloud trial credit and the VM deletion deadline. Do not extend or create paid resources without a separate decision.
+2. Monitor remaining AWS Free Plan credit and VM health. Do not upgrade to a paid plan without a separate decision.
 3. Review execution latency, infrastructure errors, settlement retries, database growth, queue time, bot win rate, and capacity saturation.
 4. Keep production secrets and the private Codebox binding isolated from staging.
 5. If a production smoke check or executor health check fails, set `ADMISSION_MODE=disabled` and `LIVE_MATCHES_ENABLED=false` before investigating.
 
-The Google Cloud VM has a fixed deletion action for 14 December 2026. Cloudflare, Supabase, or Google billing upgrades are never automatic.
+The old Google Cloud Codebox VM and its dedicated resources were deleted on 24 September 2026. Cloudflare, Supabase, and AWS billing upgrades are never automatic.
