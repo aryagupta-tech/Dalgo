@@ -1,3 +1,5 @@
+> Historical Google Cloud verification record. The VM and dedicated execution resources were deleted on 24 September 2026. Current production hosting is documented in [CODEBOX.md](CODEBOX.md).
+
 # Codebox verification — 20 September 2026
 
 ## Completed locally
@@ -21,8 +23,8 @@ The machine-readable report is in the ignored `artifacts/codebox-verification.js
 
 ## Completed on Cloudflare and Supabase
 
-- Cloudflare is authorized as `aryaguptaa.vns@gmail.com`. The named tunnel `dalgo-codebox-staging` is healthy and runs as a system service on the VM.
-- Workers VPC service `01a0bdc2-e64f-7b63-8dae-b0c78031a859` reaches Codebox at `127.0.0.1:3000`; no public Codebox hostname exists.
+- Cloudflare is authorized as `aryaguptaa.vns@gmail.com`. The named tunnel `dalgo-codebox-staging` was healthy and ran as a system service on the VM.
+- Workers VPC service `01a0bdc2-e64f-7b63-8dae-b0c78031a859` reached Codebox at `127.0.0.1:3000`; no public Codebox hostname exists.
 - Staging has the `CODEBOX` VPC binding and private `CODEBOX_AUTH_TOKEN` secret. A short-lived edge Worker verified the complete Cloudflare edge → Workers VPC → tunnel → Google VM → Codebox path and received `ready=true`, `executor=isolate`, and `concurrency=1`.
 - Supabase project `gtdofekbolymsrrullpb` is restored. Five versioned migrations are applied, 30 distinct problems are seeded (10 per arena), all public tables use RLS, and hidden problem data has an explicit deny policy for browser roles. Database/RLS checks have no findings; the Auth advisor retains its Free-plan password warning even though password/email sign-in is disabled.
 

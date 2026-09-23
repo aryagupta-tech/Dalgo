@@ -2,12 +2,13 @@
 
 Dalgo uses its pinned Codebox service for Python, C++17, Java, and JavaScript execution. Cloudflare Workers and Supabase remain the web and data services. Codebox has no daily execution-credit counter; admission stays at one active match and one execution globally.
 
-## Migration state (23 September 2026)
+## Production state (24 September 2026)
 
-- **Staging** uses the AWS host and is restricted to testers. Its Cloudflare Workers VPC service is `01a0cf64-b8d7-7760-8099-4bffab088b05` through tunnel `c52c1164-13e3-457a-a8b1-c8a46d354fb3`.
-- **Production** still uses the Google Cloud host and VPC service `01a0bdc2-e64f-7b63-8dae-b0c78031a859`. Do not delete the Google host until a production match and settlement pass after the cutover.
-- The complete execution suite passed on the 2 GiB AWS host: all 30 problem references in four languages, expected failure modes, network blocking, and cross-job isolation. Duplicate-job and API/Redis/worker restart checks passed. A Cloudflare remote preview fetched authenticated Codebox health over the AWS Workers VPC service and received `ready=true`, `executor=isolate`, `concurrency=1`. The staging coordinator reported zero active matches before cutover.
-- The frontend and database were not moved. Current owner review requires a bot match and, if available, a two-human match on staging before production promotion.
+- Both production and tester-only staging use AWS host `i-0dbfb5d512a80c50c` in Mumbai through Cloudflare Workers VPC service `01a0cf64-b8d7-7760-8099-4bffab088b05` and tunnel `c52c1164-13e3-457a-a8b1-c8a46d354fb3`.
+- Production admission is public and capped at one active match and one execution. Staging admission is paused while it shares the same single-slot executor.
+- The complete 268-case execution suite passed on the 2 GiB AWS host, including all 30 problems in four languages, failure modes, network blocking, and cross-job isolation. Duplicate-job and service-restart checks passed. A fresh Cloudflare private health probe returned `ready=true`, `executor=isolate`, and `concurrency=1`; a private Python execution returned `17`.
+- A production bot-match smoke test passed end to end on AWS: authentication, queue, execution, accepted verdict, settlement, and history. The synthetic account and match were removed after verification.
+- The old Google Cloud Codebox VM, boot disk, dedicated network, subnet, firewall, VPC service, and tunnel were deleted. The GCP project remains solely for Google OAuth configuration.
 
 ## AWS host and cost boundary
 
@@ -41,8 +42,6 @@ CODEBOX_LOCAL_URL=http://127.0.0.1:3001 \
 
 Do not make port 3000 publicly reachable. The Codebox token is required even across the private tunnel. Dalgo alone compares submitted output with expected answers; Codebox receives no hidden expected answers or rating-write permission.
 
-## Production cutover
+## Operations
 
-After owner staging acceptance, pause public admission in the production Worker while it still points to Google Cloud. Allow up to 35 minutes for the longest existing match and pending judging to finish, then bind production to the AWS VPC service with admission still paused. Verify authenticated edge-to-AWS health and a complete production bot match before reopening admission. Once history and settlement are confirmed, remove the old Google Cloud Codebox VM and its tunnel/service; keep the Cloudflare site and Supabase project. Production source changes are promoted from `develop` to `main` by the owner after staging review.
-
-The old Google Cloud host is `dalgo-codebox` in project `dalgo-508410`, zone `asia-southeast1-b`. Historical Google deployment and verification details are in `CODEBOX-VERIFICATION.md`.
+Keep the production Worker bound to the AWS VPC service. Do not point public admission at a local or directly reachable Codebox endpoint. If the AWS executor or settlement fails, pause production admission and investigate while existing matches finish; do not start a paid replacement automatically. Historical Google Cloud verification is archived in [CODEBOX-VERIFICATION.md](CODEBOX-VERIFICATION.md).
