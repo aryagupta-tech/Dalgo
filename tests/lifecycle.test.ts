@@ -502,12 +502,13 @@ describe("human match chat", () => {
     ).toBe(409);
   });
 
-  it("limits message frequency and hides all messages after resignation", async () => {
+  it("allows both players to chat after resignation, then purges after 24 hours", async () => {
     const { room, ctx } = await newRoom();
+    const firstId = crypto.randomUUID();
     expect(
       (
         await room.fetch(
-          request("/chat", { requestId: crypto.randomUUID(), text: "hello" }),
+          request("/chat", { requestId: firstId, text: "hello" }),
         )
       ).status,
     ).toBe(201);
@@ -531,8 +532,33 @@ describe("human match chat", () => {
     const result = await room.fetch(request("/resign", {}));
     expect(result.status).toBe(200);
     const view = (await result.json()) as any;
-    expect(view.chat).toBeUndefined();
+    expect(view.chat).toHaveLength(1);
+    expect(view.chatEndsAt).toBe(T0 + 24 * 60 * 60 * 1000);
+    await idle(ctx);
+    now += 2001;
+    const replyId = crypto.randomUUID();
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: replyId, text: "Thanks" }, B),
+        )
+      ).status,
+    ).toBe(201);
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: replyId, text: "Thanks" }, B),
+        )
+      ).status,
+    ).toBe(200);
+    expect((await ctx.storage.get("chat")).length).toBe(2);
+    expect(ctx.storage.alarm).toBe(T0 + 24 * 60 * 60 * 1000);
+    now = T0 + 24 * 60 * 60 * 1000 + 1;
+    await room.alarm();
     expect(await ctx.storage.get("chat")).toBeUndefined();
+    expect(
+      ((await (await room.fetch(request("/view"))).json()) as any).chat,
+    ).toBeUndefined();
     expect(
       (
         await room.fetch(
@@ -540,6 +566,29 @@ describe("human match chat", () => {
         )
       ).status,
     ).toBe(409);
+  });
+
+  it("schedules expiry when the first chat message is sent after settlement", async () => {
+    const { room, ctx } = await newRoom();
+    expect((await room.fetch(request("/resign", {}))).status).toBe(200);
+    await idle(ctx);
+    expect(await ctx.storage.get("chat")).toBeUndefined();
+    now += 3000;
+    expect(
+      (
+        await room.fetch(
+          request(
+            "/chat",
+            { requestId: crypto.randomUUID(), text: "Good game" },
+            B,
+          ),
+        )
+      ).status,
+    ).toBe(201);
+    expect(ctx.storage.alarm).toBe(T0 + 24 * 60 * 60 * 1000);
+    now = T0 + 24 * 60 * 60 * 1000 + 1;
+    await room.alarm();
+    expect(await ctx.storage.get("chat")).toBeUndefined();
   });
 
   it("disables bot chat", async () => {

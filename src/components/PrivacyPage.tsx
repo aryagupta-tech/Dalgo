@@ -130,9 +130,9 @@ export function PrivacyPage() {
 
           <PrivacySection title="Messages">
             <Typography>
-              Match chat is visible only to the two human players while their
-              match is in progress. Its messages are removed when the match
-              ends. Messages in the Friends area remain available across
+              Match chat is visible only to the two human players during their
+              match and for 24 hours after the result. Its messages are then
+              removed. Messages in the Friends area remain available across
               sessions only while both players are friends. Removing a friend
               deletes that conversation. Bots cannot receive messages.
             </Typography>

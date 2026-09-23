@@ -118,8 +118,9 @@ export interface MatchView {
   attempts: { runs: number; submits: number };
   attemptLimits?: AttemptLimits;
   result: Result | null;
-  /** Human-only messages; omitted as soon as the match ends. */
+  /** Human-only messages, available to participants for 24 hours after the result. */
   chat?: MatchChatMessage[];
+  chatEndsAt?: number;
 }
 export interface MatchChatMessage {
   id: string;

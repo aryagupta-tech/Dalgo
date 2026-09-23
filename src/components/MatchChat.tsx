@@ -34,7 +34,7 @@ export function MatchChat({
   const messages =
     (local.at(-1)?.sentAt ?? 0) > (remote.at(-1)?.sentAt ?? 0) ? local : remote;
   useEffect(() => {
-    if (match.result) {
+    if (match.mode !== "human" || (match.result && !match.chatEndsAt)) {
       setOpen(false);
       setLocal([]);
       setUnread(0);
@@ -53,7 +53,8 @@ export function MatchChat({
     }
     lastSeen.current = last;
   }, [match.chat, match.result, open, userId]);
-  if (match.mode !== "human" || match.result) return null;
+  if (match.mode !== "human" || (match.result && !match.chatEndsAt))
+    return null;
   async function send() {
     const text = draft.trim();
     if (!text || sending) return;
@@ -105,6 +106,16 @@ export function MatchChat({
       >
         <DialogTitle id="match-chat-title">Match chat</DialogTitle>
         <DialogContent dividers>
+          {match.chatEndsAt && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mb: 1.5 }}
+            >
+              This conversation closes{" "}
+              {new Date(match.chatEndsAt).toLocaleString()}.
+            </Typography>
+          )}
           <Stack
             spacing={1.25}
             sx={{ minHeight: 200, maxHeight: "45vh", overflowY: "auto" }}

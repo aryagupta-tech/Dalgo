@@ -29,6 +29,7 @@ import {
 } from "../shared/types";
 import bank from "./problems.json";
 import { publicMatchReview } from "./review";
+const MATCH_CHAT_AFTER_RESULT_MS = 24 * 60 * 60 * 1000;
 interface InternalSubmission extends Submission {
   requestId: string;
   dispatchedAt?: number;
@@ -61,6 +62,16 @@ export class MatchRoom extends DurableObject<Env> {
   }
   private async save() {
     await this.ctx.storage.put("match", this.record);
+  }
+  private chatEndsAt() {
+    const m = this.record!;
+    return (m.terminalAt ?? m.endsAt) + MATCH_CHAT_AFTER_RESULT_MS;
+  }
+  private chatAvailable(now = Date.now()) {
+    return (
+      this.record!.mode === "human" &&
+      (!this.record!.result || now < this.chatEndsAt())
+    );
   }
   private view(userId: string): MatchView {
     const m = this.record!;
@@ -115,8 +126,11 @@ export class MatchRoom extends DurableObject<Env> {
         ).length,
       },
       result: m.result,
-      ...(!m.result && m.mode === "human"
-        ? { chat: this.chat.slice(-100) }
+      ...(this.chatAvailable()
+        ? {
+            chat: this.chat.slice(-100),
+            ...(m.result ? { chatEndsAt: this.chatEndsAt() } : {}),
+          }
         : {}),
     };
   }
@@ -150,9 +164,10 @@ export class MatchRoom extends DurableObject<Env> {
       this.record.result = adjudicate(this.record, now);
       if (this.record.result) this.record.terminalAt = now;
     }
-    if (this.record.result && this.chat.length) {
+    if (this.record.result && this.chat.length && now >= this.chatEndsAt()) {
       await this.ctx.storage.delete("chat");
       this.chat = [];
+      this.broadcast();
     }
     await this.save();
     await this.schedule();
@@ -167,9 +182,14 @@ export class MatchRoom extends DurableObject<Env> {
           await this.ctx.storage.setAlarm(Date.now() + 5000);
         return;
       }
-      const expires = m.createdAt + 30 * 86400000;
+      const alarms: number[] = [];
       if (m.submissions.some((s) => s.source))
-        await this.ctx.storage.setAlarm(Math.max(Date.now() + 1000, expires));
+        alarms.push(m.createdAt + 30 * 86400000);
+      if (this.chat.length && m.result) alarms.push(this.chatEndsAt());
+      if (alarms.length)
+        await this.ctx.storage.setAlarm(
+          Math.max(Date.now() + 1000, Math.min(...alarms)),
+        );
       else await this.ctx.storage.deleteAlarm();
       return;
     }
@@ -235,6 +255,8 @@ export class MatchRoom extends DurableObject<Env> {
             )
           )
             throw new AppError("A valid request identifier is required.");
+          if (!this.chatAvailable(receivedAt))
+            throw new AppError("Match chat has ended.", 409);
           const prior = this.chat.find((item) => item.id === body.requestId);
           if (prior) {
             if (prior.senderId !== userId || prior.text !== body.text)
@@ -244,8 +266,6 @@ export class MatchRoom extends DurableObject<Env> {
               );
             return json(this.view(userId));
           }
-          if (this.record.result || receivedAt >= this.record.endsAt)
-            throw new AppError("Match chat has ended.", 409);
           if (
             typeof body.text !== "string" ||
             body.text !== body.text.trim() ||
@@ -280,6 +300,7 @@ export class MatchRoom extends DurableObject<Env> {
           ];
           await this.ctx.storage.put("chat", next);
           this.chat = next;
+          await this.schedule();
           this.broadcast();
           return json(this.view(userId), 201);
         }
@@ -293,8 +314,6 @@ export class MatchRoom extends DurableObject<Env> {
               "resigned",
             );
             this.record.terminalAt = receivedAt;
-            this.chat = [];
-            await this.ctx.storage.delete("chat");
             await this.save();
             await this.schedule();
             this.broadcast();
@@ -707,16 +726,16 @@ export class MatchRoom extends DurableObject<Env> {
   async alarm() {
     await this.serial.run(async () => {
       if (!this.record) return;
+      await this.advance();
       if (
         this.record.settlementComplete &&
-        Date.now() >= this.record.createdAt + 30 * 86400000
+        Date.now() >= this.record.createdAt + 30 * 86400000 &&
+        this.record.submissions.some((s) => s.source)
       ) {
         for (const s of this.record.submissions) s.source = "";
         await this.save();
-        await this.ctx.storage.deleteAlarm();
-        return;
+        await this.schedule();
       }
-      await this.advance();
     });
     if (this.record?.settlementComplete && !this.record.coordinatorReleased) {
       try {

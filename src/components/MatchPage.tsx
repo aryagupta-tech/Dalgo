@@ -673,15 +673,18 @@ function MatchWorkspace({
             </Button>
           </Stack>
         ) : (
-          <Button
-            component={Link}
-            to="/"
-            variant="text"
-            size="small"
-            startIcon={<ArrowLeft size={14} />}
-          >
-            Lobby
-          </Button>
+          <Stack direction="row" spacing={0.5}>
+            <MatchChat match={match} userId={userId} />
+            <Button
+              component={Link}
+              to="/"
+              variant="text"
+              size="small"
+              startIcon={<ArrowLeft size={14} />}
+            >
+              Lobby
+            </Button>
+          </Stack>
         )}
       </MatchTopbar>
       <Box
@@ -1947,6 +1950,7 @@ function ResultSheet({
           <Button variant="outlined" onClick={onReview}>
             Review workspace
           </Button>
+          <MatchChat match={match} userId={userId} />
           {result.settled && (
             <Button
               variant="outlined"
