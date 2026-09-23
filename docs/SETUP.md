@@ -12,9 +12,9 @@ The owner-facing steps are in [REQUIREMENTS.md](REQUIREMENTS.md). Use `npm run c
 
 Staging runs at [https://staging.dalgo.site](https://staging.dalgo.site), and production runs at [https://dalgo.site](https://dalgo.site). `www.dalgo.site` redirects permanently to the matching apex path and query. The `workers.dev` and preview routes are disabled in every Wrangler environment. Both environments include static assets, isolated SQLite-backed Durable Objects, WebSockets, independent signing secrets, and a daily source-retention cron. Staging responses carry `X-Robots-Tag: noindex`, and URL query strings are redacted from observability logs.
 
-Codebox is connected privately through named Cloudflare Tunnel `dalgo-codebox-staging` and Workers VPC service `01a0bdc2-e64f-7b63-8dae-b0c78031a859`. The Worker binding is `CODEBOX`; the API token is a Worker secret. The execution API has no public hostname.
+Staging Codebox is connected privately through AWS tunnel `dalgo-codebox-aws-small` and Workers VPC service `01a0cf64-b8d7-7760-8099-4bffab088b05`. Production still uses the Google Cloud tunnel and service `01a0bdc2-e64f-7b63-8dae-b0c78031a859` until the owner completes staging review. The Worker binding is `CODEBOX`; the API token is a Worker secret. The execution API has no public hostname.
 
-The full edge-to-executor route returned `ready=true`, `executor=isolate`, and `concurrency=1`. The verified timestamp and private VPC binding are stored in both environments. Production has its Supabase, Codebox, and independent WebSocket secrets configured, while live play stays off until tester acceptance passes.
+The full edge-to-AWS route returned `ready=true`, `executor=isolate`, and `concurrency=1`. The verified timestamp and private VPC binding are stored in staging. Production remains live on its existing Google Cloud Codebox service until the controlled cutover.
 
 ## Supabase
 

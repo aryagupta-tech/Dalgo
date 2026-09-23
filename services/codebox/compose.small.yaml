@@ -1,0 +1,23 @@
+# Resource caps for the dedicated 2 GiB AWS t4g.small judge host.
+# Dalgo admits one execution at a time; isolate retains its 512 MiB sandbox cap.
+services:
+  redis:
+    command:
+      [
+        redis-server,
+        --save,
+        "",
+        --appendonly,
+        "yes",
+        --appendfsync,
+        always,
+        --maxmemory,
+        64mb,
+        --maxmemory-policy,
+        noeviction,
+      ]
+    mem_limit: 128m
+  api:
+    mem_limit: 192m
+  worker:
+    mem_limit: 1152m

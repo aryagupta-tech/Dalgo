@@ -146,7 +146,7 @@ test("a stored session refreshes once and survives a browser reload", async ({
   ).toBeVisible();
   expect(configAttempts).toBeGreaterThanOrEqual(3);
   expect(refreshAttempts).toBe(1);
-  expect(authorized.filter(Boolean).length).toBeGreaterThan(0);
+  await expect.poll(() => authorized.filter(Boolean).length).toBeGreaterThan(0);
   expect(
     authorized.filter(Boolean).every((value) => value.startsWith("Bearer ")),
   ).toBe(true);
