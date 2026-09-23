@@ -9,6 +9,8 @@ const headers = {
 };
 if (!headers["X-Auth-Token"]) throw new Error("Codebox token required");
 const base = process.env.CODEBOX_LOCAL_URL || "http://127.0.0.1:3000";
+const awsHost = process.env.CODEBOX_RECOVERY_AWS_HOST;
+const awsKey = process.env.CODEBOX_RECOVERY_AWS_KEY;
 const gcpInstance = process.env.CODEBOX_RECOVERY_GCP_INSTANCE;
 const gcpZone = process.env.CODEBOX_RECOVERY_GCP_ZONE || "asia-southeast1-b";
 const gcpProject = process.env.CODEBOX_RECOVERY_GCP_PROJECT || "dalgo-508410";
@@ -37,6 +39,31 @@ async function result(token) {
 }
 const quote = (value) => `'${String(value).replaceAll("'", `'"'"'`)}'`;
 const compose = (...args) => {
+  if (awsHost) {
+    if (!awsKey) throw new Error("CODEBOX_RECOVERY_AWS_KEY is required");
+    const command = [
+      "sudo",
+      "docker",
+      "compose",
+      "-f",
+      "/opt/dalgo-codebox/compose.yaml",
+      ...args,
+    ]
+      .map(quote)
+      .join(" ");
+    return execFileSync(
+      "ssh",
+      [
+        "-i",
+        awsKey,
+        "-o",
+        "StrictHostKeyChecking=yes",
+        `ubuntu@${awsHost}`,
+        command,
+      ],
+      { stdio: "pipe", timeout: 120000 },
+    );
+  }
   if (!gcpInstance)
     return execFileSync(
       "docker",

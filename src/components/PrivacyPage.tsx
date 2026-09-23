@@ -110,11 +110,11 @@ export function PrivacyPage() {
 
           <PrivacySection title="Information dalgo stores">
             <Typography>
-              Google sign-in provides an account identifier and may
-              provide a display name, email address, and avatar. Dalgo also
-              stores your chosen username, six arena ratings, friend requests,
-              accepted friendships, match challenges, match participation,
-              verdicts, rating changes, and submission records.
+              Google sign-in provides an account identifier and may provide a
+              display name, email address, and avatar. Dalgo also stores your
+              chosen username, six arena ratings, friend requests, accepted
+              friendships, match challenges, match participation, verdicts,
+              rating changes, and submission records.
             </Typography>
             <Typography>
               Usernames, display names, profile pictures, ratings, and match
@@ -128,15 +128,15 @@ export function PrivacyPage() {
           <PrivacySection title="Code execution and service providers">
             <Typography>
               Live Run and Submit actions send source code and test inputs from
-              Cloudflare to dalgo's private Codebox service on Google Cloud.
-              Expected hidden answers and service credentials are excluded from
-              execution payloads.
+              Cloudflare to dalgo's private Codebox service on Google Cloud
+              (production) or AWS (staging). Expected hidden answers and service
+              credentials are excluded from execution payloads.
             </Typography>
             <Typography>
               Dalgo uses Supabase for authentication and stored application
               data, Cloudflare for the website and live match coordination, and
-              Google Cloud for private code execution. These services process
-              data only as needed to provide dalgo.
+              Google Cloud and AWS for private code execution. These services
+              process data only as needed to provide dalgo.
             </Typography>
           </PrivacySection>
 

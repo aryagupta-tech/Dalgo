@@ -1,5 +1,7 @@
 # Capped beta launch record
 
+This is the original Google Cloud launch record. Staging moved to AWS on 23 September 2026; see [CODEBOX.md](CODEBOX.md) for the current split deployment and production migration.
+
 **Current decision: capped public play enabled.** Staging at https://staging.dalgo.site is protected by Cloudflare Access and remains limited to approved tester emails plus the server-side tester allowlist. Production at https://dalgo.site uses `ADMISSION_MODE=public` with `playEnabled=true`. The `workers.dev` routes are disabled. The one-match and one-execution capacity caps remain enforced.
 
 ## Verified evidence
