@@ -131,7 +131,7 @@ async function api(request: Request, env: Env) {
     return json(
       await db(
         env,
-        `arena_ratings?arena=eq.${arena}&mode=eq.${mode}&matches=gt.0&select=user_id,rating,rd,matches,wins,profiles(username,display_name,avatar_url)&order=rating.desc,user_id.asc&limit=100`,
+        `arena_ratings?arena=eq.${arena}&mode=eq.${mode}&matches=gt.0&select=user_id,rating,matches,wins,profiles(username,display_name,avatar_url)&order=rating.desc,user_id.asc&limit=100`,
       ),
     );
   }
@@ -354,7 +354,7 @@ async function api(request: Request, env: Env) {
     return json(
       await db(
         env,
-        `arena_ratings?user_id=eq.${id}&select=arena,mode,rating,rd,matches,wins,losses,draws`,
+        `arena_ratings?user_id=eq.${id}&select=arena,mode,rating,matches,wins,losses,draws`,
       ),
     );
   if (path === "/history" && request.method === "GET") {

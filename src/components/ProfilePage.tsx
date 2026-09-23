@@ -468,7 +468,6 @@ export function ProfilePage({ onSignIn }: { onSignIn: () => void }) {
                                   color="text.secondary"
                                 >
                                   {rating.matches} played
-                                  {Number.isFinite(rating.rd) ? ` · RD ${Math.round(rating.rd)}` : ""}
                                 </Typography>
                               </>
                             ) : (

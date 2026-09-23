@@ -16,7 +16,6 @@ import {
   Serial,
   AppError,
   canPair,
-  BOT_RD,
   chooseBot,
   chooseProblem,
   json,
@@ -779,7 +778,6 @@ export class Coordinator extends DurableObject<Env> {
                     ? "Vector · Challenger"
                     : "Nexus · Expert",
               rating: bot.rating,
-              rd: BOT_RD,
               isBot: true,
             },
           ]
