@@ -131,6 +131,15 @@ async function api(request: Request, env: Env) {
       ),
     );
   }
+  const publicReview = path.match(/^\/matches\/([a-f0-9-]{36})\/review$/i);
+  if (publicReview) {
+    if (request.method !== "GET") throw new AppError("Method not allowed.", 405);
+    if (!uuid.test(publicReview[1])) throw new AppError("Invalid match.");
+    return internal(
+      env.MATCHES.get(env.MATCHES.idFromName(publicReview[1])),
+      "/review",
+    );
+  }
   let id: string;
   if (path.endsWith("/events")) {
     if (

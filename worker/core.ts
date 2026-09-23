@@ -32,6 +32,8 @@ export interface MatchRecord {
   coordinatorReleased?: boolean;
   terminalAt?: number;
   createdAt: number;
+  // Old persisted matches lack this launch flag and remain private.
+  codeRevealAllowed?: boolean;
 }
 export function eloDelta(winner: number, loser: number) {
   return Math.round(32 * (1 - 1 / (1 + 10 ** ((loser - winner) / 400))));

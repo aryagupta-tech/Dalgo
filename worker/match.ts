@@ -27,6 +27,7 @@ import {
   type Submission,
 } from "../shared/types";
 import bank from "./problems.json";
+import { publicMatchReview } from "./review";
 interface InternalSubmission extends Submission {
   requestId: string;
   dispatchedAt?: number;
@@ -193,6 +194,8 @@ export class MatchRoom extends DurableObject<Env> {
           return json({ id: this.record.id });
         }
         if (!this.record) throw new AppError("Match not found.", 404);
+        if (url.pathname === "/review")
+          return json(publicMatchReview(this.record, this.problem(), receivedAt));
         const userId = request.headers.get("X-Dalgo-User") ?? "";
         this.view(userId);
         await this.advance(receivedAt);

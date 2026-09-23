@@ -53,6 +53,7 @@ import { FriendPlay } from "./components/FriendPlay";
 import { UsernameOnboarding } from "./components/UsernameOnboarding";
 import { PrivacyPage } from "./components/PrivacyPage";
 import { ProfilePage } from "./components/ProfilePage";
+import { MatchReviewPage } from "./components/MatchReviewPage";
 const arenaDetails = {
   easy: { topics: "Arrays, strings, hash maps" },
   medium: { topics: "Trees, graphs, dynamic programming" },
@@ -262,6 +263,7 @@ export default function App() {
             path="/match/:id"
             element={<LiveMatchPage onSignIn={() => setSignIn(true)} />}
           />
+          <Route path="/matches/:id/review" element={<MatchReviewPage />} />
           <Route
             path="/friends"
             element={<FriendPlay onSignIn={() => setSignIn(true)} />}
@@ -1142,7 +1144,7 @@ function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
           >
             <ListItemButton
               component={Link}
-              to={"/match/" + r.id}
+              to={"/matches/" + r.id + "/review"}
               sx={{
                 display: "grid",
                 gridTemplateColumns: {
