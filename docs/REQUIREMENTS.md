@@ -6,18 +6,18 @@ Work only in `/Users/arya/Developer/Dalgo`.
 
 - Canonical production: https://dalgo.site
 - Tester staging: https://staging.dalgo.site
-- Supabase project: **dalgo-staging**, ref `gtdofekbolymsrrullpb`, Mumbai. Five versioned migrations are applied, RLS is enabled, database/RLS checks have no findings, and 30 original problems are loaded (10 per arena). The Auth advisor retains its Free-plan password warning even though password/email sign-in is disabled.
-- Staging Codebox runs on AWS VM `i-0dbfb5d512a80c50c` in Mumbai; production still uses Google Cloud VM `dalgo-codebox` during migration. Both are reachable only through Cloudflare Tunnel and Workers VPC, with one execution and one match at a time.
+- Supabase project: **dalgo-staging**, ref `gtdofekbolymsrrullpb`, Mumbai. The versioned schema migrations are applied, RLS is enabled, database/RLS checks have no findings, and 30 original problems are loaded (10 per arena). The Auth advisor retains its Free-plan password warning even though password/email sign-in is disabled.
+- Production and staging Codebox use AWS VM `i-0dbfb5d512a80c50c` in Mumbai. Both Workers connect through the private Cloudflare Tunnel and VPC service. Production allows one match and one execution at a time; staging admission is paused while sharing that host.
 - Local and hosted verification passed for Python, C++, Java, and JavaScript across all 30 problems. Wrong answers, compile/runtime failures, timeouts, memory/output limits, network blocking, isolation, idempotency, and service restarts were tested.
 - The interface uses React and Material UI with black and charcoal surfaces and a charcoal Monaco editor.
 
-## What you need to do
+## What remains
 
-1. Test a complete bot match on [staging](https://staging.dalgo.site), including Run, Submit, result, rating, and history. If a second tester is available, complete a two-human match too.
-2. After staging acceptance, promote the verified change through `develop` to `main` using the existing pull-request workflow. The production Codebox cutover must pause admission and drain existing matches before switching the private binding.
-3. Monitor AWS Free Plan credit. The 2 GiB t4g.small VM costs about USD 13.65/month at continuous use before tax and traffic; the USD 100 credit is temporary. Do not upgrade to a paid plan automatically.
+1. Review the social and Glicko changes on `develop`; do not apply their rating migration while old production matches could still settle. Production currently retains the existing Elo rules.
+2. Before staging the Glicko cutover, pause and drain production matches, apply the compatible migration, and deploy the updated Worker. Keep staging tester-only and complete a human and bot settlement check before promoting these features to `main`.
+3. Monitor AWS Free Plan credit. The 2 GiB t4g.small VM costs about USD 13.65/month at continuous use before tax and traffic at the previously checked quote; the USD 100 credit is temporary. Do not upgrade to a paid plan automatically.
 
-No new card details, passwords, or additional Supabase access are needed. The old Google Cloud VM stays running until production execution, history, and settlement pass on AWS.
+No new card details, passwords, or additional Supabase access are needed. The old Google Cloud execution resources are removed; keep the Google OAuth project.
 
 ## Completed staging acceptance
 

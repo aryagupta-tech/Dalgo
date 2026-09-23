@@ -12,9 +12,6 @@ const base = process.env.CODEBOX_LOCAL_URL || "http://127.0.0.1:3000";
 const awsHost = process.env.CODEBOX_RECOVERY_AWS_HOST;
 const awsKey = process.env.CODEBOX_RECOVERY_AWS_KEY;
 const awsSmall = process.env.CODEBOX_RECOVERY_AWS_SMALL !== "0";
-const gcpInstance = process.env.CODEBOX_RECOVERY_GCP_INSTANCE;
-const gcpZone = process.env.CODEBOX_RECOVERY_GCP_ZONE || "asia-southeast1-b";
-const gcpProject = process.env.CODEBOX_RECOVERY_GCP_PROJECT || "dalgo-508410";
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 async function post(body, key) {
   return fetch(base + "/submissions", {
@@ -66,34 +63,10 @@ const compose = (...args) => {
       { stdio: "pipe", timeout: 120000 },
     );
   }
-  if (!gcpInstance)
-    return execFileSync(
-      "docker",
-      ["compose", "-f", "services/codebox/compose.yaml", ...args],
-      { stdio: "pipe", timeout: 60000 },
-    );
-  const command = [
-    "sudo",
-    "docker",
-    "compose",
-    "-f",
-    "/opt/dalgo-codebox/compose.yaml",
-    ...args,
-  ]
-    .map(quote)
-    .join(" ");
   return execFileSync(
-    "gcloud",
-    [
-      "compute",
-      "ssh",
-      gcpInstance,
-      `--project=${gcpProject}`,
-      `--zone=${gcpZone}`,
-      "--quiet",
-      `--command=${command}`,
-    ],
-    { stdio: "pipe", timeout: 120000 },
+    "docker",
+    ["compose", "-f", "services/codebox/compose.yaml", ...args],
+    { stdio: "pipe", timeout: 60000 },
   );
 };
 async function ready() {
