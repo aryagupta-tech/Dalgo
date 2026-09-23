@@ -30,6 +30,7 @@ interface RatingRow {
   arena: Arena;
   mode: Mode;
   rating: number;
+  rd: number;
   matches: number;
   wins: number;
   losses: number;
@@ -95,7 +96,7 @@ async function profile(
   if (!profiles[0]) throw new AppError("Player not found.", 404);
   const ratings = await db<RatingRow[]>(
     env,
-    `arena_ratings?user_id=eq.${playerId}&select=arena,mode,rating,matches,wins,losses,draws`,
+    `arena_ratings?user_id=eq.${playerId}&select=arena,mode,rating,rd,matches,wins,losses,draws`,
   );
   const ordered = arenas.flatMap((arena) =>
     modes.flatMap((mode) =>
