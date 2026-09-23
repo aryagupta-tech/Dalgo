@@ -14,7 +14,9 @@ import {
   Typography,
 } from "@mui/material";
 import { api } from "../api";
-import { ARENAS, LANGUAGES } from "../../shared/types";
+import { ARENAS, LANGUAGES, type MatchView } from "../../shared/types";
+import { useAuth } from "../auth";
+import { MatchChat } from "./MatchChat";
 import type { PublicMatchReview } from "../../shared/review";
 import { Footer } from "./Chrome";
 
@@ -26,6 +28,8 @@ function verdictLabel(value: string) {
 
 export function MatchReviewPage() {
   const { id } = useParams();
+  const { user } = useAuth();
+  const [participantMatch, setParticipantMatch] = useState<MatchView | null>(null);
   const [review, setReview] = useState<PublicMatchReview | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -51,6 +55,40 @@ export function MatchReviewPage() {
       cancelled = true;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (!user || !id) {
+      setParticipantMatch(null);
+      return;
+    }
+    let stopped = false;
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const refresh = async () => {
+      try {
+        const value = await api<MatchView>(`/matches/${id}`);
+        if (!stopped) {
+          setParticipantMatch(value);
+          if (!value.chatEndsAt || value.chatEndsAt <= Date.now()) {
+            if (timer) clearInterval(timer);
+            timer = null;
+          }
+        }
+        return Boolean(value.chatEndsAt && value.chatEndsAt > Date.now());
+      } catch {
+        if (!stopped) setParticipantMatch(null);
+        if (timer) clearInterval(timer);
+        timer = null;
+        return false;
+      }
+    };
+    void refresh().then((keepPolling) => {
+      if (!stopped && keepPolling && !timer) timer = setInterval(() => void refresh(), 3000);
+    });
+    return () => {
+      stopped = true;
+      if (timer) clearInterval(timer);
+    };
+  }, [id, user?.id]);
 
   const player = review?.players[playerIndex];
   const submissions = player?.submissions ?? [];
@@ -85,9 +123,14 @@ export function MatchReviewPage() {
           <Typography component="h1" variant="h3" sx={{ mt: 1, mb: 1 }}>
             {review.problem.title}
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 4 }}>
-            {outcome} · {new Date(review.endsAt).toLocaleString()}
-          </Typography>
+          <Stack direction="row" spacing={2} sx={{ alignItems: "center", mb: 4 }}>
+            <Typography color="text.secondary">
+              {outcome} · {new Date(review.endsAt).toLocaleString()}
+            </Typography>
+            {participantMatch?.result && participantMatch.chatEndsAt && participantMatch.chatEndsAt > Date.now() && user && (
+              <MatchChat match={participantMatch} userId={user.id} />
+            )}
+          </Stack>
 
           <Stack direction={{ xs: "column", md: "row" }} spacing={3} sx={{ alignItems: "stretch" }}>
             <Box component="section" aria-label="Problem statement" sx={{ minWidth: 0, flex: 1 }}>
