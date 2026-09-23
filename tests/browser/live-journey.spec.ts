@@ -242,36 +242,3 @@ test("a resumed search follows an assignment made while the lobby was open", asy
   await expect(page.getByText("RANKED 1v1", { exact: true })).toBeVisible();
   expect(mutations).toEqual([]);
 });
-
-test("OAuth from a match preserves the validated same-origin return route", async ({
-  page,
-}) => {
-  await mockServices(page, () => ({
-    status: "matched",
-    matchId,
-    arena: "easy",
-    requestId,
-  }));
-  let callback = "";
-  await page.route(
-    "https://testproject.supabase.invalid/auth/v1/authorize**",
-    async (route) => {
-      callback =
-        new URL(route.request().url()).searchParams.get("redirect_to") ?? "";
-      await route.fulfill({
-        status: 200,
-        contentType: "text/html",
-        body: "OAuth provider stub",
-      });
-    },
-  );
-  await page.goto("/match/" + matchId);
-  const expected = page.url();
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.getByRole("button", { name: "Continue with GitHub" }).click();
-  await expect.poll(() => callback).toBe(expected);
-  await signInLocally(page);
-  await page.goto(callback);
-  await expect(page.getByText("RANKED 1v1", { exact: true })).toBeVisible();
-  await expect(page).toHaveURL(expected);
-});

@@ -110,7 +110,7 @@ export function PrivacyPage() {
 
           <PrivacySection title="Information dalgo stores">
             <Typography>
-              Google or GitHub sign-in provides an account identifier and may
+              Google sign-in provides an account identifier and may
               provide a display name, email address, and avatar. Dalgo also
               stores your chosen username, six arena ratings, friend requests,
               accepted friendships, match challenges, match participation,
