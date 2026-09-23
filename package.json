@@ -23,7 +23,6 @@
     "verify:judge:staging": "npm run verify:codebox",
     "seed:problems:staging": "node --env-file-if-exists=.dev.vars.staging scripts/seed-problems.mjs",
     "setup:codebox": "node scripts/setup-codebox.mjs",
-    "deploy:codebox:gcp": "node scripts/deploy-codebox-gcp.mjs",
     "deploy:codebox:aws": "node scripts/deploy-codebox-aws.mjs",
     "codebox:up": "docker compose -f services/codebox/compose.yaml up -d --build",
     "codebox:down": "docker compose -f services/codebox/compose.yaml down",
