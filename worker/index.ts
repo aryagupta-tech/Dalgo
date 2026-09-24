@@ -137,7 +137,8 @@ async function api(request: Request, env: Env) {
   }
   const publicReview = path.match(/^\/matches\/([a-f0-9-]{36})\/review$/i);
   if (publicReview) {
-    if (request.method !== "GET") throw new AppError("Method not allowed.", 405);
+    if (request.method !== "GET")
+      throw new AppError("Method not allowed.", 405);
     if (!uuid.test(publicReview[1])) throw new AppError("Invalid match.");
     return internal(
       env.MATCHES.get(env.MATCHES.idFromName(publicReview[1])),
@@ -448,13 +449,15 @@ async function api(request: Request, env: Env) {
       });
   }
   const match = path.match(
-    /^\/matches\/([a-f0-9-]{36})(?:\/(run|submit|resign|events|chat))?$/,
+    /^\/matches\/([a-f0-9-]{36})(?:\/(run|submit|resign|cancel|enter|events|chat))?$/,
   );
   if (match) {
     if (!uuid.test(match[1])) throw new AppError("Invalid match.", 400);
     const action = match[2] ?? "view";
     if (
-      (["run", "submit", "resign", "chat"].includes(action) &&
+      (["run", "submit", "resign", "cancel", "enter", "chat"].includes(
+        action,
+      ) &&
         request.method !== "POST") ||
       (["view", "events"].includes(action) && request.method !== "GET")
     )
@@ -466,7 +469,7 @@ async function api(request: Request, env: Env) {
       id,
       ["run", "submit", "chat"].includes(action)
         ? await request.json()
-        : action === "resign"
+        : action === "resign" || action === "cancel" || action === "enter"
           ? {}
           : undefined,
     );

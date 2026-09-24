@@ -485,7 +485,17 @@ export async function settle(env: Env, m: MatchRecord) {
         mode: m.mode,
         problem_id: m.problemId,
         problem_version: m.problemVersion,
-        started_at: new Date(m.startsAt).toISOString(),
+        // A cancellation or resignation during preparation can end before
+        // the scheduled clock. Keep the stored interval ordered for settlement.
+        started_at: new Date(
+          Math.min(
+            m.startsAt,
+            m.terminalAt ?? m.startsAt,
+            r.reason === "void" && m.arrivalDeadlineAt && !m.entryGateOpen
+              ? m.createdAt
+              : m.startsAt,
+          ),
+        ).toISOString(),
         ended_at: new Date(
           r.reason === "solved"
             ? (m.submissions.find(

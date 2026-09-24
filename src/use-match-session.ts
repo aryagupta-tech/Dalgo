@@ -35,6 +35,7 @@ export function useLiveMatch(id: string, userId: string) {
       again = false,
       failures = 0;
     let socket: WebSocket | undefined;
+    let entering = false;
     let reconnect: ReturnType<typeof setTimeout> | undefined;
     setMatch(null);
     setTransportError("");
@@ -58,6 +59,21 @@ export function useLiveMatch(id: string, userId: string) {
       setNow(v.serverNow);
       setMatch(v);
     };
+    async function enter() {
+      if (entering || stopped) return;
+      entering = true;
+      try {
+        const v = await api<MatchView>(`/matches/${id}/enter`, {
+          method: "POST",
+        });
+        apply(v);
+        if (!stopped) setTransportError("");
+      } catch (e) {
+        if (!stopped) setTransportError((e as Error).message);
+      } finally {
+        entering = false;
+      }
+    }
     async function refresh() {
       if (!userId || stopped) return;
       if (fetching) {
@@ -68,6 +84,8 @@ export function useLiveMatch(id: string, userId: string) {
       try {
         const v = await api<MatchView>("/matches/" + id);
         apply(v);
+        // Reaffirm presence while waiting; a closed tab must not count as ready.
+        if (v.status === "waiting") void enter();
         if (!stopped) {
           setTransportError("");
           if (socket?.readyState !== WebSocket.OPEN) setConnection("Polling");
@@ -193,13 +211,13 @@ export function useLiveMatch(id: string, userId: string) {
       }
     }
   }
-  async function resign() {
+  async function leave(kind: "cancel" | "resign") {
     const current = generation.current;
     if (!userId || !match) return;
     setBusy(true);
     setMutationError("");
     try {
-      const v = await api<MatchView>(`/matches/${id}/resign`, {
+      const v = await api<MatchView>(`/matches/${id}/${kind}`, {
         method: "POST",
       });
       if (current === generation.current && v.serverNow >= snapshot.current) {
@@ -209,11 +227,14 @@ export function useLiveMatch(id: string, userId: string) {
     } catch (e) {
       if (current === generation.current)
         setMutationError((e as Error).message);
+      void refreshRef.current();
       throw e;
     } finally {
       if (current === generation.current) setBusy(false);
     }
   }
+  const resign = () => leave("resign");
+  const cancel = () => leave("cancel");
   function retry() {
     const pending = requestRef.current;
     if (retryKind && pending)
@@ -228,6 +249,7 @@ export function useLiveMatch(id: string, userId: string) {
     connection,
     attempt,
     resign,
+    cancel,
     retry,
     retryKind,
   };

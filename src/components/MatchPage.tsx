@@ -32,6 +32,7 @@ import {
   type Arena,
   type Language,
   type MatchView,
+  type PublicProblem,
   type QueueView,
 } from "../../shared/types";
 import { Brand, Modal } from "./Chrome";
@@ -107,6 +108,29 @@ function LiveSession({
   onSignIn: () => void;
 }) {
   const session = useLiveMatch(id, userId);
+  const navigate = useNavigate();
+  const [exitHint, setExitHint] = useState(false);
+  const locked = Boolean(session.match && !session.match.result);
+  useEffect(() => {
+    if (!locked) return;
+    const matchPath = `/match/${id}`;
+    window.history.pushState({ dalgoMatchGuard: id }, "", matchPath);
+    const onBack = () => {
+      window.history.pushState({ dalgoMatchGuard: id }, "", matchPath);
+      navigate(matchPath, { replace: true });
+      setExitHint(true);
+    };
+    const onUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("popstate", onBack, true);
+    window.addEventListener("beforeunload", onUnload);
+    return () => {
+      window.removeEventListener("popstate", onBack, true);
+      window.removeEventListener("beforeunload", onUnload);
+    };
+  }, [id, locked, navigate]);
   if (!userId)
     return (
       <ScreenMessage
@@ -137,15 +161,96 @@ function LiveSession({
         {session.error || undefined}
       </ScreenMessage>
     );
+  if (session.match.status === "waiting")
+    return (
+      <WaitingForOpponent
+        match={session.match}
+        userId={userId}
+        now={session.now}
+        connection={session.connection}
+        error={session.error}
+        onCancel={session.cancel}
+        exitHint={exitHint}
+      />
+    );
+  if (!session.match.problem) return <ScreenMessage title="Loading match…" />;
   return (
     <MatchWorkspace
       {...session}
-      match={session.match}
+      match={session.match as MatchView & { problem: PublicProblem }}
       userId={userId}
       onAttempt={session.attempt}
       onResign={session.resign}
       onRetry={session.retry}
+      exitHint={exitHint}
     />
+  );
+}
+function WaitingForOpponent({
+  match,
+  userId,
+  now,
+  connection,
+  error,
+  onCancel,
+  exitHint,
+}: {
+  match: MatchView;
+  userId: string;
+  now: number;
+  connection: string;
+  error: string;
+  onCancel: () => Promise<void>;
+  exitHint: boolean;
+}) {
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
+  const remaining = Math.max(0, (match.arrivalDeadlineAt ?? now) - now);
+  const opponent = match.players.find((player) => player.id !== userId);
+  return (
+    <Box component="main" sx={{ minHeight: "100dvh", bgcolor: "#080808" }}>
+      <MatchTopbar arena={match.arena} />
+      <Stack
+        sx={{ maxWidth: 560, mx: "auto", px: 3, py: { xs: 7, md: 12 }, gap: 2 }}
+      >
+        {exitHint && <Alert severity="info">Cancel this match to leave.</Alert>}
+        <Typography variant="overline">HUMAN MATCH</Typography>
+        <Typography variant="h3">Waiting for both players</Typography>
+        <Typography color="text.secondary">
+          {match.entered
+            ? "You are here. The shared clock starts after your opponent enters."
+            : "Joining the match…"}
+        </Typography>
+        <Typography color="text.secondary">
+          {opponent?.name ?? "Opponent"}:{" "}
+          {match.opponentStatus === "Ready" ? "entered" : "not here yet"} ·{" "}
+          {connection}
+        </Typography>
+        <Typography
+          role="timer"
+          aria-label="Time to enter match"
+          sx={{ fontFamily: MONO }}
+        >
+          {formatClock(remaining / 1000)} until the match is cancelled
+        </Typography>
+        {(error || cancelError) && (
+          <Alert severity="error">{cancelError || error}</Alert>
+        )}
+        <Button
+          variant="outlined"
+          disabled={cancelling}
+          onClick={() => {
+            setCancelling(true);
+            setCancelError("");
+            void onCancel()
+              .catch((cause: Error) => setCancelError(cause.message))
+              .finally(() => setCancelling(false));
+          }}
+        >
+          {cancelling ? "Cancelling…" : "Cancel match"}
+        </Button>
+      </Stack>
+    </Box>
   );
 }
 function MatchTopbar({
@@ -176,7 +281,7 @@ function MatchTopbar({
         direction="row"
         sx={{ alignItems: "center", gap: { xs: 1.5, sm: 2.5 } }}
       >
-        <Brand />
+        <Brand link={false} />
         <Typography
           variant="body2"
           color="text.secondary"
@@ -197,17 +302,7 @@ function MatchTopbar({
           label="RANKED 1v1"
           sx={{ display: { xs: "none", sm: "inline-flex" }, fontSize: 11 }}
         />
-        {children || (
-          <Button
-            component={Link}
-            to="/"
-            variant="text"
-            size="small"
-            startIcon={<ArrowLeft size={14} />}
-          >
-            Lobby
-          </Button>
-        )}
+        {children}
       </Stack>
     </Stack>
   );
@@ -235,10 +330,7 @@ function ScreenMessage({
           alignItems: "center",
         }}
       >
-        <Brand />
-        <Button component={Link} to="/" variant="text">
-          Back to lobby
-        </Button>
+        <Brand link={false} />
       </Stack>
       <Box
         component="section"
@@ -535,7 +627,7 @@ export function LiveQueue({
   );
 }
 interface WorkspaceProps {
-  match: MatchView;
+  match: MatchView & { problem: PublicProblem };
   now: number;
   userId: string;
   busy: boolean;
@@ -549,6 +641,7 @@ interface WorkspaceProps {
   ) => void;
   onResign: () => Promise<void>;
   onRetry?: () => void;
+  exitHint: boolean;
 }
 function useDraft(key: string, starter: string) {
   const initial = useMemo(() => {
@@ -586,6 +679,7 @@ function MatchWorkspace({
   onAttempt,
   onResign,
   onRetry,
+  exitHint,
 }: WorkspaceProps) {
   const narrow = useMediaQuery("(max-width: 640px)");
   const compact = useMediaQuery("(max-width: 950px)");
@@ -658,6 +752,12 @@ function MatchWorkspace({
         bgcolor: "#080808",
       }}
     >
+      {exitHint && !match.result && (
+        <Alert severity="info" sx={{ borderRadius: 0 }}>
+          Resign the match to leave. The server clock keeps running if you close
+          this tab.
+        </Alert>
+      )}
       <MatchTopbar arena={match.arena}>
         {!match.result ? (
           <Stack direction="row" spacing={0.5}>
@@ -667,7 +767,6 @@ function MatchWorkspace({
               size="small"
               startIcon={<Flag size={14} />}
               onClick={() => setResigning(true)}
-              disabled={ready}
             >
               Resign
             </Button>
@@ -849,8 +948,8 @@ function MatchWorkspace({
             >
               {opponent && !opponent.isBot ? (
                 <Typography
-                  component={Link}
-                  to={`/players/${opponent.id}`}
+                  component={match.result ? Link : "span"}
+                  {...(match.result ? { to: `/players/${opponent.id}` } : {})}
                   sx={{
                     fontFamily: '"Space Grotesk", sans-serif',
                     fontSize: narrow ? 14 : 16,
@@ -858,7 +957,9 @@ function MatchWorkspace({
                     overflowWrap: "anywhere",
                     color: "inherit",
                     textDecoration: "none",
-                    "&:hover": { textDecoration: "underline" },
+                    ...(match.result
+                      ? { "&:hover": { textDecoration: "underline" } }
+                      : {}),
                   }}
                 >
                   {opponent.name}
@@ -1830,7 +1931,9 @@ function ResultSheet({
   const before =
     match.players.find((player) => player.id === userId)?.rating ?? 800;
   const detail = isVoid
-    ? "Result couldn’t be verified. Ratings unchanged."
+    ? match.cancelledBeforeStart
+      ? "The match ended before both players entered. Ratings unchanged."
+      : "Result couldn’t be verified. Ratings unchanged."
     : result.reason === "resigned"
       ? won
         ? "Opponent resigned."
