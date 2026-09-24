@@ -20,7 +20,7 @@ const migrationRoot = resolve(
 const migrationFiles = readdirSync(migrationRoot)
   .filter((name) => name.endsWith(".sql"))
   .sort();
-const glickoMigrationName = "20260924010000_glicko_ratings.sql";
+const glickoMigrationName = "20260924074700_glicko_ratings.sql";
 const migrationBeforeGlicko = migrationFiles
   .filter((name) => name < glickoMigrationName)
   .map((name) => readFileSync(resolve(migrationRoot, name), "utf8"))
