@@ -32,6 +32,11 @@ export interface MatchRecord {
   coordinatorReleased?: boolean;
   terminalAt?: number;
   createdAt: number;
+  /** New human matches wait for both clients to enter before setting the clock. */
+  arrivalDeadlineAt?: number;
+  enteredBy?: string[];
+  entrySeenAt?: Record<string, number>;
+  entryGateOpen?: boolean;
   // Old persisted matches lack this launch flag and remain private.
   codeRevealAllowed?: boolean;
 }

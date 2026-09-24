@@ -242,3 +242,122 @@ test("a resumed search follows an assignment made while the lobby was open", asy
   await expect(page.getByText("RANKED 1v1", { exact: true })).toBeVisible();
   expect(mutations).toEqual([]);
 });
+
+test("human match hides the problem until both enter and allows cancellation without a result", async ({
+  page,
+}) => {
+  await signInLocally(page);
+  await mockServices(page, () => ({
+    status: "matched",
+    matchId,
+    arena: "easy",
+    requestId,
+  }));
+  let entered = false;
+  let cancelled = false;
+  let entries = 0;
+  await page.route(
+    new RegExp(`/api/matches/${matchId}(?:/.*)?$`),
+    async (route) => {
+      const path = new URL(route.request().url()).pathname;
+      const method = route.request().method();
+      if (path.endsWith("/enter") && method === "POST") {
+        entered = true;
+        entries += 1;
+      }
+      if (path.endsWith("/cancel") && method === "POST") cancelled = true;
+      const view = {
+        ...liveMatch(),
+        status: cancelled ? "finished" : "waiting",
+        problem: cancelled ? problem : null,
+        entered,
+        arrivalDeadlineAt: Date.now() + 60_000,
+        opponentStatus: "Waiting",
+        result: cancelled
+          ? {
+              winnerId: null,
+              reason: "void",
+              deltas: { [player]: 0, [opponent]: 0 },
+              settled: true,
+            }
+          : null,
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(view),
+      });
+    },
+  );
+  await page.goto("/");
+  await page.getByRole("link", { name: "Resume match" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Waiting for both players" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "You are here. The shared clock starts after your opponent enters.",
+    ),
+  ).toBeVisible();
+  await expect(page.getByText(problem.title, { exact: true })).toHaveCount(0);
+  expect(entries).toBe(1);
+  await page.getByRole("button", { name: "Cancel match" }).click();
+  await expect(
+    page.getByText("Match voided", { exact: true }).first(),
+  ).toBeVisible();
+  expect(cancelled).toBe(true);
+});
+
+test("browser back keeps an active match open until the player resigns", async ({
+  page,
+}) => {
+  await signInLocally(page);
+  await mockServices(page, () => ({
+    status: "matched",
+    matchId,
+    arena: "easy",
+    requestId,
+  }));
+  let resigned = false;
+  await page.route(
+    new RegExp(`/api/matches/${matchId}(?:/.*)?$`),
+    async (route) => {
+      const path = new URL(route.request().url()).pathname;
+      if (path.endsWith("/resign")) resigned = true;
+      const view = {
+        ...liveMatch(),
+        status: resigned ? "finished" : "active",
+        result: resigned
+          ? {
+              winnerId: opponent,
+              reason: "resigned",
+              deltas: { [player]: -16, [opponent]: 16 },
+              settled: true,
+            }
+          : null,
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(view),
+      });
+    },
+  );
+  await page.goto("/");
+  await page.getByRole("link", { name: "Resume match" }).click();
+  await expect(page).toHaveURL(new RegExp(`/match/${matchId}$`));
+  await expect(
+    page.getByRole("button", { name: "Resign", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "dalgo home" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Opponent" })).toHaveCount(0);
+  await page.evaluate(() => window.history.back());
+  await expect(page).toHaveURL(new RegExp(`/match/${matchId}$`));
+  await expect(page.getByText(/Resign the match to leave/)).toBeVisible();
+  await page.getByRole("button", { name: "Resign", exact: true }).click();
+  await page.getByRole("button", { name: "Resign match" }).click();
+  await expect(
+    page.getByText("Opponent wins", { exact: true }).first(),
+  ).toBeVisible();
+  expect(resigned).toBe(true);
+});
