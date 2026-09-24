@@ -21,6 +21,7 @@ import {
 } from "./codebox";
 import {
   LANGUAGES,
+  ARENAS,
   DEFAULT_ATTEMPT_LIMITS,
   type MatchView,
   type MatchChatMessage,
@@ -30,6 +31,7 @@ import {
 import bank from "./problems.json";
 import { publicMatchReview } from "./review";
 const MATCH_CHAT_AFTER_RESULT_MS = 24 * 60 * 60 * 1000;
+const ENTRY_PRESENCE_MS = 7500;
 interface InternalSubmission extends Submission {
   requestId: string;
   dispatchedAt?: number;
@@ -73,6 +75,15 @@ export class MatchRoom extends DurableObject<Env> {
       (!this.record!.result || now < this.chatEndsAt())
     );
   }
+  private waitingForPlayer() {
+    const m = this.record!;
+    return (
+      m.mode === "human" &&
+      m.arrivalDeadlineAt !== undefined &&
+      !m.entryGateOpen &&
+      !m.result
+    );
+  }
   private view(userId: string): MatchView {
     const m = this.record!;
     if (!m.players.some((p) => p.id === userId && !p.isBot))
@@ -85,23 +96,41 @@ export class MatchRoom extends DurableObject<Env> {
         ? m.settlementComplete
           ? "finished"
           : "settling"
-        : Date.now() < m.startsAt
-          ? "ready"
-          : "active",
+        : this.waitingForPlayer()
+          ? "waiting"
+          : Date.now() < m.startsAt
+            ? "ready"
+            : "active",
       players: m.players,
-      problem: publicProblem(this.problem()),
+      problem: this.waitingForPlayer() ? null : publicProblem(this.problem()),
       startsAt: m.startsAt,
       endsAt: m.endsAt,
+      ...(this.waitingForPlayer()
+        ? {
+            arrivalDeadlineAt: m.arrivalDeadlineAt,
+            entered: this.recentlyEntered(userId),
+          }
+        : {}),
       serverNow: Date.now(),
+      ...(m.result?.reason === "void" && m.arrivalDeadlineAt && !m.entryGateOpen
+        ? { cancelledBeforeStart: true }
+        : {}),
       opponentStatus: m.result
         ? "Finished"
-        : Date.now() < m.startsAt
-          ? "Ready"
-          : m.submissions.some(
-                (s) => s.userId !== userId && s.verdict === "pending",
-              )
-            ? "Judging"
-            : "Solving",
+        : this.waitingForPlayer()
+          ? m.players.some(
+              (player) =>
+                player.id !== userId && this.recentlyEntered(player.id),
+            )
+            ? "Ready"
+            : "Waiting"
+          : Date.now() < m.startsAt
+            ? "Ready"
+            : m.submissions.some(
+                  (s) => s.userId !== userId && s.verdict === "pending",
+                )
+              ? "Judging"
+              : "Solving",
       submissions: m.submissions
         .filter((s) => s.userId === userId)
         .map((s) => ({
@@ -134,6 +163,10 @@ export class MatchRoom extends DurableObject<Env> {
         : {}),
     };
   }
+  private recentlyEntered(userId: string, now = Date.now()) {
+    const lastSeen = this.record?.entrySeenAt?.[userId];
+    return lastSeen !== undefined && now - lastSeen <= ENTRY_PRESENCE_MS;
+  }
   private broadcast() {
     for (const ws of this.ctx.getWebSockets()) {
       try {
@@ -160,7 +193,11 @@ export class MatchRoom extends DurableObject<Env> {
         s.completedAt = now;
       }
     }
-    if (!this.record.result) {
+    if (this.waitingForPlayer() && now >= this.record.arrivalDeadlineAt!) {
+      this.record.result = makeResult(this.record, null, "void");
+      this.record.terminalAt = now;
+    }
+    if (!this.record.result && !this.waitingForPlayer()) {
       this.record.result = adjudicate(this.record, now);
       if (this.record.result) this.record.terminalAt = now;
     }
@@ -193,7 +230,9 @@ export class MatchRoom extends DurableObject<Env> {
       else await this.ctx.storage.deleteAlarm();
       return;
     }
-    const times = [m.endsAt, Date.now() + 60000];
+    const times = this.waitingForPlayer()
+      ? [m.arrivalDeadlineAt!, Date.now() + 60000]
+      : [m.endsAt, Date.now() + 60000];
     if (m.result) times.push(Date.now() + 5000);
     if (m.bot?.completesAt && m.bot.completesAt > Date.now())
       times.push(m.bot.completesAt);
@@ -225,7 +264,9 @@ export class MatchRoom extends DurableObject<Env> {
         }
         if (!this.record) throw new AppError("Match not found.", 404);
         if (url.pathname === "/review")
-          return json(publicMatchReview(this.record, this.problem(), receivedAt));
+          return json(
+            publicMatchReview(this.record, this.problem(), receivedAt),
+          );
         const userId = request.headers.get("X-Dalgo-User") ?? "";
         this.view(userId);
         await this.advance(receivedAt);
@@ -237,6 +278,37 @@ export class MatchRoom extends DurableObject<Env> {
           this.ctx.acceptWebSocket(pair[1], [userId]);
           pair[1].send(JSON.stringify({ type: "match", id: this.record.id }));
           return new Response(null, { status: 101, webSocket: pair[0] });
+        }
+        if (url.pathname === "/enter") {
+          if (request.method !== "POST")
+            throw new AppError("Method not allowed.", 405);
+          if (this.waitingForPlayer()) {
+            const firstEntry = !this.record.enteredBy?.includes(userId);
+            if (firstEntry)
+              this.record.enteredBy = [
+                ...(this.record.enteredBy ?? []),
+                userId,
+              ];
+            this.record.entrySeenAt = {
+              ...this.record.entrySeenAt,
+              [userId]: receivedAt,
+            };
+            const bothPresent = this.record.players.every(
+              (player) =>
+                !player.isBot && this.recentlyEntered(player.id, receivedAt),
+            );
+            if (bothPresent) {
+              this.record.entryGateOpen = true;
+              this.record.startsAt = receivedAt + 5000;
+              this.record.endsAt =
+                this.record.startsAt +
+                ARENAS[this.record.arena].duration * 1000;
+            }
+            await this.save();
+            await this.schedule();
+            if (firstEntry || bothPresent) this.broadcast();
+          }
+          return json(this.view(userId));
         }
         if (url.pathname === "/view") return json(this.view(userId));
         if (url.pathname === "/chat") {
@@ -304,14 +376,20 @@ export class MatchRoom extends DurableObject<Env> {
           this.broadcast();
           return json(this.view(userId), 201);
         }
-        if (url.pathname === "/resign") {
+        if (url.pathname === "/resign" || url.pathname === "/cancel") {
           if (!this.record.result) {
-            if (Date.now() < this.record.startsAt)
-              throw new AppError("The match has not started yet.");
+            const waiting = this.waitingForPlayer();
+            if (url.pathname === "/cancel" && !waiting)
+              throw new AppError(
+                "Both players have entered. Resign to leave.",
+                409,
+              );
             this.record.result = makeResult(
               this.record,
-              this.record.players.find((p) => p.id !== userId)!.id,
-              "resigned",
+              waiting
+                ? null
+                : this.record.players.find((p) => p.id !== userId)!.id,
+              waiting ? "void" : "resigned",
             );
             this.record.terminalAt = receivedAt;
             await this.save();
@@ -335,6 +413,7 @@ export class MatchRoom extends DurableObject<Env> {
           const now = receivedAt;
           if (
             this.record.result ||
+            this.waitingForPlayer() ||
             now >= this.record.endsAt ||
             now < this.record.startsAt
           )
