@@ -21,12 +21,17 @@ import {
 } from "./codebox";
 import {
   LANGUAGES,
+  ARENAS,
   DEFAULT_ATTEMPT_LIMITS,
   type MatchView,
+  type MatchChatMessage,
   type Problem,
   type Submission,
 } from "../shared/types";
 import bank from "./problems.json";
+import { publicMatchReview } from "./review";
+const MATCH_CHAT_AFTER_RESULT_MS = 24 * 60 * 60 * 1000;
+const ENTRY_PRESENCE_MS = 7500;
 interface InternalSubmission extends Submission {
   requestId: string;
   dispatchedAt?: number;
@@ -38,12 +43,14 @@ interface InternalSubmission extends Submission {
 export class MatchRoom extends DurableObject<Env> {
   private serial = new Serial();
   private record: MatchRecord | null = null;
+  private chat: MatchChatMessage[] = [];
   private running = new Set<string>();
   private settling = false;
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     ctx.blockConcurrencyWhile(async () => {
       this.record = (await ctx.storage.get("match")) ?? null;
+      this.chat = (await ctx.storage.get<MatchChatMessage[]>("chat")) ?? [];
     });
   }
   private problem() {
@@ -58,6 +65,25 @@ export class MatchRoom extends DurableObject<Env> {
   private async save() {
     await this.ctx.storage.put("match", this.record);
   }
+  private chatEndsAt() {
+    const m = this.record!;
+    return (m.terminalAt ?? m.endsAt) + MATCH_CHAT_AFTER_RESULT_MS;
+  }
+  private chatAvailable(now = Date.now()) {
+    return (
+      this.record!.mode === "human" &&
+      (!this.record!.result || now < this.chatEndsAt())
+    );
+  }
+  private waitingForPlayer() {
+    const m = this.record!;
+    return (
+      m.mode === "human" &&
+      m.arrivalDeadlineAt !== undefined &&
+      !m.entryGateOpen &&
+      !m.result
+    );
+  }
   private view(userId: string): MatchView {
     const m = this.record!;
     if (!m.players.some((p) => p.id === userId && !p.isBot))
@@ -70,23 +96,41 @@ export class MatchRoom extends DurableObject<Env> {
         ? m.settlementComplete
           ? "finished"
           : "settling"
-        : Date.now() < m.startsAt
-          ? "ready"
-          : "active",
+        : this.waitingForPlayer()
+          ? "waiting"
+          : Date.now() < m.startsAt
+            ? "ready"
+            : "active",
       players: m.players,
-      problem: publicProblem(this.problem()),
+      problem: this.waitingForPlayer() ? null : publicProblem(this.problem()),
       startsAt: m.startsAt,
       endsAt: m.endsAt,
+      ...(this.waitingForPlayer()
+        ? {
+            arrivalDeadlineAt: m.arrivalDeadlineAt,
+            entered: this.recentlyEntered(userId),
+          }
+        : {}),
       serverNow: Date.now(),
+      ...(m.result?.reason === "void" && m.arrivalDeadlineAt && !m.entryGateOpen
+        ? { cancelledBeforeStart: true }
+        : {}),
       opponentStatus: m.result
         ? "Finished"
-        : Date.now() < m.startsAt
-          ? "Ready"
-          : m.submissions.some(
-                (s) => s.userId !== userId && s.verdict === "pending",
-              )
-            ? "Judging"
-            : "Solving",
+        : this.waitingForPlayer()
+          ? m.players.some(
+              (player) =>
+                player.id !== userId && this.recentlyEntered(player.id),
+            )
+            ? "Ready"
+            : "Waiting"
+          : Date.now() < m.startsAt
+            ? "Ready"
+            : m.submissions.some(
+                  (s) => s.userId !== userId && s.verdict === "pending",
+                )
+              ? "Judging"
+              : "Solving",
       submissions: m.submissions
         .filter((s) => s.userId === userId)
         .map((s) => ({
@@ -111,7 +155,17 @@ export class MatchRoom extends DurableObject<Env> {
         ).length,
       },
       result: m.result,
+      ...(this.chatAvailable()
+        ? {
+            chat: this.chat.slice(-100),
+            ...(m.result ? { chatEndsAt: this.chatEndsAt() } : {}),
+          }
+        : {}),
     };
+  }
+  private recentlyEntered(userId: string, now = Date.now()) {
+    const lastSeen = this.record?.entrySeenAt?.[userId];
+    return lastSeen !== undefined && now - lastSeen <= ENTRY_PRESENCE_MS;
   }
   private broadcast() {
     for (const ws of this.ctx.getWebSockets()) {
@@ -139,9 +193,18 @@ export class MatchRoom extends DurableObject<Env> {
         s.completedAt = now;
       }
     }
-    if (!this.record.result) {
+    if (this.waitingForPlayer() && now >= this.record.arrivalDeadlineAt!) {
+      this.record.result = makeResult(this.record, null, "void");
+      this.record.terminalAt = now;
+    }
+    if (!this.record.result && !this.waitingForPlayer()) {
       this.record.result = adjudicate(this.record, now);
       if (this.record.result) this.record.terminalAt = now;
+    }
+    if (this.record.result && this.chat.length && now >= this.chatEndsAt()) {
+      await this.ctx.storage.delete("chat");
+      this.chat = [];
+      this.broadcast();
     }
     await this.save();
     await this.schedule();
@@ -156,13 +219,20 @@ export class MatchRoom extends DurableObject<Env> {
           await this.ctx.storage.setAlarm(Date.now() + 5000);
         return;
       }
-      const expires = m.createdAt + 30 * 86400000;
+      const alarms: number[] = [];
       if (m.submissions.some((s) => s.source))
-        await this.ctx.storage.setAlarm(Math.max(Date.now() + 1000, expires));
+        alarms.push(m.createdAt + 30 * 86400000);
+      if (this.chat.length && m.result) alarms.push(this.chatEndsAt());
+      if (alarms.length)
+        await this.ctx.storage.setAlarm(
+          Math.max(Date.now() + 1000, Math.min(...alarms)),
+        );
       else await this.ctx.storage.deleteAlarm();
       return;
     }
-    const times = [m.endsAt, Date.now() + 60000];
+    const times = this.waitingForPlayer()
+      ? [m.arrivalDeadlineAt!, Date.now() + 60000]
+      : [m.endsAt, Date.now() + 60000];
     if (m.result) times.push(Date.now() + 5000);
     if (m.bot?.completesAt && m.bot.completesAt > Date.now())
       times.push(m.bot.completesAt);
@@ -193,6 +263,10 @@ export class MatchRoom extends DurableObject<Env> {
           return json({ id: this.record.id });
         }
         if (!this.record) throw new AppError("Match not found.", 404);
+        if (url.pathname === "/review")
+          return json(
+            publicMatchReview(this.record, this.problem(), receivedAt),
+          );
         const userId = request.headers.get("X-Dalgo-User") ?? "";
         this.view(userId);
         await this.advance(receivedAt);
@@ -205,15 +279,117 @@ export class MatchRoom extends DurableObject<Env> {
           pair[1].send(JSON.stringify({ type: "match", id: this.record.id }));
           return new Response(null, { status: 101, webSocket: pair[0] });
         }
+        if (url.pathname === "/enter") {
+          if (request.method !== "POST")
+            throw new AppError("Method not allowed.", 405);
+          if (this.waitingForPlayer()) {
+            const firstEntry = !this.record.enteredBy?.includes(userId);
+            if (firstEntry)
+              this.record.enteredBy = [
+                ...(this.record.enteredBy ?? []),
+                userId,
+              ];
+            this.record.entrySeenAt = {
+              ...this.record.entrySeenAt,
+              [userId]: receivedAt,
+            };
+            const bothPresent = this.record.players.every(
+              (player) =>
+                !player.isBot && this.recentlyEntered(player.id, receivedAt),
+            );
+            if (bothPresent) {
+              this.record.entryGateOpen = true;
+              this.record.startsAt = receivedAt + 5000;
+              this.record.endsAt =
+                this.record.startsAt +
+                ARENAS[this.record.arena].duration * 1000;
+            }
+            await this.save();
+            await this.schedule();
+            if (firstEntry || bothPresent) this.broadcast();
+          }
+          return json(this.view(userId));
+        }
         if (url.pathname === "/view") return json(this.view(userId));
-        if (url.pathname === "/resign") {
+        if (url.pathname === "/chat") {
+          if (request.method !== "POST")
+            throw new AppError("Method not allowed.", 405);
+          if (this.record.mode !== "human")
+            throw new AppError("Chat is available in human matches only.", 409);
+          const body = (await request.json()) as {
+            requestId?: unknown;
+            text?: unknown;
+          };
+          if (
+            typeof body.requestId !== "string" ||
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+              body.requestId,
+            )
+          )
+            throw new AppError("A valid request identifier is required.");
+          if (!this.chatAvailable(receivedAt))
+            throw new AppError("Match chat has ended.", 409);
+          const prior = this.chat.find((item) => item.id === body.requestId);
+          if (prior) {
+            if (prior.senderId !== userId || prior.text !== body.text)
+              throw new AppError(
+                "That message identifier is already in use.",
+                409,
+              );
+            return json(this.view(userId));
+          }
+          if (
+            typeof body.text !== "string" ||
+            body.text !== body.text.trim() ||
+            body.text.length < 1 ||
+            body.text.length > 500 ||
+            new TextEncoder().encode(body.text).length > 2000 ||
+            /[\u0000-\u001f\u007f]/.test(body.text)
+          )
+            throw new AppError(
+              "Write a single-line message under 500 characters.",
+            );
+          if (this.chat.length >= 1000)
+            throw new AppError("This match chat is full.", 429);
+          if (
+            this.chat.some(
+              (item) =>
+                item.senderId === userId && receivedAt - item.sentAt < 2000,
+            )
+          )
+            throw new AppError(
+              "Wait a moment before sending another message.",
+              429,
+            );
+          const next = [
+            ...this.chat,
+            {
+              id: body.requestId,
+              senderId: userId,
+              text: body.text,
+              sentAt: receivedAt,
+            },
+          ];
+          await this.ctx.storage.put("chat", next);
+          this.chat = next;
+          await this.schedule();
+          this.broadcast();
+          return json(this.view(userId), 201);
+        }
+        if (url.pathname === "/resign" || url.pathname === "/cancel") {
           if (!this.record.result) {
-            if (Date.now() < this.record.startsAt)
-              throw new AppError("The match has not started yet.");
+            const waiting = this.waitingForPlayer();
+            if (url.pathname === "/cancel" && !waiting)
+              throw new AppError(
+                "Both players have entered. Resign to leave.",
+                409,
+              );
             this.record.result = makeResult(
               this.record,
-              this.record.players.find((p) => p.id !== userId)!.id,
-              "resigned",
+              waiting
+                ? null
+                : this.record.players.find((p) => p.id !== userId)!.id,
+              waiting ? "void" : "resigned",
             );
             this.record.terminalAt = receivedAt;
             await this.save();
@@ -237,6 +413,7 @@ export class MatchRoom extends DurableObject<Env> {
           const now = receivedAt;
           if (
             this.record.result ||
+            this.waitingForPlayer() ||
             now >= this.record.endsAt ||
             now < this.record.startsAt
           )
@@ -628,16 +805,16 @@ export class MatchRoom extends DurableObject<Env> {
   async alarm() {
     await this.serial.run(async () => {
       if (!this.record) return;
+      await this.advance();
       if (
         this.record.settlementComplete &&
-        Date.now() >= this.record.createdAt + 30 * 86400000
+        Date.now() >= this.record.createdAt + 30 * 86400000 &&
+        this.record.submissions.some((s) => s.source)
       ) {
         for (const s of this.record.submissions) s.source = "";
         await this.save();
-        await this.ctx.storage.deleteAlarm();
-        return;
+        await this.schedule();
       }
-      await this.advance();
     });
     if (this.record?.settlementComplete && !this.record.coordinatorReleased) {
       try {

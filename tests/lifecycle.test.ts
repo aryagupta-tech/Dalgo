@@ -24,12 +24,7 @@ vi.mock("../worker/db.ts", () => ({
   })),
   getFriendIdentity: vi.fn(async (_env: any, id: string) => ({
     id,
-    username:
-      id === A
-        ? "alice"
-        : id === B
-          ? "bob"
-          : "carol",
+    username: id === A ? "alice" : id === B ? "bob" : "carol",
     usernameConfigured: true,
     name: id,
   })),
@@ -42,9 +37,7 @@ vi.mock("../worker/db.ts", () => ({
           : username === "carol"
             ? C
             : null;
-    return id
-      ? { id, username, usernameConfigured: true, name: id }
-      : null;
+    return id ? { id, username, usernameConfigured: true, name: id } : null;
   }),
   persistFriendChallenge: vi.fn(async () => null),
   recentProblems: vi.fn(async () => ({})),
@@ -88,6 +81,9 @@ class MemoryStorage {
   }
   async put(key: string, value: any) {
     this.data.set(key, structuredClone(value));
+  }
+  async delete(key: string) {
+    return this.data.delete(key);
   }
   async setAlarm(value: number | Date) {
     this.alarm = Number(value);
@@ -260,6 +256,184 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+});
+
+describe("human match entry gate", () => {
+  async function viewJson(response: Response): Promise<any> {
+    return response.json();
+  }
+  function gatedRecord() {
+    return record({
+      createdAt: T0,
+      startsAt: T0 + 65_000,
+      endsAt: T0 + 665_000,
+      arrivalDeadlineAt: T0 + 60_000,
+      enteredBy: [],
+      entrySeenAt: {},
+      entryGateOpen: false,
+    });
+  }
+
+  it("does not reveal the problem or start the clock until both players enter, even after restart", async () => {
+    const runtimeEnv = env();
+    const { room, ctx } = await newRoom(gatedRecord(), runtimeEnv);
+    const initial = (await (await room.fetch(request("/view"))).json()) as any;
+    expect(initial).toMatchObject({
+      status: "waiting",
+      problem: null,
+      entered: false,
+    });
+    expect((await submit(room, A, "too-early")).status).toBe(409);
+    expect((await room.fetch(request("/enter", {}, C))).status).toBe(403);
+    expect((await room.fetch(request("/enter", {}, A))).status).toBe(200);
+    expect((await ctx.storage.get("match")).enteredBy).toEqual([A]);
+    now = T0 + 5000;
+    const restartedCtx = new MemoryContext(ctx.storage);
+    const restarted = new MatchRoom(restartedCtx as any, runtimeEnv);
+    await restartedCtx.ready;
+    const waiting = (await (
+      await restarted.fetch(request("/view", undefined, A))
+    ).json()) as any;
+    expect(waiting).toMatchObject({
+      status: "waiting",
+      problem: null,
+      entered: true,
+      opponentStatus: "Waiting",
+    });
+    expect(waiting.startsAt).toBe(T0 + 65_000); // Provisional value is never used as a clock.
+    expect((await submit(restarted, A, "still-too-early")).status).toBe(409);
+    now = T0 + 20_000;
+    const stale = await viewJson(
+      await restarted.fetch(request("/enter", {}, B)),
+    );
+    expect(stale).toMatchObject({
+      status: "waiting",
+      problem: null,
+      opponentStatus: "Waiting",
+    });
+    expect((await ctx.storage.get("match")).entryGateOpen).toBe(false);
+    now = T0 + 21_000;
+    const second = await viewJson(
+      await restarted.fetch(request("/enter", {}, A)),
+    );
+    expect(second).toMatchObject({
+      status: "ready",
+      startsAt: T0 + 26_000,
+      endsAt: T0 + 626_000,
+    });
+    expect(second.problem?.id).toBe(gatedRecord().problemId);
+    expect(
+      (await viewJson(await restarted.fetch(request("/view", undefined, B))))
+        .startsAt,
+    ).toBe(second.startsAt);
+    now = T0 + 23_000;
+    expect(
+      (await viewJson(await restarted.fetch(request("/enter", {}, B))))
+        .startsAt,
+    ).toBe(second.startsAt);
+    now = T0 + 26_000;
+    expect(
+      (await viewJson(await restarted.fetch(request("/view", undefined, A))))
+        .status,
+    ).toBe("active");
+    now = T0 + 50_000;
+    const reconnectedCtx = new MemoryContext(ctx.storage);
+    const reconnected = new MatchRoom(reconnectedCtx as any, runtimeEnv);
+    await reconnectedCtx.ready;
+    const resumed = await viewJson(
+      await reconnected.fetch(request("/view", undefined, A)),
+    );
+    expect(resumed).toMatchObject({
+      status: "active",
+      startsAt: second.startsAt,
+      endsAt: second.endsAt,
+    });
+    expect((await reconnectedCtx.storage.get("match")).enteredBy).toEqual([
+      A,
+      B,
+    ]);
+    await idle(ctx);
+    await idle(restartedCtx);
+    await idle(reconnectedCtx);
+  });
+
+  it("voids and releases an unattended match after one minute without rating changes", async () => {
+    const { room, ctx } = await newRoom(gatedRecord());
+    await room.fetch(request("/enter", {}, A));
+    now = T0 + 20_000;
+    expect(
+      (await viewJson(await room.fetch(request("/enter", {}, B)))).status,
+    ).toBe("waiting");
+    now = T0 + 60_000;
+    await room.alarm();
+    await idle(ctx);
+    const saved = await ctx.storage.get("match");
+    expect(saved.result).toMatchObject({
+      reason: "void",
+      winnerId: null,
+      deltas: { [A]: 0, [B]: 0 },
+    });
+    expect(saved.coordinatorReleased).toBe(true);
+    expect(
+      (await viewJson(await room.fetch(request("/view", undefined, A))))
+        .cancelledBeforeStart,
+    ).toBe(true);
+    expect(
+      (await viewJson(await room.fetch(request("/enter", {}, B)))).result
+        .reason,
+    ).toBe("void");
+  });
+
+  it("lets a player cancel before both enter without awarding a resignation win", async () => {
+    const { room, ctx } = await newRoom(gatedRecord());
+    const response = await room.fetch(request("/cancel", {}, A));
+    expect(response.status).toBe(200);
+    expect((await response.json()) as any).toMatchObject({
+      result: { reason: "void", winnerId: null },
+    });
+    await idle(ctx);
+    expect((await ctx.storage.get("match")).coordinatorReleased).toBe(true);
+  });
+
+  it("rejects a cancellation that races with the second arrival; leaving then requires resignation", async () => {
+    const { room, ctx } = await newRoom(gatedRecord());
+    await room.fetch(request("/enter", {}, A));
+    now = T0 + 1000;
+    await room.fetch(request("/enter", {}, B));
+    const cancel = await room.fetch(request("/cancel", {}, A));
+    expect(cancel.status).toBe(409);
+    expect((await ctx.storage.get("match")).result).toBeNull();
+    const resignation = await room.fetch(request("/resign", {}, A));
+    expect(resignation.status).toBe(200);
+    expect((await viewJson(resignation)).result).toMatchObject({
+      reason: "resigned",
+      winnerId: B,
+    });
+    await idle(ctx);
+  });
+
+  it("keeps the existing bot start and problem access", async () => {
+    const { room } = await newRoom(
+      record({
+        mode: "bot",
+        players: [
+          { id: A, name: "Ada", rating: 1200 },
+          { id: "bot", name: "Vector", rating: 1200, isBot: true },
+        ],
+        bot: { rating: 1200, solves: false, completesAt: null },
+        startsAt: T0 + 5000,
+        endsAt: T0 + 605_000,
+        createdAt: T0,
+      }),
+    );
+    const initial = (await (await room.fetch(request("/view"))).json()) as any;
+    expect(initial.status).toBe("ready");
+    expect(initial.problem?.id).toBe(record().problemId);
+    now = T0 + 5000;
+    expect((await viewJson(await room.fetch(request("/view")))).status).toBe(
+      "active",
+    );
+  });
 });
 
 describe("authoritative match lifecycle", () => {
@@ -484,6 +658,140 @@ describe("authoritative match lifecycle", () => {
   );
 });
 
+describe("human match chat", () => {
+  it("accepts participant messages, deduplicates retries, and refuses outsiders", async () => {
+    const { room, ctx } = await newRoom();
+    const body = {
+      requestId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      text: "Good luck!",
+    };
+    expect((await room.fetch(request("/chat", body, C))).status).toBe(403);
+    expect((await room.fetch(request("/chat", body))).status).toBe(201);
+    expect((await room.fetch(request("/chat", body))).status).toBe(200);
+    const view = (await (
+      await room.fetch(request("/view", undefined, B))
+    ).json()) as any;
+    expect(view.chat).toEqual([
+      { id: body.requestId, senderId: A, text: body.text, sentAt: T0 },
+    ]);
+    expect((await ctx.storage.get("chat")).length).toBe(1);
+    expect(
+      (await room.fetch(request("/chat", { ...body, text: "Changed" }))).status,
+    ).toBe(409);
+  });
+
+  it("allows both players to chat after resignation, then purges after 24 hours", async () => {
+    const { room, ctx } = await newRoom();
+    const firstId = crypto.randomUUID();
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: firstId, text: "hello" }),
+        )
+      ).status,
+    ).toBe(201);
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: crypto.randomUUID(), text: "again" }),
+        )
+      ).status,
+    ).toBe(429);
+    expect(
+      (
+        await room.fetch(
+          request("/chat", {
+            requestId: crypto.randomUUID(),
+            text: "bad\nline",
+          }),
+        )
+      ).status,
+    ).toBe(400);
+    const result = await room.fetch(request("/resign", {}));
+    expect(result.status).toBe(200);
+    const view = (await result.json()) as any;
+    expect(view.chat).toHaveLength(1);
+    expect(view.chatEndsAt).toBe(T0 + 24 * 60 * 60 * 1000);
+    await idle(ctx);
+    now += 2001;
+    const replyId = crypto.randomUUID();
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: replyId, text: "Thanks" }, B),
+        )
+      ).status,
+    ).toBe(201);
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: replyId, text: "Thanks" }, B),
+        )
+      ).status,
+    ).toBe(200);
+    expect((await ctx.storage.get("chat")).length).toBe(2);
+    expect(ctx.storage.alarm).toBe(T0 + 24 * 60 * 60 * 1000);
+    now = T0 + 24 * 60 * 60 * 1000 + 1;
+    await room.alarm();
+    expect(await ctx.storage.get("chat")).toBeUndefined();
+    expect(
+      ((await (await room.fetch(request("/view"))).json()) as any).chat,
+    ).toBeUndefined();
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: crypto.randomUUID(), text: "late" }),
+        )
+      ).status,
+    ).toBe(409);
+  });
+
+  it("schedules expiry when the first chat message is sent after settlement", async () => {
+    const { room, ctx } = await newRoom();
+    expect((await room.fetch(request("/resign", {}))).status).toBe(200);
+    await idle(ctx);
+    expect(await ctx.storage.get("chat")).toBeUndefined();
+    now += 3000;
+    expect(
+      (
+        await room.fetch(
+          request(
+            "/chat",
+            { requestId: crypto.randomUUID(), text: "Good game" },
+            B,
+          ),
+        )
+      ).status,
+    ).toBe(201);
+    expect(ctx.storage.alarm).toBe(T0 + 24 * 60 * 60 * 1000);
+    now = T0 + 24 * 60 * 60 * 1000 + 1;
+    await room.alarm();
+    expect(await ctx.storage.get("chat")).toBeUndefined();
+  });
+
+  it("disables bot chat", async () => {
+    const { room } = await newRoom(
+      record({
+        mode: "bot",
+        players: [
+          { id: A, name: "Ada", rating: 1200 },
+          { id: "bot", name: "Vector", rating: 800, isBot: true },
+        ],
+        bot: { rating: 800, solves: false, completesAt: null },
+      }),
+    );
+    expect(
+      (
+        await room.fetch(
+          request("/chat", { requestId: crypto.randomUUID(), text: "hello" }),
+        )
+      ).status,
+    ).toBe(409);
+    const view = (await (await room.fetch(request("/view"))).json()) as any;
+    expect(view.chat).toBeUndefined();
+  });
+});
+
 describe("direct friend challenges", () => {
   const challengeRequest = (
     path: string,
@@ -680,7 +988,8 @@ describe("direct friend challenges", () => {
       players: [{ id: A }, { id: B }],
       bot: null,
     });
-    expect(initialized[0].startsAt).toBe(T0 + 5000);
+    expect(initialized[0].arrivalDeadlineAt).toBe(T0 + 60_000);
+    expect(initialized[0].enteredBy).toEqual([]);
     const state = await ctx.storage.get("state");
     expect(state.entries[A]).toMatchObject({
       status: "matched",

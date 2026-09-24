@@ -53,6 +53,8 @@ import { FriendPlay } from "./components/FriendPlay";
 import { UsernameOnboarding } from "./components/UsernameOnboarding";
 import { PrivacyPage } from "./components/PrivacyPage";
 import { ProfilePage } from "./components/ProfilePage";
+import { MatchReviewPage } from "./components/MatchReviewPage";
+import { PublicPlayerPage } from "./components/PublicPlayerPage";
 const arenaDetails = {
   easy: { topics: "Arrays, strings, hash maps" },
   medium: { topics: "Trees, graphs, dynamic programming" },
@@ -262,11 +264,13 @@ export default function App() {
             path="/match/:id"
             element={<LiveMatchPage onSignIn={() => setSignIn(true)} />}
           />
+          <Route path="/matches/:id/review" element={<MatchReviewPage />} />
           <Route
             path="/friends"
             element={<FriendPlay onSignIn={() => setSignIn(true)} />}
           />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/players/:id" element={<PublicPlayerPage />} />
           <Route
             path="/history"
             element={<History onSignIn={() => setSignIn(true)} />}
@@ -810,7 +814,7 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
                 variant="body2"
                 sx={{ fontFamily: '"JetBrains Mono", monospace' }}
               >
-                {rating ? `${rating.wins} wins` : "1,200"}
+                {rating ? `${rating.wins} wins` : "800"}
               </Typography>
             </Stack>
             {error && (
@@ -1044,13 +1048,24 @@ function Leaderboard() {
                     </TableCell>
                     <TableCell sx={{ px: { xs: 0.5, sm: 1 }, py: 2.4 }}>
                       <Stack
+                        component={Link}
+                        to={`/players/${r.user_id}`}
                         direction="row"
                         spacing={1.5}
+                        aria-label={`View ${r.profiles?.display_name || r.profiles?.username || "player"} profile`}
                         sx={{
                           alignItems: "center",
+                          color: "inherit",
+                          textDecoration: "none",
+                          "&:hover": { textDecoration: "underline" },
+                          "&:focus-visible": {
+                            outline: "2px solid currentColor",
+                            outlineOffset: 4,
+                          },
                         }}
                       >
                         <Avatar
+                          src={r.profiles?.avatar_url || undefined}
                           variant="rounded"
                           sx={{
                             width: 29,
@@ -1118,7 +1133,7 @@ function Leaderboard() {
         </TableContainer>
       </Paper>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2.5 }}>
-        New ratings start at 1,200.
+        New ratings start at 800.
       </Typography>
       <Footer />
     </Page>
@@ -1142,7 +1157,7 @@ function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
           >
             <ListItemButton
               component={Link}
-              to={"/match/" + r.id}
+              to={"/matches/" + r.id + "/review"}
               sx={{
                 display: "grid",
                 gridTemplateColumns: {
@@ -1207,6 +1222,19 @@ function MatchRows({ rows, userId }: { rows: HistoryRow[]; userId: string }) {
               </Typography>
               <ChevronRight size={15} aria-hidden="true" />
             </ListItemButton>
+            {r.mode === "human" && r.opponent?.id && (
+              <Button
+                component={Link}
+                to={`/players/${r.opponent.id}`}
+                variant="text"
+                color="inherit"
+                size="small"
+                aria-label={`View ${r.opponent.name} profile`}
+                sx={{ minWidth: 0, px: 1, flexShrink: 0 }}
+              >
+                <UserRound size={17} aria-hidden="true" />
+              </Button>
+            )}
             {r.mode === "human" && r.opponent?.usernameConfigured && (
               <Button
                 component={Link}

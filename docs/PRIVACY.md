@@ -8,7 +8,7 @@ Dalgo is operated by **Arya Gupta**. For support, privacy questions, or account 
 
 Google sign-in provides an account identifier and may provide a display name, email address, and avatar. Dalgo also stores profile pictures uploaded by the player, the player's chosen username, six arena ratings, match participation, verdicts, rating changes, and submission records.
 
-Usernames, display names, profile pictures, ratings, and match statistics may appear to other players or on leaderboards. Uploaded profile pictures are stored in a public Supabase bucket so dalgo can display them throughout the service. Submitted source code and hidden problem data are never shown to opponents.
+Usernames, display names, profile pictures, ratings, and match statistics may appear to other players or on leaderboards. Uploaded profile pictures are stored in a public Supabase bucket so dalgo can display them throughout the service. For matches started after public code reviews launch, anyone can view both players’ scored Submit code after the result is saved. Sample Run code, hidden tests, and live code are never shown to opponents.
 
 ## Code execution and service providers
 
@@ -18,7 +18,7 @@ Dalgo uses Supabase for authentication and stored application data, Cloudflare f
 
 ## Retention
 
-Private submitted source is retained in dalgo's database and live match storage for up to 30 days. Codebox source and output records are removed after 24 hours. Compact verdicts, match history, and rating changes may be retained after source removal.
+Submitted source is retained in dalgo's database and live match storage for up to 30 days. Public scored Submit code is available during that period for eligible completed matches. Codebox source and output records are removed after 24 hours. Compact verdicts, match history, and rating changes may be retained after source removal.
 
 Operational logs may contain error details, timing, capacity, and match identifiers. They are configured not to record submitted source code.
 

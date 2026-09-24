@@ -11,12 +11,16 @@ import { configuredAttemptLimits } from "./limits";
 import { DEFAULT_ATTEMPT_LIMITS } from "../shared/types";
 import { AppError, json, parseArena } from "./core";
 import { updateProfileAvatar, validateAvatar } from "./avatar";
+import { publicPlayerResponse } from "./public-players";
 import {
   claimUsername,
   createFriendRequest,
   db,
   getFriendIdentity,
   getFriendsView,
+  getFriendChat,
+  sendFriendMessage,
+  removeFriendship,
   respondFriendRequest,
 } from "./db";
 export { Coordinator } from "./coordinator";
@@ -127,9 +131,25 @@ async function api(request: Request, env: Env) {
     return json(
       await db(
         env,
-        `arena_ratings?arena=eq.${arena}&mode=eq.${mode}&matches=gt.0&select=user_id,rating,matches,wins,profiles(username,display_name,avatar_url)&order=rating.desc,user_id.asc&limit=100`,
+        `arena_ratings?arena=eq.${arena}&mode=eq.${mode}&matches=gt.0&select=user_id,rating,rd,matches,wins,profiles(username,display_name,avatar_url)&order=rating.desc,user_id.asc&limit=100`,
       ),
     );
+  }
+  const publicReview = path.match(/^\/matches\/([a-f0-9-]{36})\/review$/i);
+  if (publicReview) {
+    if (request.method !== "GET")
+      throw new AppError("Method not allowed.", 405);
+    if (!uuid.test(publicReview[1])) throw new AppError("Invalid match.");
+    return internal(
+      env.MATCHES.get(env.MATCHES.idFromName(publicReview[1])),
+      "/review",
+    );
+  }
+  if (path.startsWith("/players/")) {
+    if (request.method !== "GET")
+      throw new AppError("Method not allowed.", 405);
+    const response = await publicPlayerResponse(path, url, env);
+    if (response) return response;
   }
   let id: string;
   if (path.endsWith("/events")) {
@@ -200,6 +220,49 @@ async function api(request: Request, env: Env) {
   }
   if (path === "/friends" && request.method === "GET")
     return json(await getFriendsView(env, id));
+  const friendMessages = path.match(/^\/friends\/([a-f0-9-]{36})\/messages$/);
+  if (friendMessages) {
+    if (!uuid.test(friendMessages[1]))
+      throw new AppError("Invalid friendship.");
+    if (request.method === "GET")
+      return json(await getFriendChat(env, id, friendMessages[1]));
+    if (request.method === "POST") {
+      const body = (await request.json()) as {
+        requestId?: unknown;
+        text?: unknown;
+      };
+      if (typeof body.requestId !== "string" || !uuid.test(body.requestId))
+        throw new AppError("A valid request identifier is required.");
+      if (
+        typeof body.text !== "string" ||
+        body.text !== body.text.trim() ||
+        body.text.length < 1 ||
+        body.text.length > 500 ||
+        new TextEncoder().encode(body.text).length > 2000 ||
+        /[\u0000-\u001f\u007f]/.test(body.text)
+      )
+        throw new AppError("Write a single-line message under 500 characters.");
+      return json(
+        await sendFriendMessage(
+          env,
+          id,
+          friendMessages[1],
+          body.requestId,
+          body.text,
+        ),
+        201,
+      );
+    }
+    throw new AppError("Method not allowed.", 405);
+  }
+  const removeFriend = path.match(/^\/friends\/([a-f0-9-]{36})$/);
+  if (removeFriend) {
+    if (request.method !== "DELETE")
+      throw new AppError("Method not allowed.", 405);
+    if (!uuid.test(removeFriend[1])) throw new AppError("Invalid friendship.");
+    await removeFriendship(env, id, removeFriend[1]);
+    return json({ removed: true });
+  }
   if (path === "/friends/requests" && request.method === "POST") {
     const body = (await request.json()) as {
       username?: unknown;
@@ -292,7 +355,7 @@ async function api(request: Request, env: Env) {
     return json(
       await db(
         env,
-        `arena_ratings?user_id=eq.${id}&select=arena,mode,rating,matches,wins,losses,draws`,
+        `arena_ratings?user_id=eq.${id}&select=arena,mode,rating,rd,matches,wins,losses,draws`,
       ),
     );
   if (path === "/history" && request.method === "GET") {
@@ -386,13 +449,15 @@ async function api(request: Request, env: Env) {
       });
   }
   const match = path.match(
-    /^\/matches\/([a-f0-9-]{36})(?:\/(run|submit|resign|events))?$/,
+    /^\/matches\/([a-f0-9-]{36})(?:\/(run|submit|resign|cancel|enter|events|chat))?$/,
   );
   if (match) {
     if (!uuid.test(match[1])) throw new AppError("Invalid match.", 400);
     const action = match[2] ?? "view";
     if (
-      (["run", "submit", "resign"].includes(action) &&
+      (["run", "submit", "resign", "cancel", "enter", "chat"].includes(
+        action,
+      ) &&
         request.method !== "POST") ||
       (["view", "events"].includes(action) && request.method !== "GET")
     )
@@ -402,9 +467,9 @@ async function api(request: Request, env: Env) {
       stub,
       "/" + action,
       id,
-      ["run", "submit"].includes(action)
+      ["run", "submit", "chat"].includes(action)
         ? await request.json()
-        : action === "resign"
+        : action === "resign" || action === "cancel" || action === "enter"
           ? {}
           : undefined,
     );

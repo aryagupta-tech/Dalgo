@@ -17,14 +17,16 @@ import { createGoogleNonce, loadGoogleIdentity } from "../google-identity";
 import type { SupabaseClient } from "@supabase/supabase-js";
 export function Brand({
   compactAtMedium = false,
+  link = true,
 }: {
   compactAtMedium?: boolean;
+  link?: boolean;
 }) {
   return (
     <Box
-      component={Link}
-      to="/"
-      aria-label="dalgo home"
+      component={link ? Link : "span"}
+      {...(link ? { to: "/" } : {})}
+      aria-label={link ? "dalgo home" : "dalgo"}
       sx={{
         display: "inline-flex",
         alignItems: "center",

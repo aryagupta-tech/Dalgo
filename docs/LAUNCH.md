@@ -15,7 +15,7 @@ This is the original launch record. Codebox moved fully to AWS on 24 September 2
 - Supabase has five applied migrations, eight RLS-protected public tables, 30 distinct problem versions, and no database/RLS security findings. Hidden tests and reference solutions are denied to browser roles. The Auth advisor retains the Free plan’s generic leaked-password warning, but dalgo exposes no password login surface.
 - Dalgo presents Google sign-in only. Email sign-in is disabled; disable the legacy GitHub provider in hosted Supabase Auth settings during rollout. The production Worker is the Site URL, and production, staging, and local development origins are allowlisted redirects.
 - The initial cap is one match and one execution at a time. Codebox uses server capacity instead of daily execution credits.
-- One-time unique username onboarding and participant-only friend challenge storage are migrated. Direct challenge acceptance reuses the authoritative human MatchRoom, Codebox, Elo, and settlement path.
+- One-time unique username onboarding and participant-only friend challenge storage are migrated. Direct challenge acceptance reuses the authoritative human MatchRoom, Codebox, Glicko, and settlement path.
 
 The detailed executor record is in [CODEBOX-VERIFICATION.md](CODEBOX-VERIFICATION.md). Machine-readable reports stay in ignored `artifacts/` files because they include operational detail.
 
@@ -47,3 +47,7 @@ Public admission was enabled after the automated, hosted, and two-account accept
 5. If a production smoke check or executor health check fails, set `ADMISSION_MODE=disabled` and `LIVE_MATCHES_ENABLED=false` before investigating.
 
 The old Google Cloud Codebox VM and its dedicated resources were deleted on 24 September 2026. Cloudflare, Supabase, and AWS billing upgrades are never automatic.
+
+## Rating cutover
+
+Before applying `20260924010000_glicko_ratings.sql`, disable new match admission and wait for active matches, pending judging, and settlement retries to finish (up to 35 minutes). The migration shifts every existing arena rating down exactly 400 points while preserving results, match counts, and the historical ledger. Deploy the compatible Worker before reopening admission. Verify new accounts start at 800/RD 350 and one bot and one human match settle idempotently.

@@ -33,6 +33,7 @@ import {
   type FriendsView,
 } from "../../shared/types";
 import { api, connectEvents } from "../api";
+import { FriendChat } from "./FriendChat";
 import { useAuth } from "../auth";
 
 const arenas = Object.keys(ARENAS) as Arena[];
@@ -796,6 +797,14 @@ export function FriendPlay({ onSignIn }: { onSignIn: () => void }) {
               </Box>
             )}
           </Paper>
+
+          {user && (
+            <FriendChat
+              friends={friends.friends}
+              userId={user.id}
+              onRemoved={() => refreshFriends()}
+            />
+          )}
 
           <Paper
             variant="outlined"

@@ -114,14 +114,27 @@ export function PrivacyPage() {
               display name, email address, and avatar. Dalgo also stores your
               chosen username, six arena ratings, friend requests, accepted
               friendships, match challenges, match participation, verdicts,
-              rating changes, and submission records.
+              rating changes, submission records, and messages you send to
+              players.
             </Typography>
             <Typography>
               Usernames, display names, profile pictures, ratings, and match
               statistics may appear to other players or on leaderboards.
               Uploaded profile pictures are stored in a public Supabase bucket
-              so they can be displayed throughout dalgo. Submitted source code
-              and hidden problem data are never shown to opponents.
+              so they can be displayed throughout dalgo. For matches started
+              after public code reviews launch, anyone can view both players’
+              scored Submit code after the result is saved. Sample Run code,
+              hidden tests, and live code are never shown to opponents.
+            </Typography>
+          </PrivacySection>
+
+          <PrivacySection title="Messages">
+            <Typography>
+              Match chat is visible only to the two human players during their
+              match and for 24 hours after the result. Its messages are then
+              removed. Messages in the Friends area remain available across
+              sessions only while both players are friends. Removing a friend
+              deletes that conversation. Bots cannot receive messages.
             </Typography>
           </PrivacySection>
 
@@ -142,8 +155,10 @@ export function PrivacyPage() {
 
           <PrivacySection title="Retention">
             <Typography>
-              Private submitted source is retained in dalgo's database and live
-              match storage for up to 30 days. Codebox source and output records
+              Submitted source is retained in dalgo's database and live match
+              storage for up to 30 days. Public scored Submit code is available
+              during that period for eligible completed matches. Codebox source
+              and output records
               are removed after 24 hours. Compact verdicts, match history, and
               rating changes may be retained after source removal.
             </Typography>

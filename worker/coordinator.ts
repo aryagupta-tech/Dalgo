@@ -16,6 +16,7 @@ import {
   Serial,
   AppError,
   canPair,
+  BOT_RD,
   chooseBot,
   chooseProblem,
   json,
@@ -756,7 +757,9 @@ export class Coordinator extends DurableObject<Env> {
       entries.map((e) => e.userId),
     );
     const problem = chooseProblem(bank as Problem[], arena, recent);
-    const startsAt = Date.now() + 5000;
+    const createdAt = Date.now();
+    const startsAt = createdAt + 5000;
+    const arrivalDeadlineAt = createdAt + 60_000;
     const bot =
       entries.length === 1
         ? chooseBot(humans[0].rating, arena, startsAt)
@@ -778,14 +781,25 @@ export class Coordinator extends DurableObject<Env> {
                     ? "Vector · Challenger"
                     : "Nexus · Expert",
               rating: bot.rating,
+              rd: BOT_RD,
               isBot: true,
             },
           ]
         : humans,
       problemId: problem.id,
       problemVersion: problem.version,
-      startsAt,
-      endsAt: startsAt + ARENAS[arena].duration * 1000,
+      startsAt: bot ? startsAt : arrivalDeadlineAt + 5000,
+      endsAt:
+        (bot ? startsAt : arrivalDeadlineAt + 5000) +
+        ARENAS[arena].duration * 1000,
+      ...(bot
+        ? {}
+        : {
+            arrivalDeadlineAt,
+            enteredBy: [],
+            entrySeenAt: {},
+            entryGateOpen: false,
+          }),
       submissions: [],
       attemptLimits: {
         ...(entries[0].attemptLimits ?? DEFAULT_ATTEMPT_LIMITS),
@@ -794,7 +808,8 @@ export class Coordinator extends DurableObject<Env> {
       result: null,
       settlementComplete: false,
       archived: false,
-      createdAt: Date.now(),
+      createdAt,
+      codeRevealAllowed: true,
     };
     // Persist assignment before the remote initialization: a restart retries this same ID.
     this.data.assignments[id] = {

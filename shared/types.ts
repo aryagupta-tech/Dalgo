@@ -62,6 +62,7 @@ export interface Player {
   name: string;
   avatar?: string;
   rating: number;
+  rd?: number;
   isBot?: boolean;
 }
 export type Verdict =
@@ -106,22 +107,35 @@ export interface MatchView {
   id: string;
   arena: Arena;
   mode: Mode;
-  status: "ready" | "active" | "settling" | "finished";
+  status: "waiting" | "ready" | "active" | "settling" | "finished";
   players: Player[];
-  problem: PublicProblem;
+  problem: PublicProblem | null;
   startsAt: number;
   endsAt: number;
+  arrivalDeadlineAt?: number;
+  entered?: boolean;
+  cancelledBeforeStart?: boolean;
   serverNow: number;
-  opponentStatus?: "Ready" | "Solving" | "Judging" | "Finished";
+  opponentStatus?: "Waiting" | "Ready" | "Solving" | "Judging" | "Finished";
   submissions: Omit<Submission, "source">[];
   attempts: { runs: number; submits: number };
   attemptLimits?: AttemptLimits;
   result: Result | null;
+  /** Human-only messages, available to participants for 24 hours after the result. */
+  chat?: MatchChatMessage[];
+  chatEndsAt?: number;
+}
+export interface MatchChatMessage {
+  id: string;
+  senderId: string;
+  text: string;
+  sentAt: number;
 }
 export interface Rating {
   arena: Arena;
   mode: Mode;
   rating: number;
+  rd: number;
   matches: number;
   wins: number;
   losses: number;
@@ -203,6 +217,16 @@ export interface FriendsView {
   friends: Friendship[];
   incoming: FriendRequest[];
   outgoing: FriendRequest[];
+}
+export interface FriendMessage {
+  id: string;
+  senderId: string;
+  text: string;
+  sentAt: number;
+}
+export interface FriendChatView {
+  friendshipId: string;
+  messages: FriendMessage[];
 }
 export interface HistoryRow {
   id: string;
