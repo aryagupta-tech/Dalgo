@@ -11,7 +11,7 @@ import type {
   Player,
 } from "../shared/types";
 import type { MatchRecord } from "./core";
-import { AppError } from "./core";
+import { AppError, BOT_RD } from "./core";
 export async function db<T>(
   env: Env,
   path: string,
@@ -432,7 +432,7 @@ export async function getPlayer(
     ),
     db<any[]>(
       env,
-      `arena_ratings?user_id=eq.${id}&arena=eq.${arena}&mode=eq.${mode}&select=rating`,
+      `arena_ratings?user_id=eq.${id}&arena=eq.${arena}&mode=eq.${mode}&select=rating,rd`,
     ),
   ]);
   if (!rows[0] || !ratings[0])
@@ -445,6 +445,7 @@ export async function getPlayer(
     name: rows[0].display_name || rows[0].username,
     avatar: rows[0].avatar_url,
     rating: ratings[0].rating,
+    rd: Number(ratings[0].rd),
   };
 }
 export async function recentProblems(env: Env, ids: string[]) {
@@ -471,6 +472,8 @@ export async function settle(env: Env, m: MatchRecord) {
       before: number;
       after: number;
       delta: number;
+      before_rd: number | null;
+      after_rd: number | null;
     }[];
   }>(env, "rpc/settle_match", {
     method: "POST",
@@ -513,8 +516,8 @@ export async function settle(env: Env, m: MatchRecord) {
         },
         participants: m.players.map((p) =>
           p.isBot
-            ? { user_id: null, bot_rating: p.rating, pre_rating: p.rating }
-            : { user_id: p.id, pre_rating: p.rating },
+            ? { user_id: null, bot_rating: p.rating, pre_rating: p.rating, pre_rd: BOT_RD }
+            : { user_id: p.id, pre_rating: p.rating, pre_rd: p.rd },
         ),
       },
     }),
