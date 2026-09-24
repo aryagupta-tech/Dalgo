@@ -739,7 +739,7 @@ describe("Supabase migration and trusted settlement contract", () => {
     expect(loser.after_rd).toBeGreaterThanOrEqual(30);
   });
 
-  it("uses a 0.5 score for unequal draws and lowers both rating deviations", async () => {
+  it("keeps unequal draws at zero points while lowering both rating deviations", async () => {
     await pg.query(
       "update public.arena_ratings set rating=1200 where user_id=$1 and arena='easy' and mode='human'",
       [A],
@@ -752,8 +752,8 @@ describe("Supabase migration and trusted settlement contract", () => {
       ],
     }));
     expect(result.rating_changes).toEqual(expect.arrayContaining([
-      expect.objectContaining({ user_id: A, delta: -121, after: 1079, after_rd: 311.304, outcome: "draw" }),
-      expect.objectContaining({ user_id: B, delta: 121, after: 921, after_rd: 311.304, outcome: "draw" }),
+      expect.objectContaining({ user_id: A, delta: 0, after: 1200, after_rd: 311.304, outcome: "draw" }),
+      expect.objectContaining({ user_id: B, delta: 0, after: 800, after_rd: 311.304, outcome: "draw" }),
     ]));
   });
 

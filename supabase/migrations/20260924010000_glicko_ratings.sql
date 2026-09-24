@@ -21,8 +21,8 @@ alter table public.rating_ledger
   drop constraint if exists rating_ledger_delta_check,
   drop constraint if exists rating_ledger_check1;
 alter table public.rating_ledger
-  add constraint rating_ledger_void_zero_check
-  check (outcome <> 'void' or delta = 0);
+  add constraint rating_ledger_no_points_draw_or_void_check
+  check (outcome not in ('draw', 'void') or delta = 0);
 alter table public.rating_ledger
   add column before_rd numeric(8,3),
   add column after_rd numeric(8,3),
@@ -277,6 +277,10 @@ begin
       select g.new_rating, g.new_rd into next_rating, next_rd
       from public.glicko_after(person.pre_rating, person.effective_rd,
         opponent.pre_rating, opponent.effective_rd, score_value) g;
+      -- A draw informs RD, but Dalgo's no-points-draw rule keeps the rating fixed.
+      if outcome_value = 'draw' then
+        next_rating := person.pre_rating;
+      end if;
       individual_outcome := case when outcome_value = 'draw' then 'draw'
         when score_value = 1.0 then 'win' else 'loss' end;
     end if;
