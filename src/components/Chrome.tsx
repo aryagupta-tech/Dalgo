@@ -420,6 +420,13 @@ export function Footer() {
         <Box component="span">Python · C++ · Java · JavaScript</Box>
         <Box
           component={Link}
+          to="/how-it-works"
+          sx={{ color: "inherit", textUnderlineOffset: "3px" }}
+        >
+          How it works
+        </Box>
+        <Box
+          component={Link}
           to="/privacy"
           sx={{ color: "inherit", textUnderlineOffset: "3px" }}
         >

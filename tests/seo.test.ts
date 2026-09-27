@@ -9,6 +9,7 @@ describe("search metadata", () => {
     expect(publicPageForPath("/")?.path).toBe("/");
     expect(publicPageForPath("/leaderboard/")?.path).toBe("/leaderboard");
     expect(publicPageForPath("/privacy")?.path).toBe("/privacy");
+    expect(publicPageForPath("/how-it-works")?.path).toBe("/how-it-works");
     for (const path of [
       "/match/123",
       "/matches/123/review",
@@ -23,8 +24,8 @@ describe("search metadata", () => {
 
   it("lists only crawlable public pages in the sitemap", () => {
     const sitemap = read("public/sitemap.xml");
-    expect(sitemap.match(/<loc>/g)).toHaveLength(3);
-    for (const path of ["/", "/leaderboard", "/privacy"])
+    expect(sitemap.match(/<loc>/g)).toHaveLength(4);
+    for (const path of ["/", "/how-it-works", "/leaderboard", "/privacy"])
       expect(sitemap).toContain(`<loc>https://dalgo.site${path}</loc>`);
     expect(sitemap).not.toContain("staging.dalgo.site");
     expect(read("public/robots.txt")).toContain(
