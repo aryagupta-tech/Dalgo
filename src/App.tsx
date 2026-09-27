@@ -517,7 +517,10 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
   return (
     <Page>
       <PageTop section="PLAY" />
-      <PageHeading title="Choose your arena" />
+      <PageHeading
+        title="Choose your arena"
+        subtitle="Live data structures and algorithms (DSA) coding matches in Python, C++, Java, and JavaScript."
+      />
       {user &&
         (currentQueue?.matchId || currentQueue?.status === "waiting") && (
           <Alert

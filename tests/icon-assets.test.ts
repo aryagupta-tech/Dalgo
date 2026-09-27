@@ -31,7 +31,7 @@ describe("dalgo browser identity", () => {
       readFileSync(resolve(root, "public/site.webmanifest"), "utf8"),
     );
 
-    expect(html).toContain("<title>dalgo — The coding club</title>");
+    expect(html).toContain("<title>dalgo — Live DSA Coding Matches</title>");
     expect(html).toContain('<meta name="application-name" content="dalgo" />');
     expect(html).toContain(
       '<meta name="apple-mobile-web-app-title" content="dalgo" />',
