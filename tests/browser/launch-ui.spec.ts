@@ -38,7 +38,7 @@ for (const viewport of [
     await expect(page).toHaveTitle("dalgo — Live DSA Coding Matches");
 
     await expect(
-      page.getByRole("heading", { name: "Choose your arena", level: 1 }),
+      page.getByRole("heading", { name: "Live DSA coding matches", level: 1 }),
     ).toBeVisible();
     await expect(
       page.getByRole("radiogroup", { name: "Arena difficulty" }),
@@ -156,4 +156,50 @@ test("removed preview routes do not expose a local match simulation", async ({
     ).toBeVisible();
     await expect(page.getByRole("button", { name: "Try demo" })).toHaveCount(0);
   }
+});
+
+test("public match guide describes the actual game and links to play", async ({
+  page,
+}) => {
+  await mockApp(page, true);
+  await page.goto("/");
+  await page
+    .locator("footer")
+    .getByRole("link", { name: "How it works" })
+    .click();
+  await expect(page).toHaveURL(/\/how-it-works$/);
+  await expect(page).toHaveTitle("How Live DSA Matches Work — dalgo");
+  await expect(
+    page.getByRole("heading", { name: "How live DSA matches work", level: 1 }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Ratings start at 800" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Choose an arena" }),
+  ).toHaveAttribute("href", "/");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://dalgo.site/how-it-works",
+  );
+  await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(
+    0,
+  );
+
+  await page.getByRole("link", { name: "Choose an arena" }).click();
+  await expect(page).toHaveTitle("dalgo — Live DSA Coding Matches");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://dalgo.site/",
+  );
+  await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(
+    1,
+  );
+
+  await page.getByRole("link", { name: "Your profile" }).click();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    "noindex",
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
 });

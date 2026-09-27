@@ -38,6 +38,7 @@ import {
 import { useAuth } from "./auth";
 import { api } from "./api";
 import { useDalgoTools } from "./webmcp";
+import { updateDocumentMetadata } from "./seo";
 import {
   ARENAS,
   type Arena,
@@ -52,6 +53,7 @@ import { LiveMatchPage, LiveQueue } from "./components/MatchPage";
 import { FriendPlay } from "./components/FriendPlay";
 import { UsernameOnboarding } from "./components/UsernameOnboarding";
 import { PrivacyPage } from "./components/PrivacyPage";
+import { HowItWorksPage } from "./components/HowItWorksPage";
 import { ProfilePage } from "./components/ProfilePage";
 import { MatchReviewPage } from "./components/MatchReviewPage";
 import { PublicPlayerPage } from "./components/PublicPlayerPage";
@@ -72,6 +74,10 @@ export default function App() {
   const { user, client, profile } = useAuth();
   const [signIn, setSignIn] = useState(false);
   const location = useLocation();
+  useEffect(
+    () => updateDocumentMetadata(location.pathname),
+    [location.pathname],
+  );
   const matchRoute = /^\/match\//.test(location.pathname);
   return (
     <Box
@@ -280,6 +286,7 @@ export default function App() {
             element={<ProfilePage onSignIn={() => setSignIn(true)} />}
           />
           <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/how-it-works" element={<HowItWorksPage />} />
           <Route
             path="*"
             element={
@@ -518,8 +525,8 @@ function Lobby({ onSignIn }: { onSignIn: () => void }) {
     <Page>
       <PageTop section="PLAY" />
       <PageHeading
-        title="Choose your arena"
-        subtitle="Live data structures and algorithms (DSA) coding matches in Python, C++, Java, and JavaScript."
+        title="Live DSA coding matches"
+        subtitle="Choose an arena and solve the same problem as your opponent in Python, C++, Java, or JavaScript."
       />
       {user &&
         (currentQueue?.matchId || currentQueue?.status === "waiting") && (
