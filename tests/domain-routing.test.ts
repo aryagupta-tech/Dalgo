@@ -48,7 +48,7 @@ describe("custom domain routing", () => {
     expect(env.ASSETS.fetch).not.toHaveBeenCalled();
   });
 
-  it("marks staging assets as noindex without changing production assets", async () => {
+  it("marks staging and private production pages as noindex", async () => {
     const staging = await worker.fetch(
       new Request("https://staging.dalgo.site/profile"),
       runtime("staging"),
@@ -59,6 +59,6 @@ describe("custom domain routing", () => {
       new Request("https://dalgo.site/profile"),
       runtime("public"),
     );
-    expect(production.headers.has("X-Robots-Tag")).toBe(false);
+    expect(production.headers.get("X-Robots-Tag")).toBe("noindex");
   });
 });

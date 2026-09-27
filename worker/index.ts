@@ -12,6 +12,7 @@ import { DEFAULT_ATTEMPT_LIMITS } from "../shared/types";
 import { AppError, json, parseArena } from "./core";
 import { updateProfileAvatar, validateAvatar } from "./avatar";
 import { publicPlayerResponse } from "./public-players";
+import { addPageMetadata, publicPageForPath } from "./seo";
 import {
   claimUsername,
   createFriendRequest,
@@ -508,16 +509,36 @@ export default {
       return Response.redirect(url.toString(), 308);
     }
     if (!url.pathname.startsWith("/api/")) {
-      const asset = await env.ASSETS.fetch(request);
-      if (admissionMode(env) !== "staging" && hostname !== "staging.dalgo.site")
-        return asset;
+      const staging =
+        admissionMode(env) === "staging" || hostname === "staging.dalgo.site";
+      if (staging && url.pathname === "/robots.txt")
+        return new Response("User-agent: *\nDisallow: /\n", {
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "X-Robots-Tag": "noindex",
+          },
+        });
+      const publicPage = !staging && publicPageForPath(url.pathname);
+      const assetRequest = publicPage ? new Request(request) : request;
+      // Each public route gets its own HTML metadata, not the asset's ETag.
+      if (publicPage) {
+        assetRequest.headers.delete("If-None-Match");
+        assetRequest.headers.delete("If-Modified-Since");
+      }
+      const asset = await env.ASSETS.fetch(assetRequest);
       const headers = new Headers(asset.headers);
-      headers.set("X-Robots-Tag", "noindex");
-      return new Response(asset.body, {
-        status: asset.status,
-        statusText: asset.statusText,
-        headers,
-      });
+      const isHtml = asset.headers.get("Content-Type")?.includes("text/html");
+      if (staging || (isHtml && !publicPage))
+        headers.set("X-Robots-Tag", "noindex");
+      if (publicPage && isHtml) {
+        headers.delete("Content-Length");
+        headers.delete("ETag");
+      }
+      const response = new Response(
+        [204, 205, 304].includes(asset.status) ? null : asset.body,
+        { status: asset.status, statusText: asset.statusText, headers },
+      );
+      return staging ? response : addPageMetadata(response, url.pathname);
     }
     const origin = request.headers.get("Origin");
     if (origin && !origins(env, request).includes(origin))

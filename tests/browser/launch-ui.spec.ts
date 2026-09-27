@@ -35,7 +35,7 @@ for (const viewport of [
     await mockApp(page, true);
     await page.goto("/");
 
-    await expect(page).toHaveTitle("dalgo — The coding club");
+    await expect(page).toHaveTitle("dalgo — Live DSA Coding Matches");
 
     await expect(
       page.getByRole("heading", { name: "Choose your arena", level: 1 }),
