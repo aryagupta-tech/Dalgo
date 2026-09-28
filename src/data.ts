@@ -1,71 +1,29 @@
 import { useEffect, useState } from "react";
-import { api } from "./api";
+import { useApiQuery } from "./use-api-query";
 import { useAuth } from "./auth";
 import type { Arena, HistoryRow, PublicProblem, Rating } from "../shared/types";
 export function useRatings() {
-  const { user } = useAuth();
-  const [ratings, setRatings] = useState<Rating[]>([]);
-  const [loadedFor, setLoadedFor] = useState<string | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    let stopped = false;
-    setLoadedFor(user?.id ?? null);
-    setRatings([]);
-    setError("");
-    setLoading(!!user);
-    if (user)
-      api<Rating[]>("/ratings")
-        .then((v) => {
-          if (!stopped) setRatings(v);
-        })
-        .catch((e) => {
-          if (!stopped) setError(e.message);
-        })
-        .finally(() => {
-          if (!stopped) setLoading(false);
-        });
-    return () => {
-      stopped = true;
-    };
-  }, [user?.id]);
+  const { user, loading: authLoading } = useAuth();
+  const query = useApiQuery<Rating[]>(
+    user && !authLoading ? "/ratings" : null,
+    { identity: user?.id },
+  );
   return {
-    ratings: user?.id === loadedFor ? ratings : [],
-    error: user?.id === loadedFor ? error : "",
-    loading: !!user && (user.id !== loadedFor || loading),
+    ratings: query.data ?? [],
+    error: query.error,
+    loading: authLoading || query.loading,
   };
 }
 export function useHistory() {
-  const { user } = useAuth();
-  const [rows, setRows] = useState<HistoryRow[]>([]);
-  const [loadedFor, setLoadedFor] = useState<string | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    let stopped = false;
-    setLoadedFor(user?.id ?? null);
-    setRows([]);
-    setError("");
-    setLoading(!!user);
-    if (user)
-      api<HistoryRow[]>("/history")
-        .then((v) => {
-          if (!stopped) setRows(v);
-        })
-        .catch((e) => {
-          if (!stopped) setError(e.message);
-        })
-        .finally(() => {
-          if (!stopped) setLoading(false);
-        });
-    return () => {
-      stopped = true;
-    };
-  }, [user?.id]);
+  const { user, loading: authLoading } = useAuth();
+  const query = useApiQuery<HistoryRow[]>(
+    user && !authLoading ? "/history" : null,
+    { identity: user?.id },
+  );
   return {
-    rows: user?.id === loadedFor ? rows : [],
-    error: user?.id === loadedFor ? error : "",
-    loading: !!user && (user.id !== loadedFor || loading),
+    rows: query.data ?? [],
+    error: query.error,
+    loading: authLoading || query.loading,
   };
 }
 let bankPromise: Promise<PublicProblem[]> | undefined;
