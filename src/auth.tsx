@@ -10,12 +10,12 @@ import {
   type SupabaseClient,
   type User,
 } from "@supabase/supabase-js";
-import { api, fallbackConfig, setTokenGetter } from "./api";
+import { fallbackConfig, setTokenGetter } from "./api";
+import { useApiQuery } from "./use-api-query";
 import {
   cacheAuthConfig,
   createSessionCoordinator,
   readCachedAuthConfig,
-  retry,
 } from "./auth-session";
 import type { Admission, Config, FriendIdentity } from "../shared/types";
 const AuthContext = createContext<{
@@ -40,65 +40,59 @@ const AuthContext = createContext<{
   refreshAdmission: () => {},
 });
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const configuration = useApiQuery<Config>("/config", { public: true });
+  const [cachedConfig] = useState(() => ({
+    ...fallbackConfig,
+    ...readCachedAuthConfig(window.localStorage),
+  }));
+  const baseConfig = configuration.data ?? cachedConfig;
+  const { supabaseUrl, supabaseKey } = baseConfig;
+  const waitingForConfig =
+    !supabaseUrl && !supabaseKey && configuration.loading;
   const [state, setState] = useState({
     user: null as User | null,
-    config: fallbackConfig,
     loading: true,
     client: null as SupabaseClient | null,
   });
-  const [profile, setProfile] = useState<FriendIdentity | null>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
-  const [profileError, setProfileError] = useState("");
   const [profileVersion, setProfileVersion] = useState(0);
   const [eligibilityVersion, setEligibilityVersion] = useState(0);
   useEffect(() => {
+    if (configuration.data)
+      cacheAuthConfig(window.localStorage, configuration.data);
+  }, [configuration.data]);
+  useEffect(() => {
     let dispose = () => {};
     let stopped = false;
+    if (waitingForConfig) return;
+    const client =
+      supabaseUrl && supabaseKey
+        ? createClient(supabaseUrl, supabaseKey, {
+            auth: {
+              persistSession: true,
+              autoRefreshToken: true,
+              detectSessionInUrl: true,
+              storage: window.localStorage,
+            },
+          })
+        : null;
     (async () => {
-      let config;
-      try {
-        config = await retry(() => api<Config>("/config"));
-        cacheAuthConfig(window.localStorage, config);
-      } catch {
-        config = {
-          ...fallbackConfig,
-          ...readCachedAuthConfig(window.localStorage),
-        };
-      }
-      if (stopped) return;
-      const client =
-        config.supabaseUrl && config.supabaseKey
-          ? createClient(config.supabaseUrl, config.supabaseKey, {
-              auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true,
-                storage: window.localStorage,
-              },
-            })
-          : null;
       if (client) {
         const sessions = createSessionCoordinator(client);
         setTokenGetter(sessions.accessToken);
         const { data: sub } = client.auth.onAuthStateChange((_e, session) => {
           sessions.update(session);
-          setState((s) => ({ ...s, user: session?.user ?? null }));
+          if (!stopped)
+            setState((s) => ({ ...s, user: session?.user ?? null }));
         });
         const recover = async () => {
           try {
             const session = await sessions.restore();
             if (!stopped)
-              setState({
-                config,
-                client,
-                user: session?.user ?? null,
-                loading: false,
-              });
+              setState({ client, user: session?.user ?? null, loading: false });
           } catch {
             if (!stopped)
               setState((current) => ({
                 ...current,
-                config,
                 client,
                 loading: false,
               }));
@@ -108,120 +102,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (document.visibilityState === "visible") void recover();
         };
         window.addEventListener("focus", resume);
+        window.addEventListener("online", resume);
         document.addEventListener("visibilitychange", resume);
         dispose = () => {
           sub.subscription.unsubscribe();
           window.removeEventListener("focus", resume);
+          window.removeEventListener("online", resume);
           document.removeEventListener("visibilitychange", resume);
           void client.auth.dispose();
         };
         await recover();
-      } else setState({ config, client: null, user: null, loading: false });
+      } else setState({ client: null, user: null, loading: false });
     })();
     return () => {
       stopped = true;
       dispose();
+      setTokenGetter(async () => null);
     };
-  }, []);
-  const [eligibility, setEligibility] = useState<{
-    userId: string;
-    value: Admission;
-  } | null>(null);
-  useEffect(() => {
-    let stopped = false;
-    if (!state.user) {
-      setProfile(null);
-      setProfileLoading(false);
-      setProfileError("");
-      return;
-    }
-    setProfile(null);
-    setProfileLoading(true);
-    setProfileError("");
-    api<FriendIdentity>("/profile")
-      .then((value) => {
-        if (stopped) return;
-        if (value && typeof value.usernameConfigured === "boolean")
-          setProfile(value);
-        else {
-          setProfile(null);
-          setProfileError("Your profile could not be loaded.");
-        }
-      })
-      .catch((reason) => {
-        if (!stopped) {
-          setProfile(null);
-          setProfileError(
-            reason instanceof Error
-              ? reason.message
-              : "Your profile could not be loaded.",
-          );
-        }
-      })
-      .finally(() => {
-        if (!stopped) setProfileLoading(false);
-      });
-    return () => {
-      stopped = true;
-    };
-  }, [state.user?.id, profileVersion]);
-  useEffect(() => {
-    let stopped = false;
-    setEligibility(null);
-    if (state.user && state.client && state.config.admissionMode) {
-      const userId = state.user.id;
-      api<Admission>("/admission")
-        .then((value) => {
-          if (!stopped) setEligibility({ userId, value });
-        })
-        .catch(() => {
-          if (!stopped)
-            setEligibility({
-              userId,
-              value: {
-                mode: "disabled",
-                canJoin: false,
-                reason:
-                  "Match availability could not be checked. Reload to retry.",
-              },
-            });
-        });
-    }
-    return () => {
-      stopped = true;
-    };
-  }, [
-    state.user?.id,
-    state.client,
-    state.config.admissionMode,
-    eligibilityVersion,
-  ]);
-  const admission =
-    state.user && eligibility?.userId === state.user.id
-      ? eligibility.value
+  }, [supabaseUrl, supabaseKey, waitingForConfig]);
+  const ready = !!state.user && !!state.client && !state.loading;
+  const profileQuery = useApiQuery<FriendIdentity>(ready ? "/profile" : null, {
+    identity: state.user?.id,
+    version: profileVersion,
+  });
+  const profile =
+    profileQuery.data &&
+    typeof profileQuery.data.usernameConfigured === "boolean"
+      ? profileQuery.data
       : null;
+  const admissionQuery = useApiQuery<Admission>(ready ? "/admission" : null, {
+    identity: `${state.user?.id}:${baseConfig.admissionMode}:${baseConfig.playEnabled}`,
+    version: eligibilityVersion,
+    pollMs: 30_000,
+  });
+  const admission = admissionQuery.error ? null : admissionQuery.data;
   const needsEligibility =
-    !!state.config.admissionMode &&
-    (!!state.user || state.config.admissionMode === "staging");
+    !!baseConfig.admissionMode &&
+    (!!state.user || baseConfig.admissionMode === "staging");
   const config = needsEligibility
     ? {
-        ...state.config,
-        playEnabled: state.config.playEnabled && !!admission?.canJoin,
+        ...baseConfig,
+        playEnabled: baseConfig.playEnabled && !!admission?.canJoin,
         reason:
           admission?.reason ||
           (state.user
-            ? "Checking match availability…"
+            ? admissionQuery.error || "Checking match availability…"
             : "Live matches are limited to invited players."),
       }
-    : state.config;
+    : baseConfig;
   return (
     <AuthContext.Provider
       value={{
         ...state,
         config,
         profile,
-        profileLoading,
-        profileError,
+        profileLoading: profileQuery.loading,
+        profileError:
+          profileQuery.error ||
+          (profileQuery.data && !profile
+            ? "Your profile could not be loaded."
+            : ""),
         refreshProfile: () => setProfileVersion((value) => value + 1),
         refreshAdmission: () => setEligibilityVersion((value) => value + 1),
       }}
