@@ -16,11 +16,22 @@ export class ApiError extends Error {
 export function setTokenGetter(fn: () => Promise<string | null>) {
   tokenGetter = fn;
 }
-export async function api<T>(
+export function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+  return request<T>(path, options, true);
+}
+// Public reads must not wait for a restored or refreshed sign-in session.
+export function publicApi<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const token = await tokenGetter();
+  return request<T>(path, options, false);
+}
+async function request<T>(
+  path: string,
+  options: RequestInit,
+  authenticated: boolean,
+): Promise<T> {
+  const token = authenticated ? await tokenGetter() : null;
   const response = await fetch(API_BASE + "/api" + path, {
     ...options,
     headers: {

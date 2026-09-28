@@ -37,6 +37,7 @@ import {
 } from "@mui/material";
 import { useAuth } from "./auth";
 import { api } from "./api";
+import { useApiQuery } from "./use-api-query";
 import { useDalgoTools } from "./webmcp";
 import { updateDocumentMetadata } from "./seo";
 import {
@@ -962,33 +963,11 @@ function ArenaTabs({
 function Leaderboard() {
   const [arena, setArena] = useState<Arena>("easy");
   const [mode, setMode] = useState<Mode>("human");
-  const [rows, setRows] = useState<LeaderRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const { config } = useAuth();
-  useEffect(() => {
-    let stopped = false;
-    setLoading(true);
-    setRows([]);
-    setError("");
-    if (!config.playEnabled) {
-      setLoading(false);
-      return;
-    }
-    api<LeaderRow[]>(`/leaderboard?arena=${arena}&mode=${mode}`)
-      .then((v) => {
-        if (!stopped) setRows(v);
-      })
-      .catch((e) => {
-        if (!stopped) setError(e.message);
-      })
-      .finally(() => {
-        if (!stopped) setLoading(false);
-      });
-    return () => {
-      stopped = true;
-    };
-  }, [arena, mode, config.playEnabled]);
+  const { data, loading, error, refresh } = useApiQuery<LeaderRow[]>(
+    `/leaderboard?arena=${arena}&mode=${mode}`,
+    { public: true, pollMs: 30_000 },
+  );
+  const rows = data ?? [];
   return (
     <Page>
       <PageTop section="LEADERBOARD" />
@@ -1006,6 +985,21 @@ function Leaderboard() {
           <RatingSwitch mode={mode} onChange={setMode} />
         </Box>
       </Stack>
+      {error && (
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={
+            <Button color="inherit" onClick={refresh}>
+              Retry rankings
+            </Button>
+          }
+        >
+          {rows.length
+            ? "Rankings could not be refreshed. Showing the last update."
+            : "Rankings are temporarily unavailable."}
+        </Alert>
+      )}
       <Paper
         variant="outlined"
         square
@@ -1127,13 +1121,16 @@ function Leaderboard() {
                   >
                     <EmptyState
                       title={
-                        loading ? "Loading rankings…" : "No ranked players yet."
+                        loading
+                          ? "Loading rankings…"
+                          : error
+                            ? "Rankings unavailable."
+                            : "No ranked players yet."
                       }
                     >
-                      {error ||
-                        (config.playEnabled
-                          ? "Complete a match to establish a rating in this arena."
-                          : "No ratings are available for this arena yet.")}
+                      {!loading &&
+                        !error &&
+                        "Complete a match to establish a rating in this arena."}
                     </EmptyState>
                   </TableCell>
                 </TableRow>
