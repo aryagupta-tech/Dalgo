@@ -113,3 +113,9 @@ When changing a problem, add a new version and preserve old versions for active 
 Disconnecting does not pause a match. Reopening its URL restores the clock and attempts. Settlement failures preserve the result and block a new ranked match until retry succeeds. Private sources are removed after 30 days from Supabase and Durable Objects; compact verdicts and the rating ledger remain.
 
 No tournaments, chat, XP, badges, walkthroughs, or automatic cheating detection are included in this beta.
+
+## License
+
+Dalgo's original code and documentation are licensed under the [MIT License](LICENSE),
+copyright (c) 2026 Arya Gupta. Third-party code, dependencies, and fonts retain their
+own licenses and attribution; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
